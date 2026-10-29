@@ -64,7 +64,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val duplicateGroups = MutableStateFlow<List<DuplicateGroup>?>(null)
 
     /** mediaId → fingerprint of photos already handled in the duplicates screen. */
-    private val reviewed = MutableStateFlow<Map<Long, String>>(emptyMap())
+    private val reviewed = MutableStateFlow<Map<Long, DuplicateReviewEntity>>(emptyMap())
 
     private data class DuplicateUndo(val items: List<MediaItem>, val previous: List<DecisionEntity>)
 
@@ -144,7 +144,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         scanJob = viewModelScope.launch {
             if (duplicateGroups.value != null) delay(3_000)
             if (reviewed.value.isEmpty()) {
-                reviewed.value = duplicateDao.reviews().associate { it.mediaId to it.fingerprint }
+                reviewed.value = duplicateDao.reviews().associateBy { it.mediaId }
             }
             duplicateGroups.value = scanner.scan(library)
         }
@@ -177,13 +177,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun markReviewed(items: List<MediaItem>, done: Boolean) {
         val ids = items.map { it.id }
+        val now = System.currentTimeMillis()
+        val entities = items.map { DuplicateReviewEntity(it.id, it.fingerprint, now) }
         reviewed.update { current ->
-            if (done) current + items.associate { it.id to it.fingerprint } else current - ids.toSet()
+            if (done) current + entities.associateBy { it.mediaId } else current - ids.toSet()
         }
         viewModelScope.launch {
             if (done) {
-                val now = System.currentTimeMillis()
-                duplicateDao.upsertReviews(items.map { DuplicateReviewEntity(it.id, it.fingerprint, now) })
+                duplicateDao.upsertReviews(entities)
             } else {
                 duplicateDao.deleteReviews(ids)
             }
@@ -477,14 +478,24 @@ private const val RECENT_COUNT = 10
  * The scan result as the user should see it now: photos already in the review bin drop out,
  * groups the user has fully handled disappear, and the suggestion is recalculated for what's left.
  */
-private fun visibleGroups(
+/**
+ * Groups still worth showing. Once you've been through a group it stays hidden, unless a photo
+ * added to the phone *after* that joins it: a genuinely new copy. Older photos joining (back from
+ * the review bin, or regrouped by a rule change) don't count: you've already seen that moment.
+ */
+internal fun visibleGroups(
     groups: List<DuplicateGroup>,
     decisions: Map<Long, DecisionEntity>,
-    reviewed: Map<Long, String>,
+    reviewed: Map<Long, DuplicateReviewEntity>,
 ): List<DuplicateGroupUi> = groups.mapNotNull { group ->
     val members = group.members.filter { decisions.decisionFor(it.item) != Decision.DELETE }
     if (members.size < 2) return@mapNotNull null
-    if (members.all { reviewed[it.item.id] == it.item.fingerprint }) return@mapNotNull null
+    val reviews = members.mapNotNull { m -> reviewed[m.item.id]?.takeIf { it.fingerprint == m.item.fingerprint } }
+    if (reviews.isNotEmpty()) {
+        val lastReview = reviews.maxOf { it.reviewedAt }
+        val newCopy = members.any { m -> reviewed[m.item.id] == null && m.item.dateAddedSeconds * 1000 > lastReview }
+        if (!newCopy) return@mapNotNull null
+    }
     val visible = group.copy(members = members)
     val favorites = members.map { it.item }.filter { decisions.decisionFor(it) == Decision.FAVORITE }.mapTo(HashSet()) { it.id }
     val (suggested, reason) = DuplicateGrouper.suggest(visible) { it.id in favorites }
