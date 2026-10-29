@@ -75,6 +75,7 @@
     <string name="action_info">Details</string>
     <string name="video_sound_on">Sound on</string>
     <string name="video_sound_off">Sound off</string>
+    <string name="video_seek">Video position. Slide to move through the video.</string>
     <string name="label_delete">DELETE</string>
     <string name="label_keep">KEEP</string>
     <string name="label_later">LATER</string>
@@ -130,14 +131,7 @@
         <item quantity="one">Keep %1$s item?</item>
         <item quantity="other">Keep all %1$s items?</item>
     </plurals>
-    <string name="confirm_keep_all_body">They\'ll leave the review bin and won\'t come back in your decks. If you change your mind, you can put them back from here.</string>
-    <string name="unbinned_eyebrow">Taken out with Keep all · %1$s</string>
-    <plurals name="unbinned_title">
-        <item quantity="one">%1$s item left the bin</item>
-        <item quantity="other">%1$s items left the bin</item>
-    </plurals>
-    <string name="unbinned_restore">Put them back in the bin</string>
-    <string name="unbinned_dismiss">Leave them kept</string>
+    <string name="confirm_keep_all_body">They\'ll leave the review bin and won\'t come back in your decks. You\'ll have a few seconds to undo.</string>
     <string name="review_eyebrow">Nothing deleted yet</string>
     <string name="review_empty_title">Your review bin is empty</string>
     <string name="review_empty_body">Swipe left on photos you don\'t need. They\'ll wait here until you\'re ready.</string>

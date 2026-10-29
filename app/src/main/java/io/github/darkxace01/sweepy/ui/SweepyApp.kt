@@ -140,8 +140,7 @@ fun SweepyApp() {
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             if (event is UiEvent.KeptAll) {
-                // A short undo window, then the decision stands. If the app is closed mid-window,
-                // the review bin still offers to put them back.
+                // A short undo window, then the decision stands.
                 val result = withTimeoutOrNull(KEEP_ALL_UNDO_MILLIS) {
                     snackbar.showSnackbar(
                         message = resources.getQuantityString(R.plurals.snack_kept_all, event.count, formatCount(event.count)),
@@ -149,7 +148,7 @@ fun SweepyApp() {
                         duration = SnackbarDuration.Indefinite,
                     )
                 }
-                if (result == SnackbarResult.ActionPerformed) viewModel.undoKeepAll(event.at) else viewModel.settleKeepAll(event.at)
+                if (result == SnackbarResult.ActionPerformed) viewModel.undoKeepAll(event.at)
                 return@collect
             }
             val message = when (event) {
@@ -214,8 +213,6 @@ fun SweepyApp() {
                             onUnmark = viewModel::unmark,
                             onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
                             onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
-                            onRestoreUnbinned = viewModel::restoreUnbinned,
-                            onDismissUnbinned = viewModel::dismissUnbinned,
                         )
                     }
                     Screen.Duplicates -> {

@@ -75,9 +75,6 @@ data class ReviewGroup(val folder: String?, val items: List<MediaItem>) {
 }
 
 data class ReviewUiState(
-    /** What the last "Keep all" took out of the bin, still kept, so it can be put back. */
-    val unbinned: List<MediaItem> = emptyList(),
-    val unbinnedAt: Long = 0,
     val groups: List<ReviewGroup> = emptyList(),
     val count: Int = 0,
     val bytes: Long = 0,

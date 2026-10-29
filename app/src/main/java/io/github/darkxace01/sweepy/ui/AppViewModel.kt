@@ -12,7 +12,6 @@ import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.TrashedItem
-import io.github.darkxace01.sweepy.data.UnbinRecord
 import io.github.darkxace01.sweepy.data.db.DecisionEntity
 import io.github.darkxace01.sweepy.data.decisionFor
 import io.github.darkxace01.sweepy.data.db.DuplicateReviewEntity
@@ -90,17 +89,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
 
     val review: StateFlow<ReviewUiState> =
-        combine(media, store.state, prefs.unbin) { media, decisions, unbin ->
+        combine(media, store.state) { media, decisions ->
             if (media == null || decisions == null) return@combine ReviewUiState()
             val marked = media.filter { decisions.decisionFor(it) == Decision.DELETE }
-            val unbinnedAt = unbinBatch(decisions.values, unbin)
             ReviewUiState(
-                unbinned = if (unbinnedAt == null) {
-                    emptyList()
-                } else {
-                    media.filter { item -> decisions[item.id]?.let { it.decidedAt == unbinnedAt && it.decision == Decision.KEEP } == true }
-                },
-                unbinnedAt = unbinnedAt ?: 0,
                 groups = marked.groupBy { it.folder }
                     .map { (folder, items) -> ReviewGroup(folder, items) }
                     .sortedByDescending { it.items.size },
@@ -290,7 +282,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun unmarkAll(items: List<MediaItem>) {
         if (items.isEmpty()) return
         val at = store.put(items, Decision.KEEP)
-        prefs.recordUnbin(at)
         _events.trySend(UiEvent.KeptAll(items.size, at))
     }
 
@@ -301,15 +292,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             decisions[item.id]?.let { it.decidedAt == at && it.decision == Decision.KEEP } == true
         }
         store.put(batch, Decision.DELETE)
-        prefs.settleUnbin(at)
     }
-
-    /** The undo window for a "Keep all" closed: the decision stands. */
-    fun settleKeepAll(at: Long) = prefs.settleUnbin(at)
-
-    fun restoreUnbinned() = undoKeepAll(review.value.unbinnedAt)
-
-    fun dismissUnbinned() = prefs.settleUnbin(review.value.unbinnedAt)
 
     private var pendingTrash: List<MediaItem> = emptyList()
 
@@ -501,19 +484,3 @@ internal fun visibleGroups(
     val (suggested, reason) = DuplicateGrouper.suggest(visible) { it.id in favorites }
     DuplicateGroupUi(visible, suggested, reason, favorites)
 }
-
-/**
- * The decidedAt shared by the last "Keep all" batch from the review bin, if it hasn't been dealt with.
- * Versions before 0.2 didn't record it, so fall back to the newest big batch of keeps made in one go:
- * swipes are one photo at a time, so only a "Keep all" leaves dozens with the very same timestamp.
- */
-internal fun unbinBatch(decisions: Collection<DecisionEntity>, record: UnbinRecord): Long? {
-    val at = record.unbinnedAt.takeIf { it > 0 } ?: decisions.asSequence()
-        .filter { it.decision == Decision.KEEP }
-        .groupingBy { it.decidedAt }.eachCount()
-        .filter { it.value >= LEGACY_UNBIN_MIN }
-        .keys.maxOrNull()
-    return at?.takeIf { it > record.settledAt }
-}
-
-private const val LEGACY_UNBIN_MIN = 20

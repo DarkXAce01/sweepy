@@ -10,9 +10,6 @@ data class CleanStats(val cleanedCount: Long = 0, val cleanedBytes: Long = 0)
 
 enum class Appearance { SYSTEM, LIGHT, DARK }
 
-/** Timestamps (decidedAt) of the last "Keep all" in the review bin, and of the last batch already dealt with. */
-data class UnbinRecord(val unbinnedAt: Long = 0, val settledAt: Long = 0)
-
 /** User choices from the settings screen. */
 data class AppSettings(
     val appearance: Appearance = Appearance.SYSTEM,
@@ -65,22 +62,6 @@ class Prefs(context: Context) {
         }
     }
 
-    private val _unbin = MutableStateFlow(UnbinRecord(prefs.getLong(KEY_UNBINNED_AT, 0), prefs.getLong(KEY_UNBIN_SETTLED_AT, 0)))
-
-    /** When "Keep all" last emptied the review bin, so it can be put back. */
-    val unbin: StateFlow<UnbinRecord> = _unbin.asStateFlow()
-
-    fun recordUnbin(at: Long) {
-        _unbin.value = _unbin.value.copy(unbinnedAt = at)
-        prefs.edit { putLong(KEY_UNBINNED_AT, at) }
-    }
-
-    /** The batch from [at] was put back or deliberately left kept; stop offering it. */
-    fun settleUnbin(at: Long) {
-        _unbin.value = _unbin.value.copy(settledAt = at)
-        prefs.edit { putLong(KEY_UNBIN_SETTLED_AT, at) }
-    }
-
     fun markSwipeHintSeen() {
         if (_swipeHintSeen.value) return
         _swipeHintSeen.value = true
@@ -95,7 +76,5 @@ class Prefs(context: Context) {
         const val KEY_LEFT_HANDED = "left_handed"
         const val KEY_HAPTICS = "haptics"
         const val KEY_AUTOPLAY = "autoplay_videos"
-        const val KEY_UNBINNED_AT = "unbinned_at"
-        const val KEY_UNBIN_SETTLED_AT = "unbin_settled_at"
     }
 }

@@ -179,13 +179,6 @@ class ScreenshotTest {
 
     @Test fun review_light() = capture("review_light") { Review() }
 
-    @Test fun review_unbinned() = capture("review_unbinned") {
-        ReviewScreen(
-            state = ReviewUiState(unbinned = library.take(8), unbinnedAt = 1),
-            onBack = {}, onUnmark = {}, onUnmarkAll = {}, onCommit = {},
-        )
-    }
-
     @Test fun review_dark() = capture("review_dark", dark = true) { Review() }
 
     @Test fun trash_light() = capture("trash_light") {
