@@ -159,11 +159,10 @@ private fun DrawScope.drawMark(
                 translate(width * 0.42f, width * 0.32f) { line(secondInk.copy(alpha = color.alpha * 0.7f), width * 0.92f) }
                 line(color.copy(alpha = color.alpha * 0.92f), width)
             }
-            // A soft halo around a thin bright core.
-            MarkStyle.GLOW -> {
-                line(color.copy(alpha = color.alpha * 0.12f), width * 2.8f)
-                line(color.copy(alpha = color.alpha * 0.3f), width * 1.6f)
-                line(color, width * 0.7f)
+            // A pale watercolor wash laid down first, then a fine pen line drawn over it.
+            MarkStyle.INK -> {
+                translate(width * 0.25f, width * 0.2f) { line(color.copy(alpha = color.alpha * 0.2f), width * 2.1f) }
+                line(color.copy(alpha = color.alpha * 0.95f), width * 0.55f)
             }
         }
     }

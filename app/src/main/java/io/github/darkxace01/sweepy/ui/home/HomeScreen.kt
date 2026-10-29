@@ -32,9 +32,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -87,6 +88,7 @@ import java.time.YearMonth
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 private const val COLLAPSED_FOLDERS = 5
 private const val COLLAPSED_MONTHS = 6
@@ -108,8 +110,13 @@ fun HomeScreen(
     var showAllMonths by rememberSaveable { mutableStateOf(false) }
     // The page settles in once. Coming back from a deck should look like it never left.
     var introPlayed by rememberSaveable { mutableStateOf(false) }
-    val animateIn = remember { !introPlayed }
+    var animateIn by remember { mutableStateOf(!introPlayed) }
     SideEffect { introPlayed = true }
+    // Only the opening settles in. Sections scrolled back into view later just appear.
+    LaunchedEffect(Unit) {
+        delay(1_200)
+        animateIn = false
+    }
     val insets = WindowInsets.safeDrawing.asPaddingValues()
     val layoutDirection = LocalLayoutDirection.current
     val ready = !state.loading && state.totalCount > 0
@@ -284,7 +291,7 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
                 )
             }
             else -> {
-                CountUp(remaining.toLong(), style = MaterialTheme.typography.displayLarge)
+                CountUp(remaining.toLong(), style = MaterialTheme.typography.displayLarge, memoryKey = "home_remaining")
                 Text(
                     if (remaining == 0) stringResource(R.string.home_all_sorted)
                     else pluralStringResource(R.plurals.home_left_caption, remaining),
@@ -317,8 +324,6 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
 
 // ---- Film strip ---------------------------------------------------------------------------------
 
-private val FilmBase = Color(0xFF1B1916)
-private val FilmEdgeText = Color(0xFFE39B4B)
 private val FRAME = 74.dp
 private val FRAME_GAP = 8.dp
 
@@ -329,7 +334,7 @@ private fun FilmStrip(items: List<MediaItem>, onClick: () -> Unit, modifier: Mod
         modifier = modifier
             .fillMaxWidth()
             .bleed(PAGE)
-            .background(FilmBase)
+            .background(Sweepy.colors.film)
             .pressable(onClick, pressedScale = 0.99f),
     ) {
         item { FilmFrame(null, null, leader = true) }
@@ -341,6 +346,7 @@ private fun FilmStrip(items: List<MediaItem>, onClick: () -> Unit, modifier: Mod
 @Composable
 private fun FilmFrame(item: MediaItem?, number: Int?, leader: Boolean = false) {
     val width = if (leader) PAGE else FRAME + FRAME_GAP
+    val holes = Sweepy.colors.filmHoles
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -349,7 +355,7 @@ private fun FilmFrame(item: MediaItem?, number: Int?, leader: Boolean = false) {
                 // Sprocket holes along both edges.
                 val hole = Size(5.dp.toPx(), 3.5.dp.toPx())
                 val step = 11.dp.toPx()
-                val color = Color(0xFFF2EFE8).copy(alpha = 0.85f)
+                val color = holes
                 var x = step / 2 - hole.width / 2
                 while (x < size.width) {
                     drawRoundRect(color, Offset(x, 5.dp.toPx()), hole, CornerRadius(1.dp.toPx()))
@@ -365,7 +371,7 @@ private fun FilmFrame(item: MediaItem?, number: Int?, leader: Boolean = false) {
         Text(
             if (number != null) "$number ▸" else " ",
             style = MaterialTheme.typography.labelSmall,
-            color = FilmEdgeText,
+            color = Sweepy.colors.filmText,
             modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
         )
     }

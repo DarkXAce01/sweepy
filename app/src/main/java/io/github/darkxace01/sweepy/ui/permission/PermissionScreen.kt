@@ -131,13 +131,16 @@ private fun Promise(number: Int, title: Int, body: Int) {
 
 /**
  * Three little prints dropped on the table, each getting marked in turn: crossed out, circled,
- * starred. It shows what the app does before a single photo is loaded.
+ * starred. It shows what the app does before a single photo is loaded. Changing [replayKey]
+ * wipes the marks and draws them again.
  */
 @Composable
-private fun PrintPile(modifier: Modifier = Modifier) {
+fun PrintPile(modifier: Modifier = Modifier, replayKey: Any = Unit) {
     val inspection = LocalInspectionMode.current
     val marks = remember { List(3) { Animatable(if (inspection) 1f else 0f) } }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(replayKey) {
+        if (inspection) return@LaunchedEffect
+        marks.forEach { it.snapTo(0f) }
         delay(450)
         for (mark in marks) {
             mark.animateTo(1f, tween(durationMillis = 650, easing = FastOutSlowInEasing))

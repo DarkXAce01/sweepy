@@ -55,6 +55,7 @@ import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.ThemeChoice
 import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
+import io.github.darkxace01.sweepy.ui.welcome.WelcomeScreen
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateKind
 import io.github.darkxace01.sweepy.data.duplicates.KeepReason
@@ -108,21 +109,34 @@ class ScreenshotTest {
 
     @Test fun riso_deck() = capture("riso_deck", theme = ThemeChoice.RISO) { Deck() }
 
+    @Test fun riso_night_home() = capture("riso_night_home", dark = true, theme = ThemeChoice.RISO) { Home() }
+
     @Test fun riso_night_deck() = capture("riso_night_deck", dark = true, theme = ThemeChoice.RISO) { Deck() }
 
     @Test fun riso_done() = capture("riso_done", theme = ThemeChoice.RISO) { DeckDone() }
 
-    @Test fun phosphor_home() = capture("phosphor_home", dark = true, theme = ThemeChoice.PHOSPHOR) { Home() }
+    @Test fun herbarium_home() = capture("herbarium_home", theme = ThemeChoice.HERBARIUM) { Home() }
 
-    @Test fun phosphor_deck() = capture("phosphor_deck", dark = true, theme = ThemeChoice.PHOSPHOR) { Deck() }
+    @Test fun herbarium_deck() = capture("herbarium_deck", theme = ThemeChoice.HERBARIUM) { Deck() }
 
-    @Test fun phosphor_review() = capture("phosphor_review", dark = true, theme = ThemeChoice.PHOSPHOR) { Review() }
+    @Test fun herbarium_fern_home() = capture("herbarium_fern_home", dark = true, theme = ThemeChoice.HERBARIUM) { Home() }
 
-    @Test fun phosphor_done() = capture("phosphor_done", dark = true, theme = ThemeChoice.PHOSPHOR) { DeckDone() }
+    @Test fun herbarium_review() = capture("herbarium_review", theme = ThemeChoice.HERBARIUM) { Review() }
+
+    @Test fun herbarium_fern_done() = capture("herbarium_fern_done", dark = true, theme = ThemeChoice.HERBARIUM) { DeckDone() }
 
     @Test fun settings_riso() = capture("settings_riso", theme = ThemeChoice.RISO) { Settings(ThemeChoice.RISO) }
 
-    @Test fun settings_phosphor() = capture("settings_phosphor", dark = true, theme = ThemeChoice.PHOSPHOR) { Settings(ThemeChoice.PHOSPHOR) }
+    @Test fun settings_herbarium() = capture("settings_herbarium", theme = ThemeChoice.HERBARIUM) { Settings(ThemeChoice.HERBARIUM) }
+
+    @Test fun welcome_riso() = capture("welcome_riso", theme = ThemeChoice.RISO) {
+        WelcomeScreen(selected = ThemeChoice.RISO, onSelect = {}, onContinue = {})
+    }
+
+    @Config(qualifiers = "w412dp-h1400dp-xxhdpi")
+    @Test fun welcome_herbarium() = capture("welcome_herbarium", theme = ThemeChoice.HERBARIUM) {
+        WelcomeScreen(selected = ThemeChoice.HERBARIUM, onSelect = {}, onContinue = {})
+    }
 
     @Test fun settings_light() = capture("settings_light") { Settings() }
 

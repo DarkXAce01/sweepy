@@ -19,6 +19,7 @@ import io.github.darkxace01.sweepy.data.ThemeChoice
 //  - Geist: interface text
 //  - Geist Mono: film-edge metadata (sizes, dates, counts, small labels)
 //  - Bricolage Grotesque: the Riso theme's heavy, condensed headlines
+//  - Fraunces: the Herbarium theme's soft, wonky serif headlines
 
 val Serif = FontFamily(
     Font(R.font.instrument_serif, FontWeight.Normal, FontStyle.Normal),
@@ -51,6 +52,20 @@ val Zine = FontFamily(
             FontVariation.weight(800),
             FontVariation.width(78f),
             FontVariation.Setting("opsz", 72f),
+        ),
+    ),
+)
+
+/** Soft and a little wonky, at display optical size. */
+val Botanical = FontFamily(
+    Font(
+        R.font.fraunces,
+        weight = FontWeight.Normal,
+        variationSettings = FontVariation.Settings(
+            FontVariation.weight(380),
+            FontVariation.Setting("opsz", 96f),
+            FontVariation.Setting("SOFT", 100f),
+            FontVariation.Setting("WONK", 1f),
         ),
     ),
 )
@@ -94,31 +109,21 @@ private fun risoTypography(look: SweepyLook): Typography {
     )
 }
 
-/** Phosphor: monospace everywhere, with big type glowing faintly like a CRT. */
-private fun phosphorTypography(look: SweepyLook): Typography {
-    val glow = Shadow(color = look.colors.ink.copy(alpha = 0.6f), offset = Offset.Zero, blurRadius = 16f)
-    fun glowing(size: Double, line: Double, tracking: Double) = style(Mono, size, line, FontWeight.Medium, tracking).copy(shadow = glow)
-    return Typography(
-        displayLarge = glowing(54.0, 60.0, -0.04),
-        displayMedium = glowing(40.0, 46.0, -0.035),
-        displaySmall = glowing(30.0, 36.0, -0.03),
-        headlineLarge = glowing(27.0, 32.0, -0.025),
-        headlineMedium = glowing(23.0, 28.0, -0.02),
-        headlineSmall = style(Mono, 20.0, 26.0, FontWeight.Medium, -0.02),
-        titleLarge = style(Mono, 17.0, 23.0, FontWeight.Medium, -0.02),
-        titleMedium = style(Mono, 14.5, 21.0, FontWeight.Medium, -0.015),
-        titleSmall = style(Mono, 13.0, 19.0, FontWeight.Medium, -0.01),
-        bodyLarge = style(Mono, 14.5, 22.0, tracking = -0.015),
-        bodyMedium = style(Mono, 13.0, 19.0, tracking = -0.01),
-        bodySmall = style(Mono, 11.5, 16.0, tracking = -0.005),
-        labelLarge = style(Mono, 14.0, 20.0, FontWeight.Medium, -0.01),
-        labelMedium = style(Mono, 11.5, 15.0, FontWeight.Medium, 0.06),
-        labelSmall = style(Mono, 10.0, 13.0, FontWeight.Medium, 0.08),
+/** Herbarium: soft, slightly wonky old-style serif headlines, like a hand-lettered specimen label. */
+private fun herbariumTypography(): Typography {
+    fun headline(size: Double, line: Double, tracking: Double) = style(Botanical, size, line, tracking = tracking)
+    return ContactSheetTypography.copy(
+        displayLarge = headline(64.0, 66.0, -0.03),
+        displayMedium = headline(48.0, 52.0, -0.025),
+        displaySmall = headline(37.0, 42.0, -0.02),
+        headlineLarge = headline(31.0, 36.0, -0.015),
+        headlineMedium = headline(26.0, 31.0, -0.01),
+        headlineSmall = headline(22.0, 28.0, -0.005),
     )
 }
 
 fun typographyFor(theme: ThemeChoice, look: SweepyLook): Typography = when (theme) {
     ThemeChoice.CONTACT_SHEET -> ContactSheetTypography
     ThemeChoice.RISO -> risoTypography(look)
-    ThemeChoice.PHOSPHOR -> phosphorTypography(look)
+    ThemeChoice.HERBARIUM -> herbariumTypography()
 }

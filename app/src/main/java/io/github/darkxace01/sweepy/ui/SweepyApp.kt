@@ -57,6 +57,7 @@ import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
 import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
+import io.github.darkxace01.sweepy.ui.welcome.WelcomeScreen
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** The app's screens. Kept in a simple back stack; the last one is shown. */
@@ -94,6 +95,16 @@ fun SweepyApp() {
 
     LaunchedEffect(access, reloadKey) {
         if (access != MediaAccess.NONE) viewModel.start()
+    }
+
+    val appSettings = LocalAppSettings.current
+    if (!appSettings.themePicked) {
+        WelcomeScreen(
+            selected = appSettings.theme,
+            onSelect = { theme -> viewModel.updateSettings { it.copy(theme = theme) } },
+            onContinue = { viewModel.updateSettings { it.copy(themePicked = true) } },
+        )
+        return
     }
 
     if (access == MediaAccess.NONE) {
@@ -161,7 +172,9 @@ fun SweepyApp() {
                 )
                 is UiEvent.KeptAll -> return@collect
             }
-            snackbar.showSnackbar(message)
+            // After a cleanup, offer a way to the trash in case something went that shouldn't have.
+            val action = if (event is UiEvent.Trashed) resources.getString(R.string.snack_view_trash) else null
+            if (snackbar.showSnackbar(message, actionLabel = action) == SnackbarResult.ActionPerformed) navigate(Screen.Trash)
         }
     }
 

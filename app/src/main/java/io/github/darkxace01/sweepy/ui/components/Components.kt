@@ -116,10 +116,18 @@ private val halftoneBitmap: ImageBitmap by lazy {
     Bitmap.createBitmap(pixels, n, n, Bitmap.Config.ARGB_8888).asImageBitmap()
 }
 
-/** One lit row in four: the raster lines of an old monitor. */
-private val scanlineBitmap: ImageBitmap by lazy {
-    val pixels = intArrayOf(0xFFFFFFFF.toInt(), 0, 0, 0)
-    Bitmap.createBitmap(pixels, 1, 4, Bitmap.Config.ARGB_8888).asImageBitmap()
+/** Laid paper: fine vertical lines from the mould's wires, and a fainter chain line every so often. */
+private val laidBitmap: ImageBitmap by lazy {
+    val n = 96
+    val row = IntArray(n) { x ->
+        val alpha = when {
+            x == 0 -> 150
+            x % 4 == 0 -> 60
+            else -> 0
+        }
+        (alpha shl 24) or 0xFFFFFF
+    }
+    Bitmap.createBitmap(row, n, 1, Bitmap.Config.ARGB_8888).asImageBitmap()
 }
 
 /** Tiles a white [pattern] across the element, tinted with [color]. */
@@ -129,14 +137,14 @@ private fun Modifier.pattern(pattern: ImageBitmap, color: Color, alpha: Float): 
     onDrawBehind { drawRect(brush, alpha = alpha, colorFilter = tint) }
 }
 
-/** The page every screen sits on, with the active theme's texture: film grain, halftone or scanlines. */
+/** The page every screen sits on, with the active theme's texture: film grain, halftone or laid paper. */
 @Composable
 fun Paper(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val look = Sweepy.look
     val texture = when (look.texture) {
         Texture.GRAIN -> Modifier.grain()
         Texture.HALFTONE -> Modifier.grain(0.3f).pattern(halftoneBitmap, look.colors.ink, if (look.colors.isDark) 0.07f else 0.05f)
-        Texture.SCANLINES -> Modifier.pattern(scanlineBitmap, look.colors.ink, 0.05f)
+        Texture.LAID -> Modifier.grain(0.35f).pattern(laidBitmap, look.colors.ink, if (look.colors.isDark) 0.06f else 0.05f)
     }
     Box(
         modifier = modifier
@@ -167,19 +175,33 @@ fun Eyebrow(text: String, modifier: Modifier = Modifier, color: Color = Sweepy.c
     )
 }
 
-/** A number that counts up to [value] when it first appears or changes. */
+/** The last value each [CountUp] showed, while the app is running. */
+private val countUpShown = HashMap<String, Long>()
+
+/**
+ * A number that counts to [value]. With a [memoryKey] it counts up from zero only the first time
+ * it's shown after the app starts; after that it stays put when scrolled back into view, and only
+ * animates when the number actually changes (from the old number to the new one).
+ */
 @Composable
 fun CountUp(
     value: Long,
     style: TextStyle,
     modifier: Modifier = Modifier,
     color: Color = Sweepy.colors.ink,
+    memoryKey: String? = null,
     format: (Long) -> String = ::formatCount,
 ) {
     val inspection = LocalInspectionMode.current
-    val animated = remember { Animatable(if (inspection) value.toFloat() else 0f) }
+    val start = when {
+        inspection -> value
+        memoryKey != null -> countUpShown[memoryKey] ?: 0L
+        else -> 0L
+    }
+    val animated = remember { Animatable(start.toFloat()) }
     LaunchedEffect(value) {
         animated.animateTo(value.toFloat(), tween(durationMillis = 1100, easing = FastOutSlowInEasing))
+        if (memoryKey != null) countUpShown[memoryKey] = value
     }
     Text(format(animated.value.toLong()), style = style, color = color, modifier = modifier, maxLines = 1)
 }

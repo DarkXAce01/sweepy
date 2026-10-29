@@ -41,6 +41,10 @@ data class SweepyColors(
     val keep: Color,
     val later: Color,
     val favorite: Color,
+    /** The film strip on the home screen: its base, sprocket holes and edge numbers. */
+    val film: Color,
+    val filmHoles: Color,
+    val filmText: Color,
     val isDark: Boolean,
 )
 
@@ -56,6 +60,9 @@ private val Paper = SweepyColors(
     keep = Color(0xFF4F7F5A),
     later = Color(0xFFB98322),
     favorite = Color(0xFFBF4F72),
+    film = Color(0xFF1B1916),
+    filmHoles = Color(0xD9F2EFE8),
+    filmText = Color(0xFFE39B4B),
     isDark = false,
 )
 
@@ -71,6 +78,9 @@ private val Darkroom = SweepyColors(
     keep = Color(0xFF7DB287),
     later = Color(0xFFD9A441),
     favorite = Color(0xFFDB7193),
+    film = Color(0xFF1B1916),
+    filmHoles = Color(0xD9F2EFE8),
+    filmText = Color(0xFFE39B4B),
     isDark = true,
 )
 
@@ -87,6 +97,9 @@ private val RisoCream = SweepyColors(
     keep = Color(0xFF00955A),
     later = Color(0xFFE08A00),
     favorite = Color(0xFF7457B5),
+    film = Color(0xFF1F2C74),
+    filmHoles = Color(0xFFF3EDDD),
+    filmText = Color(0xFFFF7BC4),
     isDark = false,
 )
 
@@ -102,27 +115,51 @@ private val RisoMidnight = SweepyColors(
     keep = Color(0xFF39D38B),
     later = Color(0xFFFFD047),
     favorite = Color(0xFFB59BFF),
+    film = Color(0xFF0D1028),
+    filmHoles = Color(0xFFF6EEDB),
+    filmText = Color(0xFFFFD047),
     isDark = true,
 )
 
-// Phosphor: a green-screen terminal on an AMOLED black. Always dark.
-private val PhosphorGreen = SweepyColors(
-    paper = Color(0xFF000000),
-    surface = Color(0xFF050D08),
-    print = Color(0xFF09140D),
-    ink = Color(0xFFB4FFC6),
-    inkMuted = Color(0xFF5E9470),
-    hairline = Color(0xFF173322),
-    pencil = Color(0xFFFF6A55),
-    onPencil = Color(0xFF000000),
-    keep = Color(0xFF6CFF94),
-    later = Color(0xFFFFC452),
-    favorite = Color(0xFFFF8AD6),
+// Herbarium: a botanist's journal of pressed plants. Linen paper, forest ink, terracotta and moss.
+private val HerbariumLinen = SweepyColors(
+    paper = Color(0xFFEDEBDF),
+    surface = Color(0xFFF4F2E8),
+    print = Color(0xFFFBFAF4),
+    ink = Color(0xFF1E3326),
+    inkMuted = Color(0xFF6B7A6C),
+    hairline = Color(0xFFD9D6C5),
+    pencil = Color(0xFFB9512E),
+    onPencil = Color.White,
+    keep = Color(0xFF4F7A3A),
+    later = Color(0xFFC08A2D),
+    favorite = Color(0xFF9B4D6E),
+    film = Color(0xFF1E3326),
+    filmHoles = Color(0xFFEDEBDF),
+    filmText = Color(0xFFE0A24A),
+    isDark = false,
+)
+
+private val HerbariumFern = SweepyColors(
+    paper = Color(0xFF101712),
+    surface = Color(0xFF162019),
+    print = Color(0xFF1C2820),
+    ink = Color(0xFFE8E6D6),
+    inkMuted = Color(0xFF93A08F),
+    hairline = Color(0xFF26332A),
+    pencil = Color(0xFFE0794F),
+    onPencil = Color(0xFF101712),
+    keep = Color(0xFF8DBF6E),
+    later = Color(0xFFE2B04F),
+    favorite = Color(0xFFD88BAA),
+    film = Color(0xFF080D0A),
+    filmHoles = Color(0xFFE8E6D6),
+    filmText = Color(0xFFE2B04F),
     isDark = true,
 )
 
 /** What the page is printed on. */
-enum class Texture { GRAIN, HALFTONE, SCANLINES }
+enum class Texture { GRAIN, HALFTONE, LAID }
 
 /** How grease-pencil marks are drawn. */
 enum class MarkStyle {
@@ -132,8 +169,8 @@ enum class MarkStyle {
     /** Two inks printed slightly out of register. */
     RISO,
 
-    /** A glowing vector line, like an old radar screen. */
-    GLOW,
+    /** A fine pen line over a light watercolor wash, like a botanical drawing. */
+    INK,
 }
 
 /** Everything a theme decides. */
@@ -157,14 +194,14 @@ object Sweepy {
         @Composable @ReadOnlyComposable get() = LocalSweepyLook.current
 }
 
-/** The look for [theme], light or dark. Phosphor ignores [dark]: it only exists in the dark. */
+/** The look for [theme], light or dark. */
 fun lookFor(theme: ThemeChoice, dark: Boolean): SweepyLook = when (theme) {
     ThemeChoice.CONTACT_SHEET -> SweepyLook(if (dark) Darkroom else Paper, Texture.GRAIN, MarkStyle.PENCIL)
     ThemeChoice.RISO -> {
         val colors = if (dark) RisoMidnight else RisoCream
         SweepyLook(colors, Texture.HALFTONE, MarkStyle.RISO, secondInk = if (dark) Color(0xFF3D7BFF) else Color(0xFF3F8FE0))
     }
-    ThemeChoice.PHOSPHOR -> SweepyLook(PhosphorGreen, Texture.SCANLINES, MarkStyle.GLOW)
+    ThemeChoice.HERBARIUM -> SweepyLook(if (dark) HerbariumFern else HerbariumLinen, Texture.LAID, MarkStyle.INK)
 }
 
 private fun materialColors(c: SweepyColors) = if (c.isDark) {
