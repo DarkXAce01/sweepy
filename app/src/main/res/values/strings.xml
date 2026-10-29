@@ -2,44 +2,95 @@
 <resources>
     <string name="app_name">Sweepy</string>
 
+    <!-- General -->
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="select_all">Select all</string>
+    <string name="select_none">Clear</string>
+    <string name="show_all">Show all %1$d</string>
+    <string name="show_less">Show less</string>
+    <string name="left_and_size">%1$s left · %2$s</string>
+    <string name="count_and_size">%1$s · %2$s</string>
+    <plurals name="items_count">
+        <item quantity="one">%1$s item</item>
+        <item quantity="other">%1$s items</item>
+    </plurals>
+    <plurals name="items_word">
+        <item quantity="one">item</item>
+        <item quantity="other">items</item>
+    </plurals>
+    <string name="privacy_note">No internet access · your photos stay on this phone</string>
+
     <!-- Permission screen -->
-    <string name="permission_title">Let\'s clean up your gallery</string>
-    <string name="permission_body">Sweepy needs access to your photos and videos so you can swipe through them.\n\nSweepy has no internet access. Your photos never leave your phone.</string>
-    <string name="permission_grant">Allow access</string>
-    <string name="permission_denied">Sweepy can\'t work without access to your photos. You can allow it in Settings.</string>
+    <string name="permission_title">Clean up your gallery, one swipe at a time</string>
+    <string name="permission_body">Sweepy needs access to your photos and videos so you can swipe through them.</string>
+    <string name="permission_grant">Allow photo access</string>
+    <string name="permission_denied">Sweepy can\'t work without access to your photos. You can turn it on in Settings → Permissions.</string>
     <string name="permission_open_settings">Open settings</string>
+    <string name="promise_private_title">Private by design</string>
+    <string name="promise_private_body">No internet permission. Nothing ever leaves your phone.</string>
+    <string name="promise_safe_title">Nothing lost by accident</string>
+    <string name="promise_safe_body">You review everything first, and can restore for 30 days.</string>
+    <string name="promise_free_title">Free. Actually free.</string>
+    <string name="promise_free_body">No ads, no limits, no subscriptions.</string>
 
-    <!-- Deck -->
-    <string name="deck_loading">Loading your gallery…</string>
-    <string name="deck_empty_title">All caught up!</string>
-    <string name="deck_empty_body">You\'ve gone through everything here.</string>
-    <plurals name="deck_marked">
-        <item quantity="one">%1$d marked · %2$s</item>
-        <item quantity="other">%1$d marked · %2$s</item>
-    </plurals>
-    <string name="deck_review">Review</string>
-    <plurals name="deck_remaining">
-        <item quantity="one">%1$d item left</item>
-        <item quantity="other">%1$d items left</item>
-    </plurals>
-    <string name="deck_partial_access">Sweepy can only see the photos you picked.</string>
-    <string name="deck_partial_access_action">Allow all</string>
-    <string name="deck_freed">%1$s moved to trash</string>
+    <!-- Home -->
+    <string name="home_your_gallery">Your gallery</string>
+    <string name="home_scanning">Scanning your gallery…</string>
+    <string name="home_on_phone">%1$s on this phone</string>
+    <string name="home_reviewed_pct">%1$d%% reviewed</string>
+    <string name="home_to_go">%1$s to go</string>
+    <string name="home_start">Start swiping</string>
+    <string name="home_continue">Continue swiping</string>
+    <string name="home_empty">No photos or videos found on this phone.</string>
+    <string name="home_stat_bin">in review bin</string>
+    <string name="home_stat_cleaned">cleaned up</string>
+    <string name="home_section_quick">Quick decks</string>
+    <string name="home_section_folders">Folders</string>
+    <string name="home_section_months">By month</string>
+    <string name="home_trash_subtitle">Restore anything from the last 30 days</string>
+    <string name="partial_access">Sweepy can only see the photos you picked.</string>
+    <string name="partial_access_action">Allow all</string>
 
+    <!-- Deck names -->
+    <string name="deck_all">All photos &amp; videos</string>
+    <string name="deck_screenshots">Screenshots</string>
+    <string name="deck_whatsapp">WhatsApp</string>
+    <string name="deck_large_videos">Large videos</string>
+    <string name="deck_later">Maybe later</string>
+    <string name="deck_all_done">All done ✓</string>
+    <string name="folder_unnamed">Other</string>
+    <plurals name="waiting_count">
+        <item quantity="one">%1$s waiting</item>
+        <item quantity="other">%1$s waiting</item>
+    </plurals>
+
+    <!-- Swiping -->
     <string name="action_undo">Undo</string>
     <string name="action_delete">Delete</string>
     <string name="action_keep">Keep</string>
     <string name="action_later">Later</string>
     <string name="action_favorite">Favorite</string>
     <string name="action_info">Details</string>
-
     <string name="label_delete">DELETE</string>
     <string name="label_keep">KEEP</string>
     <string name="label_later">LATER</string>
     <string name="label_favorite">FAVORITE</string>
+    <string name="hint_title">Swipe to sort</string>
+    <string name="hint_body">Nothing is deleted yet: swiped photos wait in the review bin. Tap to start.</string>
+    <string name="done_title">All done here!</string>
+    <plurals name="done_body">
+        <item quantity="one">You\'ve been through the only item in this deck.</item>
+        <item quantity="other">You\'ve been through all %1$s items in this deck.</item>
+    </plurals>
+    <string name="done_body_later">Nothing left waiting for later.</string>
+    <plurals name="done_review">
+        <item quantity="one">Review %1$s marked item · %2$s</item>
+        <item quantity="other">Review %1$s marked items · %2$s</item>
+    </plurals>
+    <string name="done_back">Back to home</string>
 
-    <!-- Info sheet -->
-    <string name="info_name">Name</string>
+    <!-- Details sheet -->
     <string name="info_folder">Folder</string>
     <string name="info_date">Date</string>
     <string name="info_size">Size</string>
@@ -47,15 +98,59 @@
     <string name="info_type">Type</string>
     <string name="info_duration">Duration</string>
     <string name="info_unknown">Unknown</string>
+    <string name="info_open">Open in gallery</string>
 
     <!-- Review bin -->
     <string name="review_title">Review bin</string>
-    <string name="review_back">Back</string>
-    <string name="review_empty">Nothing marked for deletion yet.\nSwipe left on photos you don\'t need.</string>
+    <string name="review_keep_all">Keep all</string>
+    <string name="review_empty_title">Your review bin is empty</string>
+    <string name="review_empty_body">Swipe left on photos you don\'t need. They\'ll wait here until you\'re ready.</string>
     <string name="review_unmark">Keep this one</string>
-    <plurals name="review_commit">
-        <item quantity="one">Move %1$d item to trash · %2$s</item>
-        <item quantity="other">Move %1$d items to trash · %2$s</item>
+    <plurals name="review_summary">
+        <item quantity="one">%1$s item · tap a photo to keep it</item>
+        <item quantity="other">%1$s items · tap a photo to keep it</item>
     </plurals>
-    <string name="review_hint">Tap a photo to keep it. Items go to the system trash, where you can restore them for about 30 days.</string>
+    <plurals name="review_commit">
+        <item quantity="one">Move %1$s item to trash · %2$s</item>
+        <item quantity="other">Move %1$s items to trash · %2$s</item>
+    </plurals>
+    <string name="review_restore_note">You can restore them from Recently cleaned for 30 days.</string>
+
+    <!-- Recently cleaned (system trash) -->
+    <string name="trash_title">Recently cleaned</string>
+    <string name="trash_empty_title">Nothing in the trash</string>
+    <string name="trash_empty_body">Items you clean up land here for about 30 days, in case you change your mind.</string>
+    <plurals name="trash_summary">
+        <item quantity="one">%1$s item still using space</item>
+        <item quantity="other">%1$s items still using space</item>
+    </plurals>
+    <string name="trash_explainer">Android removes these for good when their timer runs out. Select items to restore them, or delete them now to free the space immediately. Items deleted in other gallery apps may sit in those apps\' own trash instead.</string>
+    <plurals name="trash_restore">
+        <item quantity="one">Restore %1$s</item>
+        <item quantity="other">Restore %1$s</item>
+    </plurals>
+    <string name="trash_delete_forever">Delete forever</string>
+    <string name="trash_confirm_title">Delete forever?</string>
+    <plurals name="trash_confirm_body">
+        <item quantity="one">%1$s item (%2$s) will be permanently deleted. This can\'t be undone.</item>
+        <item quantity="other">%1$s items (%2$s) will be permanently deleted. This can\'t be undone.</item>
+    </plurals>
+    <plurals name="days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
+
+    <!-- Snackbars -->
+    <plurals name="snack_trashed">
+        <item quantity="one">%1$s item moved to trash · %2$s</item>
+        <item quantity="other">%1$s items moved to trash · %2$s</item>
+    </plurals>
+    <plurals name="snack_restored">
+        <item quantity="one">%1$s item restored</item>
+        <item quantity="other">%1$s items restored</item>
+    </plurals>
+    <plurals name="snack_deleted">
+        <item quantity="one">%1$s item deleted forever · %2$s freed</item>
+        <item quantity="other">%1$s items deleted forever · %2$s freed</item>
+    </plurals>
 </resources>

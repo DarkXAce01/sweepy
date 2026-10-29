@@ -1,43 +1,74 @@
 package io.github.darkxace01.sweepy.ui
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.darkxace01.sweepy.R
+import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaAccess
 import io.github.darkxace01.sweepy.data.MediaPermissions
+import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.deck.DeckScreen
-import io.github.darkxace01.sweepy.ui.deck.DeckViewModel
+import io.github.darkxace01.sweepy.ui.home.HomeScreen
 import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
+import io.github.darkxace01.sweepy.ui.trash.TrashScreen
 
-/** Top level of the app: permission screen → swipe deck ⇄ review bin. */
+/** The app's screens. Kept in a simple back stack; the last one is shown. */
+sealed interface Screen {
+    data object Home : Screen
+    data class Deck(val source: DeckSource) : Screen
+    data object Review : Screen
+    data object Trash : Screen
+}
+
 @Composable
 fun SweepyApp() {
     val context = LocalContext.current
-    val viewModel: DeckViewModel = viewModel()
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val viewModel: AppViewModel = viewModel()
 
     var access by remember { mutableStateOf(MediaPermissions.current(context)) }
     var permissionDenied by rememberSaveable { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
-    var showReview by rememberSaveable { mutableStateOf(false) }
 
     // The user can change permissions in Settings while the app is in the background.
     LifecycleResumeEffect(Unit) {
@@ -53,14 +84,8 @@ fun SweepyApp() {
         reloadKey++ // with partial access the user may have picked different photos
     }
 
-    val trashLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult(),
-    ) { result ->
-        viewModel.onTrashResult(confirmed = result.resultCode == Activity.RESULT_OK)
-    }
-
     LaunchedEffect(access, reloadKey) {
-        if (access != MediaAccess.NONE) viewModel.load()
+        if (access != MediaAccess.NONE) viewModel.start()
     }
 
     if (access == MediaAccess.NONE) {
@@ -76,26 +101,115 @@ fun SweepyApp() {
         return
     }
 
-    if (showReview) {
-        BackHandler { showReview = false }
-        ReviewScreen(
-            state = state,
-            onBack = { showReview = false },
-            onUnmark = viewModel::unmark,
-            onCommit = {
-                viewModel.createTrashRequest()?.let { pendingIntent ->
-                    trashLauncher.launch(IntentSenderRequest.Builder(pendingIntent.intentSender).build())
-                }
+    val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
+    var navigatingBack by remember { mutableStateOf(false) }
+    fun navigate(screen: Screen) {
+        navigatingBack = false
+        backStack.add(screen)
+    }
+    fun back() {
+        if (backStack.size > 1) {
+            navigatingBack = true
+            backStack.removeAt(backStack.lastIndex)
+        }
+    }
+    BackHandler(enabled = backStack.size > 1) { back() }
+
+    // System dialogs (move to trash / restore / delete forever) report back here.
+    val trashLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+        viewModel.onTrashResult(confirmed = it.resultCode == Activity.RESULT_OK)
+    }
+    val trashActionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+        viewModel.onTrashActionResult(confirmed = it.resultCode == Activity.RESULT_OK)
+    }
+    fun PendingIntent.launchWith(launcher: ActivityResultLauncher<IntentSenderRequest>) =
+        launcher.launch(IntentSenderRequest.Builder(intentSender).build())
+
+    val snackbar = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            val message = when (event) {
+                is UiEvent.Trashed -> resources.getQuantityString(
+                    R.plurals.snack_trashed, event.count, formatCount(event.count), formatSize(context, event.bytes),
+                )
+                is UiEvent.Restored -> resources.getQuantityString(R.plurals.snack_restored, event.count, formatCount(event.count))
+                is UiEvent.DeletedForever -> resources.getQuantityString(
+                    R.plurals.snack_deleted, event.count, formatCount(event.count), formatSize(context, event.bytes),
+                )
+            }
+            snackbar.showSnackbar(message)
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        AnimatedContent(
+            targetState = backStack.last(),
+            transitionSpec = {
+                val direction = if (navigatingBack) -1 else 1
+                (slideInHorizontally(tween(320)) { direction * it / 5 } + fadeIn(tween(220))) togetherWith
+                    (slideOutHorizontally(tween(320)) { -direction * it / 8 } + fadeOut(tween(160)))
             },
-        )
-    } else {
-        DeckScreen(
-            state = state,
-            partialAccess = access == MediaAccess.PARTIAL,
-            onDecide = viewModel::decide,
-            onUndo = viewModel::undo,
-            onOpenReview = { showReview = true },
-            onRequestFullAccess = { permissionLauncher.launch(MediaPermissions.requested) },
-        )
+            label = "navigation",
+        ) { screen ->
+            when (screen) {
+                Screen.Home -> {
+                    val state by viewModel.home.collectAsStateWithLifecycle()
+                    HomeScreen(
+                        state = state,
+                        partialAccess = access == MediaAccess.PARTIAL,
+                        onOpenDeck = { navigate(Screen.Deck(it)) },
+                        onOpenReview = { navigate(Screen.Review) },
+                        onOpenTrash = { navigate(Screen.Trash) },
+                        onRequestFullAccess = { permissionLauncher.launch(MediaPermissions.requested) },
+                    )
+                }
+                is Screen.Deck -> {
+                    val state by viewModel.deck(screen.source).collectAsStateWithLifecycle()
+                    val hintSeen by viewModel.swipeHintSeen.collectAsStateWithLifecycle()
+                    DeckScreen(
+                        source = screen.source,
+                        state = state,
+                        showHint = !hintSeen,
+                        onBack = ::back,
+                        onDecide = { item, decision -> viewModel.decide(screen.source, item, decision) },
+                        onUndo = { viewModel.undo(screen.source) },
+                        onOpenReview = { navigate(Screen.Review) },
+                        onDismissHint = viewModel::dismissSwipeHint,
+                    )
+                }
+                Screen.Review -> {
+                    val state by viewModel.review.collectAsStateWithLifecycle()
+                    ReviewScreen(
+                        state = state,
+                        onBack = ::back,
+                        onUnmark = viewModel::unmark,
+                        onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
+                        onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
+                    )
+                }
+                Screen.Trash -> {
+                    LaunchedEffect(Unit) { viewModel.loadTrash() }
+                    val state by viewModel.trash.collectAsStateWithLifecycle()
+                    TrashScreen(
+                        state = state,
+                        onBack = ::back,
+                        onRestore = { viewModel.createRestoreRequest(it)?.launchWith(trashActionLauncher) },
+                        onDeleteForever = { viewModel.createDeleteForeverRequest(it)?.launchWith(trashActionLauncher) },
+                    )
+                }
+            }
+        }
+
+        SnackbarHost(
+            hostState = snackbar,
+            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 96.dp),
+        ) { data ->
+            Snackbar(
+                snackbarData = data,
+                shape = MaterialTheme.shapes.medium,
+                containerColor = MaterialTheme.colorScheme.inverseSurface,
+            )
+        }
     }
 }
