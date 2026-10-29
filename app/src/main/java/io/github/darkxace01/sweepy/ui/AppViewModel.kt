@@ -13,8 +13,13 @@ import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.TrashedItem
 import io.github.darkxace01.sweepy.data.db.DecisionEntity
 import io.github.darkxace01.sweepy.data.decisionFor
+import io.github.darkxace01.sweepy.data.db.DuplicateReviewEntity
+import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
+import io.github.darkxace01.sweepy.data.duplicates.DuplicateGrouper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +45,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val repository = container.media
     private val store = container.decisions
     private val prefs = container.prefs
+    private val scanner = container.duplicates
+    private val duplicateDao = container.duplicateDao
 
     /** null while loading. */
     private val media = MutableStateFlow<List<MediaItem>?>(null)
@@ -49,9 +56,35 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val _events = Channel<UiEvent>(Channel.BUFFERED)
     val events: Flow<UiEvent> = _events.receiveAsFlow()
 
+    // ---- Duplicates (declared first: home depends on it) -----------------------------------------
+
+    /** Raw scan result; null until the first scan finishes. */
+    private val duplicateGroups = MutableStateFlow<List<DuplicateGroup>?>(null)
+
+    /** mediaId → fingerprint of photos already handled in the duplicates screen. */
+    private val reviewed = MutableStateFlow<Map<Long, String>>(emptyMap())
+
+    private data class DuplicateUndo(val items: List<MediaItem>, val previous: List<DecisionEntity>)
+
+    private val duplicateHistory = MutableStateFlow<List<DuplicateUndo>>(emptyList())
+
+    val duplicates: StateFlow<DuplicatesUiState> =
+        combine(duplicateGroups, store.state, reviewed, scanner.progress, duplicateHistory) { groups, decisions, reviewed, progress, history ->
+            DuplicatesUiState(
+                scanning = groups == null || progress != null,
+                progress = progress,
+                groups = if (groups == null || decisions == null) emptyList() else visibleGroups(groups, decisions, reviewed),
+                canUndo = history.isNotEmpty(),
+            )
+        }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, DuplicatesUiState())
+
     val home: StateFlow<HomeUiState> =
-        combine(media, store.state, prefs.stats) { media, decisions, stats ->
-            if (media == null || decisions == null) HomeUiState(stats = stats) else buildHome(media, decisions, stats)
+        combine(media, store.state, prefs.stats, duplicates) { media, decisions, stats, duplicates ->
+            if (media == null || decisions == null) {
+                HomeUiState(stats = stats)
+            } else {
+                buildHome(media, decisions, stats).copy(duplicates = duplicates.summary())
+            }
         }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
 
     val review: StateFlow<ReviewUiState> =
@@ -89,7 +122,63 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun refresh() {
-        media.value = repository.loadAll()
+        val loaded = repository.loadAll()
+        media.value = loaded
+        scheduleDuplicateScan(loaded)
+    }
+
+    private var scanJob: Job? = null
+
+    /** Rescans for duplicates a moment after the library settles (it's cached, so usually quick). */
+    private fun scheduleDuplicateScan(library: List<MediaItem>) {
+        scanJob?.cancel()
+        scanJob = viewModelScope.launch {
+            if (duplicateGroups.value != null) delay(3_000)
+            if (reviewed.value.isEmpty()) {
+                reviewed.value = duplicateDao.reviews().associate { it.mediaId to it.fingerprint }
+            }
+            duplicateGroups.value = scanner.scan(library)
+        }
+    }
+
+    /**
+     * Keeps the photos in [keep] and sends the rest of the group to the review bin. Favorites are
+     * always kept. Keepers that already had a decision (later, kept) keep it.
+     */
+    fun resolveDuplicates(group: DuplicateGroupUi, keep: Set<Long>) {
+        val decisions = store.state.value.orEmpty()
+        val items = group.items
+        val previous = items.mapNotNull { decisions[it.id] }
+        val bins = items.filter { it.id !in keep && decisions.decisionFor(it) != Decision.FAVORITE }
+        val newKeepers = items.filter { it.id in keep && decisions.decisionFor(it) == null }
+        store.put(newKeepers, Decision.KEEP)
+        store.put(bins, Decision.DELETE)
+        markReviewed(items, true)
+        duplicateHistory.update { (it + DuplicateUndo(items, previous)).takeLast(MAX_HISTORY) }
+    }
+
+    fun undoDuplicates() {
+        val entry = duplicateHistory.value.lastOrNull() ?: return
+        duplicateHistory.update { it.dropLast(1) }
+        val previousIds = entry.previous.mapTo(HashSet()) { it.mediaId }
+        store.remove(entry.items.map { it.id }.filter { it !in previousIds })
+        store.putEntities(entry.previous)
+        markReviewed(entry.items, false)
+    }
+
+    private fun markReviewed(items: List<MediaItem>, done: Boolean) {
+        val ids = items.map { it.id }
+        reviewed.update { current ->
+            if (done) current + items.associate { it.id to it.fingerprint } else current - ids.toSet()
+        }
+        viewModelScope.launch {
+            if (done) {
+                val now = System.currentTimeMillis()
+                duplicateDao.upsertReviews(items.map { DuplicateReviewEntity(it.id, it.fingerprint, now) })
+            } else {
+                duplicateDao.deleteReviews(ids)
+            }
+        }
     }
 
     // ---- Decks ---------------------------------------------------------------------------------
@@ -167,6 +256,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun forgetEverything() {
         store.remove(store.state.value?.keys.orEmpty())
         history.value = emptyList()
+        duplicateHistory.value = emptyList()
+        reviewed.value = emptyMap()
+        viewModelScope.launch { duplicateDao.clearReviews() }
     }
 
     // ---- Review bin ----------------------------------------------------------------------------
@@ -337,3 +429,21 @@ private fun buildHome(media: List<MediaItem>, decisions: Map<Long, DecisionEntit
 
 private const val COVER_COUNT = 4
 private const val RECENT_COUNT = 10
+
+/**
+ * The scan result as the user should see it now: photos already in the review bin drop out,
+ * groups the user has fully handled disappear, and the suggestion is recalculated for what's left.
+ */
+private fun visibleGroups(
+    groups: List<DuplicateGroup>,
+    decisions: Map<Long, DecisionEntity>,
+    reviewed: Map<Long, String>,
+): List<DuplicateGroupUi> = groups.mapNotNull { group ->
+    val members = group.members.filter { decisions.decisionFor(it.item) != Decision.DELETE }
+    if (members.size < 2) return@mapNotNull null
+    if (members.all { reviewed[it.item.id] == it.item.fingerprint }) return@mapNotNull null
+    val visible = group.copy(members = members)
+    val favorites = members.map { it.item }.filter { decisions.decisionFor(it) == Decision.FAVORITE }.mapTo(HashSet()) { it.id }
+    val (suggested, reason) = DuplicateGrouper.suggest(visible) { it.id in favorites }
+    DuplicateGroupUi(visible, suggested, reason, favorites)
+}

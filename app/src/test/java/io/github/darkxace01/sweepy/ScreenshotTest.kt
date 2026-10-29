@@ -46,6 +46,14 @@ import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
+import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
+import io.github.darkxace01.sweepy.data.duplicates.DuplicateKind
+import io.github.darkxace01.sweepy.data.duplicates.KeepReason
+import io.github.darkxace01.sweepy.data.duplicates.MediaSignature
+import io.github.darkxace01.sweepy.ui.DuplicateGroupUi
+import io.github.darkxace01.sweepy.ui.DuplicatesSummary
+import io.github.darkxace01.sweepy.ui.DuplicatesUiState
+import io.github.darkxace01.sweepy.ui.duplicates.DuplicatesScreen
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -74,7 +82,7 @@ class ScreenshotTest {
     @Test fun home_full_light() = capture("home_full_light") { Home() }
 
     @Test fun home_loading() = capture("home_loading") {
-        HomeScreen(HomeUiState(), partialAccess = false, onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onRequestFullAccess = {})
+        HomeScreen(HomeUiState(), partialAccess = false, onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onOpenDuplicates = {}, onRequestFullAccess = {})
     }
 
     @Test fun deck_light() = capture("deck_light") { Deck() }
@@ -100,6 +108,30 @@ class ScreenshotTest {
         onForgetKept = {},
         onForgetEverything = {},
     )
+
+    @Test fun duplicates_similar() = capture("duplicates_similar") {
+        val shots = library.filter { !it.isVideo }.take(5).mapIndexed { i, item ->
+            item.copy(dateTakenMillis = 1_700_000_000_000L + i * 700L, width = 4000, height = 3000)
+        }
+        val group = DuplicateGroup(DuplicateKind.SIMILAR, shots.mapIndexed { i, it -> MediaSignature(it, sharpness = 40f + i) })
+        DuplicatesScreen(
+            state = DuplicatesUiState(scanning = false, groups = listOf(DuplicateGroupUi(group, shots[2], KeepReason.SHARPEST, emptySet()))),
+            onBack = {}, onResolve = { _, _ -> }, onUndo = {},
+        )
+    }
+
+    @Test fun duplicates_exact() = capture("duplicates_exact", dark = true) {
+        val copies = List(2) { i -> library[1].copy(id = 900L + i, folder = if (i == 0) "Camera" else "WhatsApp Images") }
+        val group = DuplicateGroup(DuplicateKind.EXACT, copies.map { MediaSignature(it, contentHash = "same") })
+        DuplicatesScreen(
+            state = DuplicatesUiState(scanning = false, groups = listOf(DuplicateGroupUi(group, copies[0], KeepReason.ORIGINAL, emptySet())), canUndo = true),
+            onBack = {}, onResolve = { _, _ -> }, onUndo = {},
+        )
+    }
+
+    @Test fun duplicates_scanning() = capture("duplicates_scanning") {
+        DuplicatesScreen(DuplicatesUiState(scanning = true, progress = 0.42f), onBack = {}, onResolve = { _, _ -> }, onUndo = {})
+    }
 
     @Test fun deck_done() = capture("deck_done") {
         DeckScreen(
@@ -153,6 +185,7 @@ class ScreenshotTest {
                 laterCount = 24,
                 stats = CleanStats(cleanedCount = 2_840, cleanedBytes = 7_300_000_000),
                 recent = library.take(10),
+                duplicates = DuplicatesSummary(scanning = false, groupCount = 41, reclaimableBytes = 2_300_000_000, covers = library.drop(5).take(4)),
                 quickDecks = listOf(
                     DeckSummary(DeckSource.Screenshots, 1840, 1_900_000_000, 1210, library.drop(3).take(4)),
                     DeckSummary(DeckSource.WhatsApp, 3122, 4_100_000_000, 2650, library.drop(1).take(4)),
@@ -163,7 +196,7 @@ class ScreenshotTest {
                 months = months,
             ),
             partialAccess = false,
-            onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onRequestFullAccess = {},
+            onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onOpenDuplicates = {}, onRequestFullAccess = {},
         )
     }
 

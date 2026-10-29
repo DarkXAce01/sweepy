@@ -60,6 +60,7 @@ import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.DeckSummary
+import io.github.darkxace01.sweepy.ui.DuplicatesSummary
 import io.github.darkxace01.sweepy.ui.HomeUiState
 import io.github.darkxace01.sweepy.ui.components.CountUp
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
@@ -98,6 +99,7 @@ fun HomeScreen(
     onOpenReview: () -> Unit,
     onOpenTrash: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenDuplicates: () -> Unit,
     onRequestFullAccess: () -> Unit,
 ) {
     var showAllFolders by rememberSaveable { mutableStateOf(false) }
@@ -131,7 +133,7 @@ fun HomeScreen(
 
                 item { Stats(state, onOpenReview, onOpenTrash, Modifier.padding(top = 28.dp).reveal(4)) }
 
-                if (state.quickDecks.isNotEmpty()) {
+                run {
                     item { SectionHeader(2, stringResource(R.string.home_section_quick), Modifier.reveal(5)) }
                     item {
                         LazyRow(
@@ -139,6 +141,7 @@ fun HomeScreen(
                             contentPadding = PaddingValues(horizontal = PAGE),
                             modifier = Modifier.fillMaxWidth().bleed(PAGE).reveal(5),
                         ) {
+                            item(key = "duplicates") { DuplicatesTile(state.duplicates, onClick = onOpenDuplicates) }
                             items(state.quickDecks, key = { it.source.toString() }) { summary ->
                                 QuickDeckTile(summary, onClick = { onOpenDeck(summary.source) })
                             }
@@ -466,6 +469,49 @@ private fun QuickDeckTile(summary: DeckSummary, onClick: () -> Unit) {
         Eyebrow(leftLabel(summary) + " · " + formatSize(context, summary.totalBytes), small = true, color = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted)
         Spacer(Modifier.height(8.dp))
         ThinProgress(summary.progress, color = if (done) Sweepy.colors.keep else Sweepy.colors.ink)
+    }
+}
+
+/** Tile for the duplicates screen: shows scan progress first, then how much space it could free. */
+@Composable
+private fun DuplicatesTile(summary: DuplicatesSummary, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val none = !summary.scanning && summary.groupCount == 0
+    Column(Modifier.width(150.dp).pressable(onClick)) {
+        Box {
+            Mosaic(summary.covers, Modifier.fillMaxWidth())
+            if (summary.covers.isEmpty()) {
+                MarkIcon(
+                    if (none) Mark.CIRCLE else Mark.QUESTION,
+                    if (none) Sweepy.colors.keep else Sweepy.colors.inkMuted.copy(alpha = 0.5f),
+                    size = 64.dp,
+                    strokeWidth = 0.06f,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(stringResource(R.string.deck_duplicates), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink, maxLines = 1)
+        Spacer(Modifier.height(2.dp))
+        Eyebrow(
+            when {
+                summary.groupCount > 0 -> pluralStringResource(R.plurals.dup_tile_groups, summary.groupCount, formatCount(summary.groupCount)) +
+                    " · " + formatSize(context, summary.reclaimableBytes)
+                summary.scanning -> summary.progress?.let { stringResource(R.string.dup_scanning_pct, (it * 100).roundToInt()) }
+                    ?: stringResource(R.string.dup_scanning)
+                else -> stringResource(R.string.dup_none)
+            },
+            small = true,
+            color = if (none) Sweepy.colors.keep else Sweepy.colors.inkMuted,
+        )
+        Spacer(Modifier.height(8.dp))
+        ThinProgress(
+            progress = when {
+                summary.scanning -> summary.progress ?: 0f
+                else -> 1f
+            },
+            color = if (none) Sweepy.colors.keep else Sweepy.colors.ink,
+        )
     }
 }
 

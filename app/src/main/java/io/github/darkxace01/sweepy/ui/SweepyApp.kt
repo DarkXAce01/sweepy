@@ -48,6 +48,7 @@ import io.github.darkxace01.sweepy.data.MediaAccess
 import io.github.darkxace01.sweepy.data.MediaPermissions
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.deck.DeckScreen
+import io.github.darkxace01.sweepy.ui.duplicates.DuplicatesScreen
 import io.github.darkxace01.sweepy.ui.home.HomeScreen
 import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
@@ -61,6 +62,7 @@ sealed interface Screen {
     data object Review : Screen
     data object Trash : Screen
     data object Settings : Screen
+    data object Duplicates : Screen
 }
 
 @Composable
@@ -164,6 +166,7 @@ fun SweepyApp() {
                         onOpenReview = { navigate(Screen.Review) },
                         onOpenTrash = { navigate(Screen.Trash) },
                         onOpenSettings = { navigate(Screen.Settings) },
+                        onOpenDuplicates = { navigate(Screen.Duplicates) },
                         onRequestFullAccess = { permissionLauncher.launch(MediaPermissions.requested) },
                     )
                 }
@@ -189,6 +192,15 @@ fun SweepyApp() {
                         onUnmark = viewModel::unmark,
                         onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
                         onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
+                    )
+                }
+                Screen.Duplicates -> {
+                    val state by viewModel.duplicates.collectAsStateWithLifecycle()
+                    DuplicatesScreen(
+                        state = state,
+                        onBack = ::back,
+                        onResolve = viewModel::resolveDuplicates,
+                        onUndo = viewModel::undoDuplicates,
                     )
                 }
                 Screen.Settings -> {

@@ -192,4 +192,41 @@
     <string name="setting_licenses">Licenses</string>
     <string name="setting_licenses_body">Sweepy is free software under the GNU GPL v3. Fonts: Instrument Serif, Geist and Geist Mono, under the SIL Open Font License 1.1.</string>
     <string name="settings_signoff">Made with care, for free.</string>
+    <!-- Duplicates -->
+    <string name="deck_duplicates">Duplicates</string>
+    <string name="dup_position">Group %1$s of %2$s</string>
+    <string name="dup_skip">Skip</string>
+    <string name="dup_scanning">Scanning…</string>
+    <string name="dup_scanning_pct">Scanning %1$d%%</string>
+    <string name="dup_scanning_title">Comparing your photos…</string>
+    <string name="dup_scanning_body">The first scan looks at every photo once. After that, only new photos are checked. Nothing leaves your phone.</string>
+    <string name="dup_empty_title">No duplicates</string>
+    <string name="dup_empty_body">No copies or look-alikes left. New ones will show up here as you take more photos.</string>
+    <string name="dup_exact_title">Exact copies</string>
+    <string name="dup_similar_title">Look-alikes</string>
+    <plurals name="dup_exact_body">
+        <item quantity="one">The same file, saved %d time.</item>
+        <item quantity="other">The same file, saved %d times.</item>
+    </plurals>
+    <plurals name="dup_burst_body">
+        <item quantity="one">%1$d shot within %2$s.</item>
+        <item quantity="other">%1$d shots within %2$s.</item>
+    </plurals>
+    <plurals name="dup_similar_body">
+        <item quantity="one">%d photo that looks the same.</item>
+        <item quantity="other">%d photos that look the same.</item>
+    </plurals>
+    <string name="dup_instructions">Tap to keep or bin · hold to look closer</string>
+    <string name="dup_keep_all">Keep all</string>
+    <string name="dup_done">Done</string>
+    <string name="dup_bin">Bin %1$s</string>
+    <string name="reason_original">Original</string>
+    <string name="reason_sharpest">Sharpest</string>
+    <string name="reason_detail">Most detail</string>
+    <string name="reason_favorite">★ Favorite</string>
+    <plurals name="dup_tile_groups">
+        <item quantity="one">%1$s group</item>
+        <item quantity="other">%1$s groups</item>
+    </plurals>
+    <string name="dup_none">None found</string>
 </resources>

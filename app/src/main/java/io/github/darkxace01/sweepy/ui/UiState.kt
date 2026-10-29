@@ -4,6 +4,8 @@ import io.github.darkxace01.sweepy.data.CleanStats
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.TrashedItem
+import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
+import io.github.darkxace01.sweepy.data.duplicates.KeepReason
 
 /** Size and progress of one deck, for the home screen. */
 data class DeckSummary(
@@ -33,6 +35,7 @@ data class HomeUiState(
     val quickDecks: List<DeckSummary> = emptyList(),
     val folders: List<DeckSummary> = emptyList(),
     val months: List<DeckSummary> = emptyList(),
+    val duplicates: DuplicatesSummary = DuplicatesSummary(),
 ) {
     val progress: Float get() = if (totalCount == 0) 0f else reviewedCount / totalCount.toFloat()
 }
@@ -76,3 +79,43 @@ sealed interface UiEvent {
     data class Restored(val count: Int) : UiEvent
     data class DeletedForever(val count: Int, val bytes: Long) : UiEvent
 }
+
+/** One duplicate group ready to show, with the photo we'd suggest keeping. */
+data class DuplicateGroupUi(
+    val group: DuplicateGroup,
+    val suggested: MediaItem,
+    val reason: KeepReason,
+    /** Favorites in this group; they can't be binned. */
+    val favorites: Set<Long>,
+) {
+    val items: List<MediaItem> get() = group.items
+    val key: String get() = items.joinToString(",") { it.id.toString() }
+
+    /** Space freed by keeping only the suggestion. */
+    val reclaimableBytes: Long get() = group.totalBytes - suggested.sizeBytes
+}
+
+data class DuplicatesUiState(
+    val scanning: Boolean = true,
+    /** 0..1 while reading files, null otherwise. */
+    val progress: Float? = null,
+    val groups: List<DuplicateGroupUi> = emptyList(),
+    val canUndo: Boolean = false,
+) {
+    fun summary() = DuplicatesSummary(
+        scanning = scanning,
+        progress = progress,
+        groupCount = groups.size,
+        reclaimableBytes = groups.sumOf { it.reclaimableBytes },
+        covers = groups.take(4).map { it.suggested },
+    )
+}
+
+/** What the home screen shows on the duplicates tile. */
+data class DuplicatesSummary(
+    val scanning: Boolean = true,
+    val progress: Float? = null,
+    val groupCount: Int = 0,
+    val reclaimableBytes: Long = 0,
+    val covers: List<MediaItem> = emptyList(),
+)
