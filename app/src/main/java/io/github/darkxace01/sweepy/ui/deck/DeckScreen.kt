@@ -67,6 +67,7 @@ import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.DeckUiState
+import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.InkButton
 import io.github.darkxace01.sweepy.ui.components.Mark
@@ -112,8 +113,12 @@ fun DeckScreen(
     var enterFrom by remember { mutableStateOf<SwipeDirection?>(null) }
     var infoItem by remember { mutableStateOf<MediaItem?>(null) }
 
-    val cardState = remember(current?.id) {
-        SwipeCardState(initialOffset = enterFrom?.let { offscreenOffset(it, stackSize) } ?: Offset.Zero)
+    val mirrored = LocalAppSettings.current.leftHanded
+    val cardState = remember(current?.id, mirrored) {
+        SwipeCardState(
+            initialOffset = enterFrom?.let { offscreenOffset(it, stackSize, mirrored = mirrored) } ?: Offset.Zero,
+            mirrored = mirrored,
+        )
     }
     LaunchedEffect(cardState) {
         if (cardState.offset.value != Offset.Zero) cardState.snapBack()
@@ -217,7 +222,7 @@ fun DeckScreen(
                                 modifier = Modifier.fillMaxSize().onSizeChanged { cardState.size = it },
                             )
                         }
-                        if (showHint) SwipeHint(onDismiss = onDismissHint)
+                        if (showHint) SwipeHint(mirrored, onDismiss = onDismissHint)
                     }
                 }
             }
@@ -310,10 +315,12 @@ private fun ActionBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 18.dp),
     ) {
+        // Buttons sit on the same side as their swipe, so left-handed mode swaps delete and keep.
+        val (start, end) = if (cardState.mirrored) SwipeDirection.RIGHT to SwipeDirection.LEFT else SwipeDirection.LEFT to SwipeDirection.RIGHT
         UndoButton(canUndo, onUndo)
-        MarkButton(SwipeDirection.LEFT, 68.dp, enabled, cardState, onSwipe)
+        MarkButton(start, 68.dp, enabled, cardState, onSwipe)
         MarkButton(SwipeDirection.UP, 52.dp, enabled, cardState, onSwipe)
-        MarkButton(SwipeDirection.RIGHT, 68.dp, enabled, cardState, onSwipe)
+        MarkButton(end, 68.dp, enabled, cardState, onSwipe)
         MarkButton(SwipeDirection.DOWN, 52.dp, enabled, cardState, onSwipe)
     }
 }
@@ -384,7 +391,7 @@ private val OnScrim = Color(0xFFF2EFE8)
 
 /** First-run overlay: the four directions, noted at the edges of the print like grease-pencil notes. */
 @Composable
-private fun SwipeHint(onDismiss: () -> Unit) {
+private fun SwipeHint(mirrored: Boolean, onDismiss: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -394,8 +401,8 @@ private fun SwipeHint(onDismiss: () -> Unit) {
             .padding(18.dp),
     ) {
         HintLabel(SwipeDirection.UP, "↑", Modifier.align(Alignment.TopCenter))
-        HintLabel(SwipeDirection.LEFT, "←", Modifier.align(Alignment.CenterStart))
-        HintLabel(SwipeDirection.RIGHT, "→", Modifier.align(Alignment.CenterEnd))
+        HintLabel(if (mirrored) SwipeDirection.RIGHT else SwipeDirection.LEFT, "←", Modifier.align(Alignment.CenterStart), onStart = true)
+        HintLabel(if (mirrored) SwipeDirection.LEFT else SwipeDirection.RIGHT, "→", Modifier.align(Alignment.CenterEnd), onEnd = true)
         HintLabel(SwipeDirection.DOWN, "↓", Modifier.align(Alignment.BottomCenter))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -420,16 +427,16 @@ private fun SwipeHint(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun HintLabel(direction: SwipeDirection, arrow: String, modifier: Modifier) {
-    val alignment = when (direction) {
-        SwipeDirection.LEFT -> Alignment.Start
-        SwipeDirection.RIGHT -> Alignment.End
+private fun HintLabel(direction: SwipeDirection, arrow: String, modifier: Modifier, onStart: Boolean = false, onEnd: Boolean = false) {
+    val alignment = when {
+        onStart -> Alignment.Start
+        onEnd -> Alignment.End
         else -> Alignment.CenterHorizontally
     }
     Column(horizontalAlignment = alignment, modifier = modifier) {
         MarkIcon(direction.mark, direction.color, size = 30.dp, strokeWidth = 0.1f)
         Eyebrow(
-            if (direction == SwipeDirection.RIGHT) "${direction.label()} $arrow" else "$arrow ${direction.label()}",
+            if (onEnd) "${direction.label()} $arrow" else "$arrow ${direction.label()}",
             color = OnScrim,
             modifier = Modifier.padding(top = 4.dp),
         )

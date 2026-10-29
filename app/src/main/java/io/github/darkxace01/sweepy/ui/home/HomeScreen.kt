@@ -26,6 +26,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -95,6 +97,7 @@ fun HomeScreen(
     onOpenDeck: (DeckSource) -> Unit,
     onOpenReview: () -> Unit,
     onOpenTrash: () -> Unit,
+    onOpenSettings: () -> Unit,
     onRequestFullAccess: () -> Unit,
 ) {
     var showAllFolders by rememberSaveable { mutableStateOf(false) }
@@ -112,7 +115,7 @@ fun HomeScreen(
                 bottom = insets.calculateBottomPadding() + 28.dp,
             ),
         ) {
-            item { TopBar(onOpenTrash, Modifier.reveal(0)) }
+            item { TopBar(onOpenTrash, onOpenSettings, Modifier.reveal(0)) }
 
             if (partialAccess) {
                 item { PartialAccessBanner(onRequestFullAccess, Modifier.padding(top = 8.dp).reveal(1)) }
@@ -203,7 +206,7 @@ private fun Modifier.bleed(bleed: Dp): Modifier = this.layout { measurable, cons
 // ---- Header & hero ------------------------------------------------------------------------------
 
 @Composable
-private fun TopBar(onOpenTrash: () -> Unit, modifier: Modifier = Modifier) {
+private fun TopBar(onOpenTrash: () -> Unit, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth().height(56.dp)) {
         Text(
             stringResource(R.string.app_name),
@@ -214,8 +217,11 @@ private fun TopBar(onOpenTrash: () -> Unit, modifier: Modifier = Modifier) {
         Spacer(Modifier.width(8.dp))
         MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 14.dp, strokeWidth = 0.14f, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.weight(1f))
-        QuietIconButton(stringResource(R.string.trash_title), onOpenTrash, Modifier.padding(end = 0.dp)) {
+        QuietIconButton(stringResource(R.string.trash_title), onOpenTrash) {
             Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+        }
+        QuietIconButton(stringResource(R.string.settings_title), onOpenSettings) {
+            Icon(Icons.Outlined.Settings, contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
         }
     }
 }

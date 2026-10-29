@@ -65,6 +65,7 @@ import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.QuietIconButton
 import io.github.darkxace01.sweepy.ui.components.pencilMark
+import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatDuration
 import io.github.darkxace01.sweepy.ui.formatSize
@@ -117,9 +118,10 @@ private val PhotoShape = RoundedCornerShape(5.dp)
 /**
  * Position and animation of the top card. Shared with the buttons so they can "throw" the card too.
  * [initialOffset] lets a card start off-screen and fly back in (used by undo).
+ * [mirrored] is left-handed mode: dragging right means [SwipeDirection.LEFT] (delete) and vice versa.
  */
 @Stable
-class SwipeCardState(initialOffset: Offset = Offset.Zero) {
+class SwipeCardState(initialOffset: Offset = Offset.Zero, val mirrored: Boolean = false) {
     val offset = Animatable(initialOffset, Offset.VectorConverter)
     var size by mutableStateOf(IntSize.Zero)
     var isFlyingOut by mutableStateOf(false)
@@ -132,7 +134,7 @@ class SwipeCardState(initialOffset: Offset = Offset.Zero) {
             val (x, y) = offset.value
             if (x == 0f && y == 0f) return null
             return if (abs(x) >= abs(y)) {
-                val direction = if (x > 0) SwipeDirection.RIGHT else SwipeDirection.LEFT
+                val direction = if ((x > 0) != mirrored) SwipeDirection.RIGHT else SwipeDirection.LEFT
                 direction to min(1f, abs(x) / (size.width * HORIZONTAL_THRESHOLD))
             } else {
                 val direction = if (y > 0) SwipeDirection.DOWN else SwipeDirection.UP
@@ -162,7 +164,7 @@ class SwipeCardState(initialOffset: Offset = Offset.Zero) {
         val (x, y) = offset.value
         return when {
             abs(vx) > abs(vy) && abs(vx) > FLING_VELOCITY && vx * x > 0 ->
-                if (vx > 0) SwipeDirection.RIGHT else SwipeDirection.LEFT
+                if ((vx > 0) != mirrored) SwipeDirection.RIGHT else SwipeDirection.LEFT
             abs(vy) > abs(vx) && abs(vy) > FLING_VELOCITY && vy * y > 0 ->
                 if (vy > 0) SwipeDirection.DOWN else SwipeDirection.UP
             else -> null
@@ -179,13 +181,13 @@ class SwipeCardState(initialOffset: Offset = Offset.Zero) {
     suspend fun flyOut(direction: SwipeDirection) {
         flownDirection = direction
         isFlyingOut = true
-        offset.animateTo(offscreenOffset(direction, size, offset.value), tween(durationMillis = 260, easing = FastOutLinearInEasing))
+        offset.animateTo(offscreenOffset(direction, size, offset.value, mirrored), tween(durationMillis = 260, easing = FastOutLinearInEasing))
     }
 }
 
 /** Where a card ends up after being swiped in [direction]. */
-fun offscreenOffset(direction: SwipeDirection, size: IntSize, from: Offset = Offset.Zero): Offset {
-    val w = size.width * 1.4f
+fun offscreenOffset(direction: SwipeDirection, size: IntSize, from: Offset = Offset.Zero, mirrored: Boolean = false): Offset {
+    val w = size.width * 1.4f * if (mirrored) -1f else 1f
     val h = size.height * 1.3f
     return when (direction) {
         SwipeDirection.LEFT -> Offset(-w, from.y + size.height * 0.05f)
@@ -208,8 +210,9 @@ fun SwipeCard(
 
     // Buzz once when the card crosses the "let go to swipe" threshold.
     val committed by remember(state) { derivedStateOf { state.committedDirection } }
+    val hapticsOn = LocalAppSettings.current.haptics
     LaunchedEffect(committed) {
-        if (committed != null) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+        if (committed != null && hapticsOn) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
     }
 
     Box(
@@ -252,7 +255,7 @@ fun SwipeCard(
             }
             .pointerInput(item.id) { detectTapGestures(onDoubleTap = { onInfo() }) },
     ) {
-        PrintCard(item = item, onInfo = onInfo, playVideo = true, modifier = Modifier.fillMaxSize()) {
+        PrintCard(item = item, onInfo = onInfo, playVideo = LocalAppSettings.current.autoplayVideos, zoomable = true, modifier = Modifier.fillMaxSize()) {
             PencilOverlay(state)
         }
     }
@@ -295,9 +298,10 @@ private fun PencilOverlay(state: SwipeCardState) {
             )
         }
         for (direction in SwipeDirection.entries) {
+            // The label sits on the side the card is moving away from.
             val alignment = when (direction) {
-                SwipeDirection.LEFT -> Alignment.TopEnd
-                SwipeDirection.RIGHT -> Alignment.TopStart
+                SwipeDirection.LEFT -> if (state.mirrored) Alignment.TopStart else Alignment.TopEnd
+                SwipeDirection.RIGHT -> if (state.mirrored) Alignment.TopEnd else Alignment.TopStart
                 SwipeDirection.UP -> Alignment.BottomCenter
                 SwipeDirection.DOWN -> Alignment.TopCenter
             }
@@ -340,6 +344,7 @@ fun PrintCard(
     onInfo: (() -> Unit)?,
     modifier: Modifier = Modifier,
     playVideo: Boolean = false,
+    zoomable: Boolean = false,
     overlay: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -373,13 +378,15 @@ fun PrintCard(
                     .graphicsLayer { alpha = 0.45f }
                     .blur(40.dp),
             )
-            AsyncImage(
-                model = item.uri,
-                contentDescription = item.displayName,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize(),
-            )
-            if (item.isVideo && playVideo) VideoPreview(item, Modifier.fillMaxSize())
+            Box(if (zoomable) Modifier.fillMaxSize().pinchToPeek() else Modifier.fillMaxSize()) {
+                AsyncImage(
+                    model = item.uri,
+                    contentDescription = item.displayName,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                if (item.isVideo && playVideo) VideoPreview(item, Modifier.fillMaxSize())
+            }
             overlay()
         }
 

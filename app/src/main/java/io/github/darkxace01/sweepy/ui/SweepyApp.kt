@@ -51,6 +51,7 @@ import io.github.darkxace01.sweepy.ui.deck.DeckScreen
 import io.github.darkxace01.sweepy.ui.home.HomeScreen
 import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
+import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
 
 /** The app's screens. Kept in a simple back stack; the last one is shown. */
@@ -59,6 +60,7 @@ sealed interface Screen {
     data class Deck(val source: DeckSource) : Screen
     data object Review : Screen
     data object Trash : Screen
+    data object Settings : Screen
 }
 
 @Composable
@@ -161,6 +163,7 @@ fun SweepyApp() {
                         onOpenDeck = { navigate(Screen.Deck(it)) },
                         onOpenReview = { navigate(Screen.Review) },
                         onOpenTrash = { navigate(Screen.Trash) },
+                        onOpenSettings = { navigate(Screen.Settings) },
                         onRequestFullAccess = { permissionLauncher.launch(MediaPermissions.requested) },
                     )
                 }
@@ -186,6 +189,18 @@ fun SweepyApp() {
                         onUnmark = viewModel::unmark,
                         onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
                         onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
+                    )
+                }
+                Screen.Settings -> {
+                    val settings by viewModel.settings.collectAsStateWithLifecycle()
+                    val keptCount by viewModel.keptCount.collectAsStateWithLifecycle()
+                    SettingsScreen(
+                        settings = settings,
+                        keptCount = keptCount,
+                        onBack = ::back,
+                        onChange = viewModel::updateSettings,
+                        onForgetKept = viewModel::forgetKept,
+                        onForgetEverything = viewModel::forgetEverything,
                     )
                 }
                 Screen.Trash -> {

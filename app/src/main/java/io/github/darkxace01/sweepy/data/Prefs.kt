@@ -8,6 +8,17 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class CleanStats(val cleanedCount: Long = 0, val cleanedBytes: Long = 0)
 
+enum class Appearance { SYSTEM, LIGHT, DARK }
+
+/** User choices from the settings screen. */
+data class AppSettings(
+    val appearance: Appearance = Appearance.SYSTEM,
+    /** Swaps the sides: swipe right to delete, left to keep. */
+    val leftHanded: Boolean = false,
+    val haptics: Boolean = true,
+    val autoplayVideos: Boolean = true,
+)
+
 /** Small settings and lifetime stats. */
 class Prefs(context: Context) {
     private val prefs = context.getSharedPreferences("sweepy", Context.MODE_PRIVATE)
@@ -19,6 +30,28 @@ class Prefs(context: Context) {
 
     private val _swipeHintSeen = MutableStateFlow(prefs.getBoolean(KEY_HINT_SEEN, false))
     val swipeHintSeen: StateFlow<Boolean> = _swipeHintSeen.asStateFlow()
+
+    private val _settings = MutableStateFlow(
+        AppSettings(
+            appearance = prefs.getString(KEY_APPEARANCE, null)
+                ?.let { name -> Appearance.entries.firstOrNull { it.name == name } } ?: Appearance.SYSTEM,
+            leftHanded = prefs.getBoolean(KEY_LEFT_HANDED, false),
+            haptics = prefs.getBoolean(KEY_HAPTICS, true),
+            autoplayVideos = prefs.getBoolean(KEY_AUTOPLAY, true),
+        ),
+    )
+    val settings: StateFlow<AppSettings> = _settings.asStateFlow()
+
+    fun updateSettings(transform: (AppSettings) -> AppSettings) {
+        val updated = transform(_settings.value)
+        _settings.value = updated
+        prefs.edit {
+            putString(KEY_APPEARANCE, updated.appearance.name)
+            putBoolean(KEY_LEFT_HANDED, updated.leftHanded)
+            putBoolean(KEY_HAPTICS, updated.haptics)
+            putBoolean(KEY_AUTOPLAY, updated.autoplayVideos)
+        }
+    }
 
     fun addCleaned(count: Int, bytes: Long) {
         val updated = CleanStats(_stats.value.cleanedCount + count, _stats.value.cleanedBytes + bytes)
@@ -39,5 +72,9 @@ class Prefs(context: Context) {
         const val KEY_CLEANED_COUNT = "cleaned_count"
         const val KEY_CLEANED_BYTES = "cleaned_bytes"
         const val KEY_HINT_SEEN = "swipe_hint_seen"
+        const val KEY_APPEARANCE = "appearance"
+        const val KEY_LEFT_HANDED = "left_handed"
+        const val KEY_HAPTICS = "haptics"
+        const val KEY_AUTOPLAY = "autoplay_videos"
     }
 }

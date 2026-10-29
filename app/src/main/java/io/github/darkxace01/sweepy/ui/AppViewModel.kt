@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.darkxace01.sweepy.SweepyApplication
+import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.CleanStats
 import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckSource
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -142,6 +144,30 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun dismissSwipeHint() = prefs.markSwipeHintSeen()
+
+    // ---- Settings ------------------------------------------------------------------------------
+
+    val settings: StateFlow<AppSettings> = prefs.settings
+
+    fun updateSettings(transform: (AppSettings) -> AppSettings) = prefs.updateSettings(transform)
+
+    /** How many items are remembered as kept (so they never show up again). */
+    val keptCount: StateFlow<Int> = store.state
+        .map { decisions -> decisions?.values?.count { it.decision == Decision.KEEP } ?: 0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    /** Lets kept photos show up in decks again. Marked, later and favorites are untouched. */
+    fun forgetKept() {
+        val ids = store.state.value?.values?.filter { it.decision == Decision.KEEP }?.map { it.mediaId }.orEmpty()
+        store.remove(ids)
+        history.value = emptyList()
+    }
+
+    /** Forgets every decision, including the review bin. Nothing on the phone is deleted. */
+    fun forgetEverything() {
+        store.remove(store.state.value?.keys.orEmpty())
+        history.value = emptyList()
+    }
 
     // ---- Review bin ----------------------------------------------------------------------------
 

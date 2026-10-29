@@ -41,6 +41,9 @@ import io.github.darkxace01.sweepy.ui.deck.SwipeCardState
 import io.github.darkxace01.sweepy.ui.home.HomeScreen
 import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
+import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
+import io.github.darkxace01.sweepy.ui.LocalAppSettings
+import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
 import org.junit.Test
@@ -71,7 +74,7 @@ class ScreenshotTest {
     @Test fun home_full_light() = capture("home_full_light") { Home() }
 
     @Test fun home_loading() = capture("home_loading") {
-        HomeScreen(HomeUiState(), partialAccess = false, onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onRequestFullAccess = {})
+        HomeScreen(HomeUiState(), partialAccess = false, onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onRequestFullAccess = {})
     }
 
     @Test fun deck_light() = capture("deck_light") { Deck() }
@@ -79,6 +82,24 @@ class ScreenshotTest {
     @Test fun deck_dark() = capture("deck_dark", dark = true) { Deck() }
 
     @Test fun deck_hint() = capture("deck_hint", dark = true) { Deck(showHint = true) }
+
+    @Test fun deck_left_handed() = capture("deck_left_handed") {
+        CompositionLocalProvider(LocalAppSettings provides AppSettings(leftHanded = true)) { Deck(showHint = true) }
+    }
+
+    @Test fun settings_light() = capture("settings_light") { Settings() }
+
+    @Test fun settings_dark() = capture("settings_dark", dark = true) { Settings() }
+
+    @Composable
+    private fun Settings() = SettingsScreen(
+        settings = AppSettings(leftHanded = true),
+        keptCount = 1_204,
+        onBack = {},
+        onChange = {},
+        onForgetKept = {},
+        onForgetEverything = {},
+    )
 
     @Test fun deck_done() = capture("deck_done") {
         DeckScreen(
@@ -142,7 +163,7 @@ class ScreenshotTest {
                 months = months,
             ),
             partialAccess = false,
-            onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onRequestFullAccess = {},
+            onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onRequestFullAccess = {},
         )
     }
 
