@@ -23,8 +23,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +57,7 @@ import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
 import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** The app's screens. Kept in a simple back stack; the last one is shown. */
 sealed interface Screen {
@@ -136,6 +139,19 @@ fun SweepyApp() {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
+            if (event is UiEvent.KeptAll) {
+                // A short undo window, then the decision stands. If the app is closed mid-window,
+                // the review bin still offers to put them back.
+                val result = withTimeoutOrNull(KEEP_ALL_UNDO_MILLIS) {
+                    snackbar.showSnackbar(
+                        message = resources.getQuantityString(R.plurals.snack_kept_all, event.count, formatCount(event.count)),
+                        actionLabel = resources.getString(R.string.action_undo),
+                        duration = SnackbarDuration.Indefinite,
+                    )
+                }
+                if (result == SnackbarResult.ActionPerformed) viewModel.undoKeepAll(event.at) else viewModel.settleKeepAll(event.at)
+                return@collect
+            }
             val message = when (event) {
                 is UiEvent.Trashed -> resources.getQuantityString(
                     R.plurals.snack_trashed, event.count, formatCount(event.count), formatSize(context, event.bytes),
@@ -144,6 +160,7 @@ fun SweepyApp() {
                 is UiEvent.DeletedForever -> resources.getQuantityString(
                     R.plurals.snack_deleted, event.count, formatCount(event.count), formatSize(context, event.bytes),
                 )
+                is UiEvent.KeptAll -> return@collect
             }
             snackbar.showSnackbar(message)
         }
@@ -197,6 +214,8 @@ fun SweepyApp() {
                             onUnmark = viewModel::unmark,
                             onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
                             onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
+                            onRestoreUnbinned = viewModel::restoreUnbinned,
+                            onDismissUnbinned = viewModel::dismissUnbinned,
                         )
                     }
                     Screen.Duplicates -> {
@@ -246,3 +265,5 @@ fun SweepyApp() {
         }
     }
 }
+
+private const val KEEP_ALL_UNDO_MILLIS = 3_500L

@@ -75,6 +75,9 @@ data class ReviewGroup(val folder: String?, val items: List<MediaItem>) {
 }
 
 data class ReviewUiState(
+    /** What the last "Keep all" took out of the bin, still kept, so it can be put back. */
+    val unbinned: List<MediaItem> = emptyList(),
+    val unbinnedAt: Long = 0,
     val groups: List<ReviewGroup> = emptyList(),
     val count: Int = 0,
     val bytes: Long = 0,
@@ -92,6 +95,9 @@ sealed interface UiEvent {
     data class Trashed(val count: Int, val bytes: Long) : UiEvent
     data class Restored(val count: Int) : UiEvent
     data class DeletedForever(val count: Int, val bytes: Long) : UiEvent
+
+    /** "Keep all" emptied the review bin; offers a short undo. [at] identifies the batch. */
+    data class KeptAll(val count: Int, val at: Long) : UiEvent
 }
 
 /** One duplicate group ready to show, with the photo we'd suggest keeping. */

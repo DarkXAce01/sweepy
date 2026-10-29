@@ -46,10 +46,12 @@ class DecisionStore(private val dao: DecisionDao, scope: CoroutineScope) {
         if (_state.value == null) _state.value = dao.all().associateBy { it.mediaId }
     }
 
-    fun put(items: Collection<MediaItem>, decision: Decision) {
-        if (items.isEmpty()) return
+    /** Records [decision] for all [items] with one shared timestamp, which is returned. */
+    fun put(items: Collection<MediaItem>, decision: Decision): Long {
         val now = System.currentTimeMillis()
+        if (items.isEmpty()) return now
         putEntities(items.map { DecisionEntity(it.id, decision, it.fingerprint, now) })
+        return now
     }
 
     /** Puts back exact earlier entries (used by undo). */

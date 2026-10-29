@@ -1,6 +1,7 @@
 package io.github.darkxace01.sweepy.ui.review
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,14 +13,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +50,8 @@ import io.github.darkxace01.sweepy.ui.components.Hairline
 import io.github.darkxace01.sweepy.ui.components.InkButton
 import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.MediaThumbnail
+import io.github.darkxace01.sweepy.ui.components.Mosaic
+import io.github.darkxace01.sweepy.ui.components.OutlineButton
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.ScreenTopBar
 import io.github.darkxace01.sweepy.ui.components.formatCount
@@ -58,8 +68,11 @@ fun ReviewScreen(
     onUnmark: (MediaItem) -> Unit,
     onUnmarkAll: () -> Unit,
     onCommit: () -> Unit,
+    onRestoreUnbinned: () -> Unit = {},
+    onDismissUnbinned: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    var confirmKeepAll by remember { mutableStateOf(false) }
     Paper {
         Box(Modifier.fillMaxSize().safeDrawingPadding()) {
             Column(Modifier.fillMaxSize()) {
@@ -74,7 +87,7 @@ fun ReviewScreen(
                                 color = Sweepy.colors.ink,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .pressable(onUnmarkAll)
+                                    .pressable({ confirmKeepAll = true })
                                     .padding(horizontal = 10.dp, vertical = 12.dp),
                             )
                         }
@@ -82,6 +95,9 @@ fun ReviewScreen(
                 )
 
                 if (state.count == 0) {
+                    if (state.unbinned.isNotEmpty()) {
+                        UnbinnedCard(state, onRestoreUnbinned, onDismissUnbinned, Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
+                    }
                     EmptyState(
                         mark = Mark.CROSS,
                         title = stringResource(R.string.review_empty_title),
@@ -95,6 +111,11 @@ fun ReviewScreen(
                     contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 150.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    if (state.unbinned.isNotEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }, key = "unbinned") {
+                            UnbinnedCard(state, onRestoreUnbinned, onDismissUnbinned, Modifier.padding(4.dp))
+                        }
+                    }
                     item(span = { GridItemSpan(maxLineSpan) }, key = "summary") {
                         Summary(state.count, formatSize(context, state.bytes), Modifier.padding(horizontal = 4.dp))
                     }
@@ -142,6 +163,70 @@ fun ReviewScreen(
                 }
             }
         }
+    }
+
+    if (confirmKeepAll) {
+        AlertDialog(
+            onDismissRequest = { confirmKeepAll = false },
+            containerColor = Sweepy.colors.surface,
+            shape = RoundedCornerShape(18.dp),
+            title = {
+                Text(
+                    pluralStringResource(R.plurals.confirm_keep_all_title, state.count, formatCount(state.count)),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Sweepy.colors.ink,
+                )
+            },
+            text = {
+                Text(stringResource(R.string.confirm_keep_all_body), style = MaterialTheme.typography.bodyMedium, color = Sweepy.colors.inkMuted)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmKeepAll = false
+                    onUnmarkAll()
+                }) { Text(stringResource(R.string.review_keep_all), color = Sweepy.colors.ink) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmKeepAll = false }) { Text(stringResource(R.string.cancel), color = Sweepy.colors.ink) }
+            },
+        )
+    }
+}
+
+/** Offers to undo the last "Keep all": those photos are still marked keep, so they can go straight back in the bin. */
+@Composable
+private fun UnbinnedCard(state: ReviewUiState, onRestore: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val count = state.unbinned.size
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, Sweepy.colors.pencil.copy(alpha = 0.45f), RoundedCornerShape(14.dp))
+            .padding(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Mosaic(state.unbinned.take(4), Modifier.size(56.dp), cornerRadius = 6.dp)
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                Eyebrow(stringResource(R.string.unbinned_eyebrow, formatSize(context, state.unbinned.sumOf { it.sizeBytes })), small = true)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    pluralStringResource(R.plurals.unbinned_title, count, formatCount(count)),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Sweepy.colors.ink,
+                )
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        InkButton(
+            text = stringResource(R.string.unbinned_restore),
+            onClick = onRestore,
+            color = Sweepy.colors.pencil,
+            contentColor = Color.White,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlineButton(stringResource(R.string.unbinned_dismiss), onDismiss, Modifier.fillMaxWidth())
     }
 }
 
