@@ -75,6 +75,8 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.video)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui.compose)
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

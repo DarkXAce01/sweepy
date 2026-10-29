@@ -12,46 +12,43 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.ReviewUiState
 import io.github.darkxace01.sweepy.ui.components.BottomActionArea
 import io.github.darkxace01.sweepy.ui.components.EmptyState
-import io.github.darkxace01.sweepy.ui.components.IconBadge
+import io.github.darkxace01.sweepy.ui.components.Eyebrow
+import io.github.darkxace01.sweepy.ui.components.Hairline
+import io.github.darkxace01.sweepy.ui.components.InkButton
+import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.MediaThumbnail
-import io.github.darkxace01.sweepy.ui.components.PrimaryButton
+import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.ScreenTopBar
 import io.github.darkxace01.sweepy.ui.components.formatCount
+import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.DeleteRed
+import io.github.darkxace01.sweepy.ui.theme.Sweepy
 
 /** Everything swiped left. Nothing is deleted until the user taps the button at the bottom. */
 @Composable
@@ -63,23 +60,30 @@ fun ReviewScreen(
     onCommit: () -> Unit,
 ) {
     val context = LocalContext.current
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Paper {
         Box(Modifier.fillMaxSize().safeDrawingPadding()) {
             Column(Modifier.fillMaxSize()) {
                 ScreenTopBar(
                     title = stringResource(R.string.review_title),
+                    eyebrow = stringResource(R.string.review_eyebrow),
                     onBack = onBack,
                     actions = {
                         if (state.count > 0) {
-                            TextButton(onClick = onUnmarkAll) { Text(stringResource(R.string.review_keep_all)) }
+                            Eyebrow(
+                                stringResource(R.string.review_keep_all),
+                                color = Sweepy.colors.ink,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .pressable(onUnmarkAll)
+                                    .padding(horizontal = 10.dp, vertical = 12.dp),
+                            )
                         }
                     },
                 )
 
                 if (state.count == 0) {
                     EmptyState(
-                        icon = rememberVectorPainter(Icons.Filled.Delete),
-                        tint = MaterialTheme.colorScheme.primary,
+                        mark = Mark.CROSS,
                         title = stringResource(R.string.review_empty_title),
                         body = stringResource(R.string.review_empty_body),
                     )
@@ -87,45 +91,32 @@ fun ReviewScreen(
                 }
 
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 100.dp),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 140.dp),
+                    columns = GridCells.Adaptive(minSize = 96.dp),
+                    contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 150.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }, key = "summary") {
-                        SummaryCard(
-                            count = state.count,
-                            size = formatSize(context, state.bytes),
-                            modifier = Modifier.padding(bottom = 8.dp, start = 4.dp, end = 4.dp),
-                        )
+                        Summary(state.count, formatSize(context, state.bytes), Modifier.padding(horizontal = 4.dp))
                     }
                     state.groups.forEach { group ->
                         item(span = { GridItemSpan(maxLineSpan) }, key = "header-${group.folder}") {
-                            Row(
-                                verticalAlignment = Alignment.Bottom,
-                                modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 18.dp, bottom = 8.dp),
-                            ) {
-                                Text(
-                                    group.folder ?: stringResource(R.string.folder_unnamed),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Text(
-                                    stringResource(
-                                        R.string.count_and_size,
-                                        formatCount(group.items.size),
-                                        formatSize(context, group.bytes),
-                                    ),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                            Column(Modifier.padding(start = 4.dp, end = 4.dp, top = 22.dp, bottom = 8.dp)) {
+                                Hairline()
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 10.dp)) {
+                                    Eyebrow(
+                                        group.folder ?: stringResource(R.string.folder_unnamed),
+                                        color = Sweepy.colors.ink,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Eyebrow(
+                                        stringResource(R.string.count_and_size, formatCount(group.items.size), formatSize(context, group.bytes)),
+                                        small = true,
+                                    )
+                                }
                             }
                         }
                         items(group.items, key = { it.id }) { item ->
-                            ReviewThumbnail(
-                                item = item,
-                                onClick = { onUnmark(item) },
-                                modifier = Modifier.animateItem(),
-                            )
+                            ReviewThumbnail(item = item, onClick = { onUnmark(item) }, modifier = Modifier.animateItem())
                         }
                     }
                 }
@@ -133,24 +124,20 @@ fun ReviewScreen(
 
             if (state.count > 0) {
                 BottomActionArea(Modifier.align(Alignment.BottomCenter)) {
-                    PrimaryButton(
-                        text = pluralStringResource(
-                            R.plurals.review_commit,
-                            state.count,
-                            formatCount(state.count),
-                            formatSize(context, state.bytes),
-                        ),
+                    InkButton(
+                        text = pluralStringResource(R.plurals.review_commit, state.count, formatCount(state.count)),
+                        trailing = formatSize(context, state.bytes),
                         onClick = onCommit,
-                        background = DeleteRed,
+                        color = Sweepy.colors.pencil,
                         contentColor = Color.White,
-                        icon = rememberVectorPainter(Icons.Filled.Delete),
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(10.dp))
                     Text(
                         stringResource(R.string.review_restore_note),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Sweepy.colors.inkMuted,
+                        textAlign = TextAlign.Center,
                     )
                 }
             }
@@ -159,27 +146,19 @@ fun ReviewScreen(
 }
 
 @Composable
-private fun SummaryCard(count: Int, size: String, modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(18.dp),
-    ) {
-        IconBadge(rememberVectorPainter(Icons.Filled.Delete), DeleteRed, size = 52.dp)
-        Column(Modifier.padding(start = 16.dp)) {
-            Text(size, style = MaterialTheme.typography.headlineSmall)
-            Text(
-                pluralStringResource(R.plurals.review_summary, count, formatCount(count)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+private fun Summary(count: Int, size: String, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)) {
+        Text(size, style = MaterialTheme.typography.displayMedium, color = Sweepy.colors.ink)
+        Text(
+            pluralStringResource(R.plurals.review_summary, count, formatCount(count)),
+            style = MaterialTheme.typography.headlineSmall,
+            fontStyle = FontStyle.Italic,
+            color = Sweepy.colors.inkMuted,
+        )
     }
 }
 
+/** A contact-sheet frame with a grease-pencil cross through it. Tap to keep it after all. */
 @Composable
 private fun ReviewThumbnail(item: MediaItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val label = stringResource(R.string.review_unmark) + ": " + item.displayName.orEmpty()
@@ -187,20 +166,18 @@ private fun ReviewThumbnail(item: MediaItem, onClick: () -> Unit, modifier: Modi
         modifier
             .padding(4.dp)
             .aspectRatio(1f)
+            .clip(RoundedCornerShape(6.dp))
+            .background(Sweepy.colors.print)
             .pressable(onClick, pressedScale = 0.92f)
+            .padding(3.dp)
             .semantics { contentDescription = label },
     ) {
-        MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = 16.dp)
+        MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = 3.dp)
         Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(6.dp)
-                .size(24.dp)
-                .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.5f)),
-        ) {
-            Icon(Icons.Filled.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
-        }
+            Modifier
+                .fillMaxSize()
+                .padding(10.dp)
+                .pencilMark(Mark.CROSS, Sweepy.colors.pencil.copy(alpha = 0.9f), { 1f }, strokeWidth = 0.07f),
+        )
     }
 }

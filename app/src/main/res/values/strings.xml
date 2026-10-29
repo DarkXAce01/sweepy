@@ -15,15 +15,12 @@
         <item quantity="one">%1$s item</item>
         <item quantity="other">%1$s items</item>
     </plurals>
-    <plurals name="items_word">
-        <item quantity="one">item</item>
-        <item quantity="other">items</item>
-    </plurals>
     <string name="privacy_note">No internet access · your photos stay on this phone</string>
 
     <!-- Permission screen -->
-    <string name="permission_title">Clean up your gallery, one swipe at a time</string>
-    <string name="permission_body">Sweepy needs access to your photos and videos so you can swipe through them.</string>
+    <string name="permission_eyebrow">A quiet tidy-up</string>
+    <string name="permission_title">Sort your photos like a contact sheet.</string>
+    <string name="permission_body">Swipe through your gallery and mark what goes, what stays, and what you\'ll decide later. Sweepy needs access to your photos and videos to show them.</string>
     <string name="permission_grant">Allow photo access</string>
     <string name="permission_denied">Sweepy can\'t work without access to your photos. You can turn it on in Settings → Permissions.</string>
     <string name="permission_open_settings">Open settings</string>
@@ -35,19 +32,27 @@
     <string name="promise_free_body">No ads, no limits, no subscriptions.</string>
 
     <!-- Home -->
-    <string name="home_your_gallery">Your gallery</string>
     <string name="home_scanning">Scanning your gallery…</string>
-    <string name="home_on_phone">%1$s on this phone</string>
-    <string name="home_reviewed_pct">%1$d%% reviewed</string>
-    <string name="home_to_go">%1$s to go</string>
-    <string name="home_start">Start swiping</string>
-    <string name="home_continue">Continue swiping</string>
+    <string name="home_start">Start sorting</string>
+    <string name="home_continue">Continue sorting</string>
     <string name="home_empty">No photos or videos found on this phone.</string>
-    <string name="home_stat_bin">in review bin</string>
-    <string name="home_stat_cleaned">cleaned up</string>
+    <string name="home_stat_bin">Review bin</string>
+    <string name="home_stat_cleaned">Cleaned up</string>
     <string name="home_section_quick">Quick decks</string>
     <string name="home_section_folders">Folders</string>
     <string name="home_section_months">By month</string>
+    <string name="home_section_recent">Newest on the roll</string>
+    <string name="home_section_archive">Archive</string>
+    <string name="home_library_eyebrow">Your library · %1$s</string>
+    <plurals name="home_left_caption">
+        <item quantity="one">photo or video left to sort</item>
+        <item quantity="other">photos &amp; videos left to sort</item>
+    </plurals>
+    <string name="home_all_sorted">everything is sorted.</string>
+    <string name="home_sorted_pct">%1$d%% sorted</string>
+    <string name="home_sorted_of">%1$s of %2$s</string>
+    <string name="left_short">%1$s left</string>
+    <string name="label_done">Done</string>
     <string name="home_trash_subtitle">Restore anything from the last 30 days</string>
     <string name="partial_access">Sweepy can only see the photos you picked.</string>
     <string name="partial_access_action">Allow all</string>
@@ -60,10 +65,6 @@
     <string name="deck_later">Maybe later</string>
     <string name="deck_all_done">All done ✓</string>
     <string name="folder_unnamed">Other</string>
-    <plurals name="waiting_count">
-        <item quantity="one">%1$s waiting</item>
-        <item quantity="other">%1$s waiting</item>
-    </plurals>
 
     <!-- Swiping -->
     <string name="action_undo">Undo</string>
@@ -72,21 +73,23 @@
     <string name="action_later">Later</string>
     <string name="action_favorite">Favorite</string>
     <string name="action_info">Details</string>
+    <string name="video_sound_on">Sound on</string>
+    <string name="video_sound_off">Sound off</string>
     <string name="label_delete">DELETE</string>
     <string name="label_keep">KEEP</string>
     <string name="label_later">LATER</string>
     <string name="label_favorite">FAVORITE</string>
     <string name="hint_title">Swipe to sort</string>
     <string name="hint_body">Nothing is deleted yet: swiped photos wait in the review bin. Tap to start.</string>
-    <string name="done_title">All done here!</string>
+    <string name="done_title">That\'s a wrap.</string>
     <plurals name="done_body">
         <item quantity="one">You\'ve been through the only item in this deck.</item>
         <item quantity="other">You\'ve been through all %1$s items in this deck.</item>
     </plurals>
     <string name="done_body_later">Nothing left waiting for later.</string>
     <plurals name="done_review">
-        <item quantity="one">Review %1$s marked item · %2$s</item>
-        <item quantity="other">Review %1$s marked items · %2$s</item>
+        <item quantity="one">Review %1$s marked item</item>
+        <item quantity="other">Review %1$s marked items</item>
     </plurals>
     <string name="done_back">Back to home</string>
 
@@ -102,22 +105,25 @@
 
     <!-- Review bin -->
     <string name="review_title">Review bin</string>
+    <string name="bin_short">Bin</string>
     <string name="review_keep_all">Keep all</string>
+    <string name="review_eyebrow">Nothing deleted yet</string>
     <string name="review_empty_title">Your review bin is empty</string>
     <string name="review_empty_body">Swipe left on photos you don\'t need. They\'ll wait here until you\'re ready.</string>
     <string name="review_unmark">Keep this one</string>
     <plurals name="review_summary">
-        <item quantity="one">%1$s item · tap a photo to keep it</item>
-        <item quantity="other">%1$s items · tap a photo to keep it</item>
+        <item quantity="one">across %1$s print. Tap it to keep it.</item>
+        <item quantity="other">across %1$s prints. Tap one to keep it.</item>
     </plurals>
     <plurals name="review_commit">
-        <item quantity="one">Move %1$s item to trash · %2$s</item>
-        <item quantity="other">Move %1$s items to trash · %2$s</item>
+        <item quantity="one">Move %1$s item to trash</item>
+        <item quantity="other">Move %1$s items to trash</item>
     </plurals>
     <string name="review_restore_note">You can restore them from Recently cleaned for 30 days.</string>
 
     <!-- Recently cleaned (system trash) -->
     <string name="trash_title">Recently cleaned</string>
+    <string name="trash_eyebrow">Restorable for 30 days</string>
     <string name="trash_empty_title">Nothing in the trash</string>
     <string name="trash_empty_body">Items you clean up land here for about 30 days, in case you change your mind.</string>
     <plurals name="trash_summary">
@@ -136,8 +142,8 @@
         <item quantity="other">%1$s items (%2$s) will be permanently deleted. This can\'t be undone.</item>
     </plurals>
     <plurals name="days_left">
-        <item quantity="one">%d day left</item>
-        <item quantity="other">%d days left</item>
+        <item quantity="one">%dd left</item>
+        <item quantity="other">%dd left</item>
     </plurals>
 
     <!-- Snackbars -->

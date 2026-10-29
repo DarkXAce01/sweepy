@@ -116,10 +116,10 @@ class ScreenshotTest {
             "Camera" to 4210, "WhatsApp Images" to 3122, "Screenshots" to 1840, "Download" to 611,
             "Instagram" to 402, "Telegram" to 120,
         ).mapIndexed { i, (name, count) ->
-            DeckSummary(DeckSource.Folder(i.toLong(), name), count, count * 2_400_000L, (count * (0.3 + i * 0.12)).toInt(), library[i])
+            DeckSummary(DeckSource.Folder(i.toLong(), name), count, count * 2_400_000L, (count * (0.3 + i * 0.12)).toInt(), library.drop(i).take(4))
         }
         val months = listOf(202610, 202609, 202608, 202607, 202606).mapIndexed { i, ym ->
-            DeckSummary(DeckSource.Month(ym), 300 - i * 40, (300 - i * 40) * 3_100_000L, if (i == 1) 0 else 200 - i * 30, library[i + 6])
+            DeckSummary(DeckSource.Month(ym), 300 - i * 40, (300 - i * 40) * 3_100_000L, if (i == 1) 0 else 200 - i * 30, library.drop(i + 6).take(4))
         }
         HomeScreen(
             state = HomeUiState(
@@ -131,11 +131,12 @@ class ScreenshotTest {
                 markedBytes = 1_420_000_000,
                 laterCount = 24,
                 stats = CleanStats(cleanedCount = 2_840, cleanedBytes = 7_300_000_000),
+                recent = library.take(10),
                 quickDecks = listOf(
-                    DeckSummary(DeckSource.Screenshots, 1840, 1_900_000_000, 1210, library[3]),
-                    DeckSummary(DeckSource.WhatsApp, 3122, 4_100_000_000, 2650, library[1]),
-                    DeckSummary(DeckSource.LargeVideos, 48, 6_700_000_000, 41, library[2]),
-                    DeckSummary(DeckSource.Later, 24, 120_000_000, 24, library[4]),
+                    DeckSummary(DeckSource.Screenshots, 1840, 1_900_000_000, 1210, library.drop(3).take(4)),
+                    DeckSummary(DeckSource.WhatsApp, 3122, 4_100_000_000, 2650, library.drop(1).take(4)),
+                    DeckSummary(DeckSource.LargeVideos, 48, 6_700_000_000, 41, library.drop(2).take(4)),
+                    DeckSummary(DeckSource.Later, 24, 120_000_000, 24, library.drop(4).take(4)),
                 ),
                 folders = folders,
                 months = months,

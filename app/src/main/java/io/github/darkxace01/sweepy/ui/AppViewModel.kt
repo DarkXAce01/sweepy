@@ -245,16 +245,19 @@ private fun buildHome(media: List<MediaItem>, decisions: Map<Long, DecisionEntit
         var total = 0
         var bytes = 0L
         var remaining = 0
-        var cover: MediaItem? = null
+        // Covers prefer photos still waiting, so a finished deck doesn't look unfinished.
+        val waitingCovers = ArrayList<MediaItem>(COVER_COUNT)
+        val decidedCovers = ArrayList<MediaItem>(COVER_COUNT)
 
         fun add(item: MediaItem, undecided: Boolean) {
             total++
             bytes += item.sizeBytes
             if (undecided) remaining++
-            if (cover == null || (undecided && cover?.let { decisions.decisionFor(it) } != null)) cover = item
+            val covers = if (undecided) waitingCovers else decidedCovers
+            if (covers.size < COVER_COUNT) covers += item
         }
 
-        fun summary() = DeckSummary(source, total, bytes, remaining, cover)
+        fun summary() = DeckSummary(source, total, bytes, remaining, (waitingCovers + decidedCovers).take(COVER_COUNT))
     }
 
     val screenshots = Acc(DeckSource.Screenshots)
@@ -268,10 +271,12 @@ private fun buildHome(media: List<MediaItem>, decisions: Map<Long, DecisionEntit
     var reviewed = 0
     var markedCount = 0
     var markedBytes = 0L
+    val recent = ArrayList<MediaItem>(RECENT_COUNT)
 
     for (item in media) {
         val decision = decisions.decisionFor(item)
         val undecided = decision == null
+        if (undecided && recent.size < RECENT_COUNT) recent += item
         totalBytes += item.sizeBytes
         if (!undecided) reviewed++
         if (decision == Decision.DELETE) {
@@ -297,8 +302,12 @@ private fun buildHome(media: List<MediaItem>, decisions: Map<Long, DecisionEntit
         markedBytes = markedBytes,
         laterCount = later.total,
         stats = stats,
+        recent = recent,
         quickDecks = listOf(screenshots, whatsApp, largeVideos, later).filter { it.total > 0 }.map { it.summary() },
         folders = folders.values.sortedByDescending { it.total }.map { it.summary() },
         months = months.values.sortedByDescending { (it.source as DeckSource.Month).yearMonth }.map { it.summary() },
     )
 }
+
+private const val COVER_COUNT = 4
+private const val RECENT_COUNT = 10

@@ -9,28 +9,26 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -42,52 +40,69 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.MediaItem
-import io.github.darkxace01.sweepy.ui.components.pressable
+import io.github.darkxace01.sweepy.ui.components.Eyebrow
+import io.github.darkxace01.sweepy.ui.components.Mark
+import io.github.darkxace01.sweepy.ui.components.QuietIconButton
+import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatDuration
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.DeleteRed
-import io.github.darkxace01.sweepy.ui.theme.FavoritePink
-import io.github.darkxace01.sweepy.ui.theme.KeepGreen
-import io.github.darkxace01.sweepy.ui.theme.LaterAmber
+import io.github.darkxace01.sweepy.ui.theme.Sweepy
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
 
-enum class SwipeDirection(val decision: Decision, val color: Color) {
-    LEFT(Decision.DELETE, DeleteRed),
-    RIGHT(Decision.KEEP, KeepGreen),
-    UP(Decision.LATER, LaterAmber),
-    DOWN(Decision.FAVORITE, FavoritePink),
+enum class SwipeDirection(val decision: Decision, val mark: Mark) {
+    LEFT(Decision.DELETE, Mark.CROSS),
+    RIGHT(Decision.KEEP, Mark.CIRCLE),
+    UP(Decision.LATER, Mark.QUESTION),
+    DOWN(Decision.FAVORITE, Mark.STAR),
     ;
 
     companion object {
         fun of(decision: Decision): SwipeDirection = entries.first { it.decision == decision }
     }
 }
+
+/** The grease-pencil color for each decision. */
+val SwipeDirection.color: Color
+    @Composable @ReadOnlyComposable get() = when (this) {
+        SwipeDirection.LEFT -> Sweepy.colors.pencil
+        SwipeDirection.RIGHT -> Sweepy.colors.keep
+        SwipeDirection.UP -> Sweepy.colors.later
+        SwipeDirection.DOWN -> Sweepy.colors.favorite
+    }
+
+@Composable
+fun SwipeDirection.label(): String = stringResource(
+    when (this) {
+        SwipeDirection.LEFT -> R.string.label_delete
+        SwipeDirection.RIGHT -> R.string.label_keep
+        SwipeDirection.UP -> R.string.label_later
+        SwipeDirection.DOWN -> R.string.label_favorite
+    },
+)
 
 /** How far the card must travel (as a fraction of its size) before letting go counts as a swipe. */
 private const val HORIZONTAL_THRESHOLD = 0.3f
@@ -96,7 +111,8 @@ private const val VERTICAL_THRESHOLD = 0.2f
 /** A quick flick counts as a swipe even if the card hasn't travelled far. In px per second. */
 private const val FLING_VELOCITY = 1800f
 
-val CardShape = RoundedCornerShape(30.dp)
+val CardShape = RoundedCornerShape(14.dp)
+private val PhotoShape = RoundedCornerShape(5.dp)
 
 /**
  * Position and animation of the top card. Shared with the buttons so they can "throw" the card too.
@@ -123,6 +139,14 @@ class SwipeCardState(initialOffset: Offset = Offset.Zero) {
                 direction to min(1f, abs(y) / (size.height * VERTICAL_THRESHOLD))
             }
         }
+
+    /** How far the mark for [direction] is drawn (0..1). It stays complete while the card flies away. */
+    fun markProgress(direction: SwipeDirection): Float {
+        if (isFlyingOut) return if (flownDirection == direction) 1f else 0f
+        return lean?.takeIf { it.first == direction }?.second ?: 0f
+    }
+
+    private var flownDirection: SwipeDirection? = null
 
     /** 0..1: how far the top card has moved, used to bring the cards underneath forward. */
     val dragProgress: Float
@@ -153,8 +177,9 @@ class SwipeCardState(initialOffset: Offset = Offset.Zero) {
     )
 
     suspend fun flyOut(direction: SwipeDirection) {
+        flownDirection = direction
         isFlyingOut = true
-        offset.animateTo(offscreenOffset(direction, size, offset.value), tween(durationMillis = 240, easing = FastOutLinearInEasing))
+        offset.animateTo(offscreenOffset(direction, size, offset.value), tween(durationMillis = 260, easing = FastOutLinearInEasing))
     }
 }
 
@@ -190,9 +215,16 @@ fun SwipeCard(
     Box(
         modifier = modifier
             .graphicsLayer {
-                translationX = state.offset.value.x
-                translationY = state.offset.value.y
-                rotationZ = if (state.size.width > 0) state.offset.value.x / state.size.width * 14f else 0f
+                val (x, y) = state.offset.value
+                val w = state.size.width.coerceAtLeast(1)
+                val h = state.size.height.coerceAtLeast(1)
+                translationX = x
+                translationY = y
+                rotationZ = x / w * 10f
+                // A slight tilt in depth, like a print lifted off the table by one corner.
+                rotationY = -x / w * 9f
+                rotationX = y / h * 7f
+                cameraDistance = 14f * density
             }
             .pointerInput(state) {
                 val tracker = VelocityTracker()
@@ -220,162 +252,182 @@ fun SwipeCard(
             }
             .pointerInput(item.id) { detectTapGestures(onDoubleTap = { onInfo() }) },
     ) {
-        MediaCard(item = item, onInfo = onInfo, modifier = Modifier.fillMaxSize())
-        SwipeOverlay(state)
+        PrintCard(item = item, onInfo = onInfo, playVideo = true, modifier = Modifier.fillMaxSize()) {
+            PencilOverlay(state)
+        }
     }
 }
 
-/** Color wash and "stamp" that appear as the card is dragged. Reads state only while drawing. */
+/**
+ * The grease-pencil mark drawn over the photo while it's dragged: it draws itself in step with
+ * the finger, so letting go halfway leaves half a cross. Reads drag state only while drawing.
+ */
 @Composable
-private fun SwipeOverlay(state: SwipeCardState) {
-    val lean = state.lean ?: return
-    val (direction, progress) = lean
-    val (label, icon) = when (direction) {
-        SwipeDirection.LEFT -> stringResource(R.string.label_delete) to rememberVectorPainter(Icons.Filled.Close)
-        SwipeDirection.RIGHT -> stringResource(R.string.label_keep) to rememberVectorPainter(Icons.Filled.Check)
-        SwipeDirection.UP -> stringResource(R.string.label_later) to painterResource(R.drawable.ic_schedule)
-        SwipeDirection.DOWN -> stringResource(R.string.label_favorite) to rememberVectorPainter(Icons.Filled.Favorite)
-    }
-    val alignment = when (direction) {
-        SwipeDirection.LEFT -> Alignment.TopEnd
-        SwipeDirection.RIGHT -> Alignment.TopStart
-        SwipeDirection.UP -> Alignment.BottomCenter
-        SwipeDirection.DOWN -> Alignment.TopCenter
-    }
-    val tilt = when (direction) {
-        SwipeDirection.LEFT -> 14f
-        SwipeDirection.RIGHT -> -14f
-        else -> 0f
-    }
+private fun PencilOverlay(state: SwipeCardState) {
+    val colors = SwipeDirection.entries.associateWith { it.color }
     Box(
         Modifier
             .fillMaxSize()
-            .clip(CardShape)
-            .background(
-                Brush.radialGradient(
-                    listOf(direction.color.copy(alpha = 0.45f * progress), direction.color.copy(alpha = 0.12f * progress)),
-                ),
+            .drawWithContent {
+                drawContent()
+                // A faint wash of the mark's color, like light through a gel.
+                val lean = state.lean ?: return@drawWithContent
+                drawRect(colors.getValue(lean.first).copy(alpha = 0.16f * lean.second))
+            },
+    ) {
+        // Cross and circle span the whole frame, like marks on a contact sheet.
+        for (direction in listOf(SwipeDirection.LEFT, SwipeDirection.RIGHT)) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(14.dp)
+                    .pencilMark(direction.mark, colors.getValue(direction), { state.markProgress(direction) }, strokeWidth = 0.032f),
             )
-            .padding(28.dp),
-    ) {
-        Stamp(
-            label = label,
-            icon = icon,
-            color = direction.color,
-            modifier = Modifier
-                .align(alignment)
-                .padding(top = if (direction == SwipeDirection.DOWN) 0.dp else 8.dp, bottom = if (direction == SwipeDirection.UP) 60.dp else 0.dp)
-                .graphicsLayer {
-                    alpha = min(1f, progress * 1.4f)
-                    val s = 0.7f + 0.3f * progress
-                    scaleX = s
-                    scaleY = s
-                    rotationZ = tilt
-                },
-        )
-    }
-}
-
-@Composable
-private fun Stamp(label: String, icon: Painter, color: Color, modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(color)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-    ) {
-        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(label, color = Color.White, style = MaterialTheme.typography.headlineSmall)
-    }
-}
-
-/** The photo/video with its folder, date and size. Also used for the cards waiting underneath. */
-@Composable
-fun MediaCard(item: MediaItem, onInfo: (() -> Unit)?, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    Box(
-        modifier = modifier
-            .clip(CardShape)
-            .background(Color(0xFF0E0D13)),
-    ) {
-        // Blurred, zoomed copy of the photo fills the empty space around portrait/landscape images.
-        AsyncImage(
-            model = item.uri,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = 0.55f }
-                .blur(48.dp),
-        )
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.25f)))
-        AsyncImage(
-            model = item.uri,
-            contentDescription = item.displayName,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize(),
-        )
-
-        // Bottom info with a gradient so text is readable on any photo.
-        Column(
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.78f))))
-                .padding(start = 20.dp, end = 20.dp, top = 48.dp, bottom = 20.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Pill(
-                    icon = painterResource(if (item.isVideo) R.drawable.ic_videocam else R.drawable.ic_folder),
-                    text = item.folder ?: stringResource(R.string.info_unknown),
-                )
-                if (item.isVideo) {
-                    Spacer(Modifier.width(6.dp))
-                    Pill(icon = null, text = formatDuration(item.durationMillis))
-                }
+        }
+        // The question mark and star sit in the middle.
+        for (direction in listOf(SwipeDirection.UP, SwipeDirection.DOWN)) {
+            Box(
+                Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth(0.5f)
+                    .aspectRatio(1f)
+                    .pencilMark(direction.mark, colors.getValue(direction), { state.markProgress(direction) }, strokeWidth = 0.075f),
+            )
+        }
+        for (direction in SwipeDirection.entries) {
+            val alignment = when (direction) {
+                SwipeDirection.LEFT -> Alignment.TopEnd
+                SwipeDirection.RIGHT -> Alignment.TopStart
+                SwipeDirection.UP -> Alignment.BottomCenter
+                SwipeDirection.DOWN -> Alignment.TopCenter
+            }
+            val tilt = when (direction) {
+                SwipeDirection.LEFT -> 6f
+                SwipeDirection.RIGHT -> -6f
+                SwipeDirection.UP -> -3f
+                SwipeDirection.DOWN -> 3f
             }
             Text(
-                text = "${formatDate(item.dateTakenMillis)}  ·  ${formatSize(context, item.sizeBytes)}",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
+                direction.label(),
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 15.sp, letterSpacing = 1.5.sp),
+                color = Sweepy.colors.print,
+                modifier = Modifier
+                    .align(alignment)
+                    .padding(20.dp)
+                    .graphicsLayer {
+                        val p = state.markProgress(direction)
+                        alpha = ((p - 0.25f) / 0.5f).coerceIn(0f, 1f)
+                        rotationZ = tilt
+                        val s = 0.85f + 0.15f * p
+                        scaleX = s
+                        scaleY = s
+                    }
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(colors.getValue(direction))
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
             )
         }
+    }
+}
 
-        if (onInfo != null) {
-            val infoLabel = stringResource(R.string.action_info)
-            Box(
-                contentAlignment = Alignment.Center,
+/**
+ * A photo presented as a print: matte border with a caption "chin" carrying its folder, date and
+ * size. Also used for the cards waiting underneath. [overlay] is drawn on top of the photo only.
+ */
+@Composable
+fun PrintCard(
+    item: MediaItem,
+    onInfo: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    playVideo: Boolean = false,
+    overlay: @Composable () -> Unit = {},
+) {
+    val context = LocalContext.current
+    val colors = Sweepy.colors
+    Column(
+        modifier = modifier
+            .shadow(
+                elevation = 14.dp,
+                shape = CardShape,
+                ambientColor = Color.Black.copy(alpha = 0.25f),
+                spotColor = Color.Black.copy(alpha = if (colors.isDark) 0.6f else 0.28f),
+            )
+            .clip(CardShape)
+            .background(colors.print)
+            .padding(start = 10.dp, end = 10.dp, top = 10.dp),
+    ) {
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .clip(PhotoShape)
+                .background(Color(0xFF14130F)),
+        ) {
+            // A blurred, zoomed copy fills the space around portrait/landscape photos.
+            AsyncImage(
+                model = item.uri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(14.dp)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .pressable(onInfo, pressedScale = 0.88f)
-                    .semantics { contentDescription = infoLabel },
-            ) {
-                Icon(Icons.Outlined.Info, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = 0.45f }
+                    .blur(40.dp),
+            )
+            AsyncImage(
+                model = item.uri,
+                contentDescription = item.displayName,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+            if (item.isVideo && playVideo) VideoPreview(item, Modifier.fillMaxSize())
+            overlay()
+        }
+
+        // The caption chin.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().height(64.dp).padding(start = 4.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Eyebrow(item.folder ?: stringResource(R.string.info_unknown), small = true)
+                Spacer(Modifier.height(1.dp))
+                Text(
+                    formatDate(item.dateTakenMillis),
+                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 21.sp, lineHeight = 24.sp),
+                    fontStyle = FontStyle.Italic,
+                    color = colors.ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Eyebrow(
+                    if (item.isVideo) "▶ " + formatDuration(item.durationMillis) else fileType(item),
+                    small = true,
+                    color = colors.ink,
+                )
+                Spacer(Modifier.height(3.dp))
+                Eyebrow(formatSize(context, item.sizeBytes), small = true)
+            }
+            if (onInfo != null) {
+                Spacer(Modifier.width(2.dp))
+                QuietIconButton(stringResource(R.string.action_info), onInfo) {
+                    Icon(Icons.Outlined.Info, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(20.dp))
+                }
+            } else {
+                Spacer(Modifier.width(12.dp))
             }
         }
     }
 }
 
-@Composable
-private fun Pill(icon: Painter?, text: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.18f))
-            .padding(horizontal = 10.dp, vertical = 5.dp),
-    ) {
-        if (icon != null) {
-            Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
-            Spacer(Modifier.width(5.dp))
+/** "JPG", "PNG", "HEIC"… from the MIME type. */
+private fun fileType(item: MediaItem): String =
+    item.mimeType?.substringAfter('/')?.substringBefore(';')?.let {
+        when (it.lowercase()) {
+            "jpeg" -> "JPG"
+            "quicktime" -> "MOV"
+            "x-matroska" -> "MKV"
+            else -> it.uppercase()
         }
-        Text(text, color = Color.White, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}
+    } ?: ""

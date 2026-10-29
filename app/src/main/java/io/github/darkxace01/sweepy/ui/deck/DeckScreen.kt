@@ -1,10 +1,11 @@
 package io.github.darkxace01.sweepy.ui.deck
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -26,14 +27,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,16 +46,17 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -70,20 +67,31 @@ import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.DeckUiState
-import io.github.darkxace01.sweepy.ui.components.CircleIconButton
-import io.github.darkxace01.sweepy.ui.components.ProgressTrack
+import io.github.darkxace01.sweepy.ui.components.Eyebrow
+import io.github.darkxace01.sweepy.ui.components.InkButton
+import io.github.darkxace01.sweepy.ui.components.Mark
+import io.github.darkxace01.sweepy.ui.components.MarkIcon
+import io.github.darkxace01.sweepy.ui.components.OutlineButton
+import io.github.darkxace01.sweepy.ui.components.Paper
+import io.github.darkxace01.sweepy.ui.components.QuietIconButton
+import io.github.darkxace01.sweepy.ui.components.Ruler
 import io.github.darkxace01.sweepy.ui.components.deckTitle
 import io.github.darkxace01.sweepy.ui.components.formatCount
+import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.DeleteRed
-import io.github.darkxace01.sweepy.ui.theme.FavoritePink
-import io.github.darkxace01.sweepy.ui.theme.KeepGreen
-import io.github.darkxace01.sweepy.ui.theme.LaterAmber
+import io.github.darkxace01.sweepy.ui.theme.Sweepy
 import kotlinx.coroutines.launch
 
-/** How many cards are drawn in the stack (the top one plus the ones peeking out underneath). */
+/** How many cards are drawn in the pile (the top one plus the ones underneath). */
 private const val VISIBLE_CARDS = 3
+
+/** A small, stable, per-photo angle so the pile looks dropped on a table rather than stacked by a machine. */
+private fun pileAngle(id: Long): Float {
+    val h = (id * 2654435761L) ushr 7
+    val a = (h % 1000L).toFloat() / 1000f * 9f - 4.5f
+    return if (a in -1.5f..1.5f) a + if (a < 0) -1.5f else 1.5f else a
+}
 
 @Composable
 fun DeckScreen(
@@ -126,32 +134,30 @@ fun DeckScreen(
         onUndo()?.let { enterFrom = SwipeDirection.of(it) }
     }
 
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    val glowColors = SwipeDirection.entries.associateWith { it.color }
+
+    Paper {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
             TopBar(
                 title = deckTitle(source),
-                subtitle = when {
+                eyebrow = when {
                     state.loading -> ""
                     current == null -> stringResource(R.string.deck_all_done)
-                    else -> stringResource(
-                        R.string.left_and_size,
-                        formatCount(state.deck.size),
-                        formatSize(context, state.remainingBytes),
-                    )
+                    else -> stringResource(R.string.left_and_size, formatCount(state.deck.size), formatSize(context, state.remainingBytes))
                 },
                 markedCount = state.markedCount,
                 onBack = onBack,
                 onOpenReview = onOpenReview,
             )
             if (source != DeckSource.Later) {
-                ProgressTrack(
+                Ruler(
                     progress = state.progress,
-                    height = 4.dp,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    ticks = 50,
+                    modifier = Modifier.padding(horizontal = 22.dp),
                 )
             }
 
-            // The card stack, with a colored glow behind it while dragging.
+            // The pile, with a soft colored light underneath while dragging.
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -159,40 +165,42 @@ fun DeckScreen(
                     .fillMaxWidth()
                     .drawBehind {
                         val lean = cardState.lean ?: return@drawBehind
+                        val radius = size.maxDimension * 0.65f
                         drawCircle(
                             Brush.radialGradient(
-                                listOf(lean.first.color.copy(alpha = 0.32f * lean.second), Color.Transparent),
-                                center = Offset(size.width / 2, size.height / 2),
-                                radius = size.maxDimension * 0.7f,
+                                listOf(glowColors.getValue(lean.first).copy(alpha = 0.22f * lean.second), Color.Transparent),
+                                center = center,
+                                radius = radius,
                             ),
-                            radius = size.maxDimension * 0.7f,
+                            radius = radius,
                         )
                     }
-                    .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 28.dp)
+                    .padding(start = 22.dp, end = 22.dp, top = 22.dp, bottom = 26.dp)
                     .onSizeChanged { stackSize = it },
             ) {
                 when {
-                    state.loading -> CircularProgressIndicator()
+                    state.loading -> CircularProgressIndicator(color = Sweepy.colors.ink, strokeWidth = 1.5.dp, modifier = Modifier.size(28.dp))
                     current == null -> DoneState(source, state, onOpenReview, onBack)
                     else -> {
-                        // Cards underneath, drawn back to front. They move up as the top card is dragged away.
+                        // Prints underneath, drawn back to front. They straighten up and come forward
+                        // as the top one is dragged away.
                         val upcoming = state.deck.subList(1, minOf(state.deck.size, VISIBLE_CARDS))
                         upcoming.asReversed().forEachIndexed { reversedIndex, item ->
                             val depth = upcoming.size - reversedIndex // 1 = right under the top card
                             key(item.id) {
-                                MediaCard(
+                                val angle = pileAngle(item.id)
+                                PrintCard(
                                     item = item,
                                     onInfo = null,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .graphicsLayer {
-                                            val p = cardState.dragProgress
-                                            val d = depth - p
-                                            val s = 1f - 0.05f * d
+                                            val d = depth - cardState.dragProgress
+                                            val s = 1f - 0.035f * d
                                             scaleX = s
                                             scaleY = s
-                                            // Undo the shrink at the bottom edge, then peek out a little further per level.
-                                            translationY = size.height * (1f - s) / 2f + 12.dp.toPx() * d
+                                            rotationZ = angle * d
+                                            translationY = 6.dp.toPx() * d
                                         },
                                 )
                             }
@@ -214,13 +222,15 @@ fun DeckScreen(
                 }
             }
 
-            if (current != null || state.loading) ActionBar(
-                enabled = current != null && !state.loading,
-                canUndo = state.canUndo,
-                cardState = cardState,
-                onSwipe = ::swipe,
-                onUndo = ::undo,
-            )
+            if (current != null || state.loading) {
+                ActionBar(
+                    enabled = current != null && !state.loading,
+                    canUndo = state.canUndo,
+                    cardState = cardState,
+                    onSwipe = ::swipe,
+                    onUndo = ::undo,
+                )
+            }
         }
     }
 
@@ -230,53 +240,51 @@ fun DeckScreen(
 @Composable
 private fun TopBar(
     title: String,
-    subtitle: String,
+    eyebrow: String,
     markedCount: Int,
     onBack: () -> Unit,
     onOpenReview: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
     ) {
-        CircleIconButton(
-            icon = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowBack),
-            contentDescription = stringResource(R.string.back),
-            onClick = onBack,
-        )
-        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        QuietIconButton(stringResource(R.string.back), onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Sweepy.colors.ink)
+        }
+        Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
+            Eyebrow(eyebrow, small = true)
             Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Sweepy.colors.ink,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        BinButton(markedCount, onOpenReview)
+        BinChip(markedCount, onOpenReview)
     }
 }
 
+/** The review bin, as a small outlined tag with a running count. */
 @Composable
-private fun BinButton(count: Int, onClick: () -> Unit) {
+private fun BinChip(count: Int, onClick: () -> Unit) {
     val active = count > 0
     val label = stringResource(R.string.review_title)
+    val color = if (active) Sweepy.colors.pencil else Sweepy.colors.inkMuted
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .height(44.dp)
-            .clip(CircleShape)
-            .background(if (active) DeleteRed.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh)
+            .height(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, if (active) color.copy(alpha = 0.45f) else Sweepy.colors.hairline, RoundedCornerShape(10.dp))
             .pressable(onClick, pressedScale = 0.92f)
-            .padding(horizontal = 14.dp)
+            .padding(horizontal = 12.dp)
             .semantics { contentDescription = label },
     ) {
-        Icon(
-            Icons.Filled.Delete,
-            contentDescription = null,
-            tint = if (active) DeleteRed else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
-        )
+        MarkIcon(Mark.CROSS, color, size = 14.dp, strokeWidth = 0.14f)
+        Spacer(Modifier.width(8.dp))
+        Eyebrow(stringResource(R.string.bin_short), color = color)
         AnimatedContent(
             targetState = count,
             transitionSpec = {
@@ -284,12 +292,7 @@ private fun BinButton(count: Int, onClick: () -> Unit) {
             },
             label = "binCount",
         ) { value ->
-            Text(
-                formatCount(value),
-                style = MaterialTheme.typography.labelLarge,
-                color = if (active) DeleteRed else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 6.dp),
-            )
+            Eyebrow(formatCount(value), color = Sweepy.colors.ink, modifier = Modifier.padding(start = 6.dp))
         }
     }
 }
@@ -302,127 +305,114 @@ private fun ActionBar(
     onSwipe: (SwipeDirection) -> Unit,
     onUndo: () -> Unit,
 ) {
-    // The button matching the drag direction lights up as the card is dragged.
-    fun emphasis(direction: SwipeDirection): () -> Float = {
-        cardState.lean?.takeIf { it.first == direction }?.second ?: 0f
-    }
     Row(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 18.dp),
     ) {
-        ActionButton(
-            icon = painterResource(R.drawable.ic_undo),
-            label = stringResource(R.string.action_undo),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            size = 50.dp,
-            enabled = canUndo,
-            emphasis = { 0f },
-            onClick = onUndo,
-        )
-        ActionButton(
-            icon = rememberVectorPainter(Icons.Filled.Close),
-            label = stringResource(R.string.action_delete),
-            color = DeleteRed,
-            size = 72.dp,
-            enabled = enabled,
-            emphasis = emphasis(SwipeDirection.LEFT),
-            onClick = { onSwipe(SwipeDirection.LEFT) },
-        )
-        ActionButton(
-            icon = painterResource(R.drawable.ic_schedule),
-            label = stringResource(R.string.action_later),
-            color = LaterAmber,
-            size = 50.dp,
-            enabled = enabled,
-            emphasis = emphasis(SwipeDirection.UP),
-            onClick = { onSwipe(SwipeDirection.UP) },
-        )
-        ActionButton(
-            icon = rememberVectorPainter(Icons.Filled.Check),
-            label = stringResource(R.string.action_keep),
-            color = KeepGreen,
-            size = 72.dp,
-            enabled = enabled,
-            emphasis = emphasis(SwipeDirection.RIGHT),
-            onClick = { onSwipe(SwipeDirection.RIGHT) },
-        )
-        ActionButton(
-            icon = rememberVectorPainter(Icons.Filled.Favorite),
-            label = stringResource(R.string.action_favorite),
-            color = FavoritePink,
-            size = 50.dp,
-            enabled = enabled,
-            emphasis = emphasis(SwipeDirection.DOWN),
-            onClick = { onSwipe(SwipeDirection.DOWN) },
-        )
+        UndoButton(canUndo, onUndo)
+        MarkButton(SwipeDirection.LEFT, 68.dp, enabled, cardState, onSwipe)
+        MarkButton(SwipeDirection.UP, 52.dp, enabled, cardState, onSwipe)
+        MarkButton(SwipeDirection.RIGHT, 68.dp, enabled, cardState, onSwipe)
+        MarkButton(SwipeDirection.DOWN, 52.dp, enabled, cardState, onSwipe)
     }
 }
 
 @Composable
-private fun ActionButton(
-    icon: Painter,
-    label: String,
-    color: Color,
+private fun UndoButton(enabled: Boolean, onClick: () -> Unit) {
+    val label = stringResource(R.string.action_undo)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(48.dp)
+            .graphicsLayer { alpha = if (enabled) 1f else 0.3f }
+            .clip(CircleShape)
+            .pressable(onClick, enabled = enabled, pressedScale = 0.85f)
+            .semantics { contentDescription = label },
+    ) {
+        Icon(painterResource(R.drawable.ic_undo), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+    }
+}
+
+/** A round button carrying the hand-drawn mark; it fills with the mark's color as the card leans its way. */
+@Composable
+private fun MarkButton(
+    direction: SwipeDirection,
     size: Dp,
     enabled: Boolean,
-    emphasis: () -> Float,
-    onClick: () -> Unit,
+    cardState: SwipeCardState,
+    onSwipe: (SwipeDirection) -> Unit,
 ) {
-    val container = MaterialTheme.colorScheme.surfaceContainer
+    val color = direction.color
+    val print = Sweepy.colors.print
+    val hairline = Sweepy.colors.hairline
+    val label = stringResource(
+        when (direction) {
+            SwipeDirection.LEFT -> R.string.action_delete
+            SwipeDirection.RIGHT -> R.string.action_keep
+            SwipeDirection.UP -> R.string.action_later
+            SwipeDirection.DOWN -> R.string.action_favorite
+        },
+    )
+    val emphasis = { cardState.lean?.takeIf { it.first == direction }?.second ?: 0f }
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(size)
             .graphicsLayer {
                 val e = emphasis()
-                scaleX = 1f + 0.14f * e
-                scaleY = 1f + 0.14f * e
+                scaleX = 1f + 0.12f * e
+                scaleY = 1f + 0.12f * e
                 alpha = if (enabled) 1f else 0.35f
             }
             .clip(CircleShape)
             .drawBehind {
-                drawRect(container)
-                drawRect(color.copy(alpha = 0.12f + 0.88f * emphasis()))
+                drawRect(print)
+                drawRect(color.copy(alpha = emphasis()))
+                drawCircle(hairline, radius = this.size.minDimension / 2 - 0.5.dp.toPx(), style = Stroke(1.dp.toPx()))
             }
-            .border(1.5.dp, color.copy(alpha = 0.3f), CircleShape)
-            .pressable(onClick, enabled = enabled, pressedScale = 0.88f)
+            .pressable({ onSwipe(direction) }, enabled = enabled, pressedScale = 0.88f)
             .semantics { contentDescription = label },
     ) {
-        val iconSize = size * 0.42f
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(iconSize).graphicsLayer { alpha = 1f - emphasis() })
-        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(iconSize).graphicsLayer { alpha = emphasis() })
+        val markSize = size * 0.46f
+        MarkIcon(direction.mark, color, size = markSize, strokeWidth = 0.11f, modifier = Modifier.graphicsLayer { alpha = 1f - emphasis() })
+        MarkIcon(direction.mark, print, size = markSize, strokeWidth = 0.11f, modifier = Modifier.graphicsLayer { alpha = emphasis() })
     }
 }
 
-/** First-run overlay explaining the four swipe directions. */
+private val OnScrim = Color(0xFFF2EFE8)
+
+/** First-run overlay: the four directions, noted at the edges of the print like grease-pencil notes. */
 @Composable
 private fun SwipeHint(onDismiss: () -> Unit) {
     Box(
-        contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
             .clip(CardShape)
-            .background(Color.Black.copy(alpha = 0.62f))
-            .pressable(onDismiss, pressedScale = 1f),
+            .background(Color(0xFF12110F).copy(alpha = 0.8f))
+            .pressable(onDismiss, pressedScale = 1f)
+            .padding(18.dp),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-            HintChip("↑  " + stringResource(R.string.action_later), LaterAmber)
-            Spacer(Modifier.height(20.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                HintChip("←  " + stringResource(R.string.action_delete), DeleteRed)
-                Spacer(Modifier.width(16.dp))
-                HintChip(stringResource(R.string.action_keep) + "  →", KeepGreen)
-            }
-            Spacer(Modifier.height(20.dp))
-            HintChip("↓  " + stringResource(R.string.action_favorite), FavoritePink)
-            Spacer(Modifier.height(32.dp))
-            Text(stringResource(R.string.hint_title), color = Color.White, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(6.dp))
+        HintLabel(SwipeDirection.UP, "↑", Modifier.align(Alignment.TopCenter))
+        HintLabel(SwipeDirection.LEFT, "←", Modifier.align(Alignment.CenterStart))
+        HintLabel(SwipeDirection.RIGHT, "→", Modifier.align(Alignment.CenterEnd))
+        HintLabel(SwipeDirection.DOWN, "↓", Modifier.align(Alignment.BottomCenter))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.align(Alignment.Center).padding(horizontal = 80.dp),
+        ) {
+            Text(
+                stringResource(R.string.hint_title),
+                color = OnScrim,
+                style = MaterialTheme.typography.headlineLarge,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(10.dp))
             Text(
                 stringResource(R.string.hint_body),
-                color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.bodyMedium,
+                color = OnScrim.copy(alpha = 0.75f),
+                style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
             )
         }
@@ -430,83 +420,70 @@ private fun SwipeHint(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun HintChip(text: String, color: Color) {
-    Text(
-        text,
-        color = Color.White,
-        style = MaterialTheme.typography.labelLarge,
-        modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(color)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-    )
+private fun HintLabel(direction: SwipeDirection, arrow: String, modifier: Modifier) {
+    val alignment = when (direction) {
+        SwipeDirection.LEFT -> Alignment.Start
+        SwipeDirection.RIGHT -> Alignment.End
+        else -> Alignment.CenterHorizontally
+    }
+    Column(horizontalAlignment = alignment, modifier = modifier) {
+        MarkIcon(direction.mark, direction.color, size = 30.dp, strokeWidth = 0.1f)
+        Eyebrow(
+            if (direction == SwipeDirection.RIGHT) "${direction.label()} $arrow" else "$arrow ${direction.label()}",
+            color = OnScrim,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
 }
 
 @Composable
 private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
-    AnimatedVisibility(visible, enter = fadeIn() + scaleIn(initialScale = 0.85f)) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(KeepGreen, Color(0xFF0E9E6E)))),
-            ) {
-                Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(52.dp))
-            }
-            Spacer(Modifier.height(24.dp))
-            Text(stringResource(R.string.done_title), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(8.dp))
+    val inspection = LocalInspectionMode.current
+    val draw = remember { Animatable(if (inspection) 1f else 0f) }
+    LaunchedEffect(Unit) { draw.animateTo(1f, tween(durationMillis = 900, delayMillis = 150, easing = FastOutSlowInEasing)) }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().height(170.dp)) {
             Text(
-                text = if (source == DeckSource.Later) {
-                    stringResource(R.string.done_body_later)
-                } else {
-                    pluralStringResource(R.plurals.done_body, state.totalCount, formatCount(state.totalCount))
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                stringResource(R.string.done_title),
+                style = MaterialTheme.typography.displaySmall,
+                fontStyle = FontStyle.Italic,
+                color = Sweepy.colors.ink,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(28.dp))
-            if (state.markedCount > 0) {
-                WideButton(
-                    text = pluralStringResource(
-                        R.plurals.done_review,
-                        state.markedCount,
-                        formatCount(state.markedCount),
-                        formatSize(context, state.markedBytes),
-                    ),
-                    background = DeleteRed,
-                    content = Color.White,
-                    onClick = onOpenReview,
-                )
-                Spacer(Modifier.height(10.dp))
-            }
-            WideButton(
-                text = stringResource(R.string.done_back),
-                background = MaterialTheme.colorScheme.surfaceContainerHigh,
-                content = MaterialTheme.colorScheme.onSurface,
-                onClick = onBack,
+            // A loop drawn around the words, the way a keeper gets circled on a contact sheet.
+            Box(
+                Modifier
+                    .fillMaxWidth(0.88f)
+                    .height(150.dp)
+                    .pencilMark(Mark.CIRCLE, Sweepy.colors.keep, { draw.value }, strokeWidth = 0.035f),
             )
         }
-    }
-}
-
-@Composable
-private fun WideButton(text: String, background: Color, content: Color, onClick: () -> Unit) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(54.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(background)
-            .pressable(onClick),
-    ) {
-        Text(text, color = content, style = MaterialTheme.typography.labelLarge)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = if (source == DeckSource.Later) {
+                stringResource(R.string.done_body_later)
+            } else {
+                pluralStringResource(R.plurals.done_body, state.totalCount, formatCount(state.totalCount))
+            },
+            style = MaterialTheme.typography.bodyLarge,
+            color = Sweepy.colors.inkMuted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 12.dp),
+        )
+        Spacer(Modifier.height(32.dp))
+        if (state.markedCount > 0) {
+            InkButton(
+                text = pluralStringResource(R.plurals.done_review, state.markedCount, formatCount(state.markedCount)),
+                trailing = formatSize(context, state.markedBytes),
+                color = Sweepy.colors.pencil,
+                contentColor = Color.White,
+                onClick = onOpenReview,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(10.dp))
+        }
+        OutlineButton(stringResource(R.string.done_back), onBack, Modifier.fillMaxWidth())
     }
 }

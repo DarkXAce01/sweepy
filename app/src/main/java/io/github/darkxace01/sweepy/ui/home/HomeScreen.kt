@@ -1,10 +1,11 @@
 package io.github.darkxace01.sweepy.ui.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,17 +24,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,44 +38,55 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.DeckSource
+import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.DeckSummary
 import io.github.darkxace01.sweepy.ui.HomeUiState
-import io.github.darkxace01.sweepy.ui.components.CircleIconButton
-import io.github.darkxace01.sweepy.ui.components.IconBadge
+import io.github.darkxace01.sweepy.ui.components.CountUp
+import io.github.darkxace01.sweepy.ui.components.Eyebrow
+import io.github.darkxace01.sweepy.ui.components.Hairline
+import io.github.darkxace01.sweepy.ui.components.InkButton
+import io.github.darkxace01.sweepy.ui.components.Mark
+import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.MediaThumbnail
-import io.github.darkxace01.sweepy.ui.components.ProgressTrack
-import io.github.darkxace01.sweepy.ui.components.deckColor
-import io.github.darkxace01.sweepy.ui.components.deckIcon
+import io.github.darkxace01.sweepy.ui.components.Mosaic
+import io.github.darkxace01.sweepy.ui.components.Paper
+import io.github.darkxace01.sweepy.ui.components.QuietIconButton
+import io.github.darkxace01.sweepy.ui.components.Ruler
+import io.github.darkxace01.sweepy.ui.components.ThinProgress
 import io.github.darkxace01.sweepy.ui.components.deckTitle
 import io.github.darkxace01.sweepy.ui.components.formatCount
+import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
+import io.github.darkxace01.sweepy.ui.components.reveal
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.DeleteRed
-import io.github.darkxace01.sweepy.ui.theme.KeepGreen
-import io.github.darkxace01.sweepy.ui.theme.Violet
-import io.github.darkxace01.sweepy.ui.theme.VioletDeep
-import io.github.darkxace01.sweepy.ui.theme.VioletNight
+import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import java.time.YearMonth
+import java.time.format.TextStyle as JavaTextStyle
+import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val COLLAPSED_FOLDERS = 5
-private const val COLLAPSED_MONTHS = 4
+private const val COLLAPSED_MONTHS = 6
+private const val MONTH_COLUMNS = 3
+private val PAGE = 22.dp
 
 @Composable
 fun HomeScreen(
@@ -94,63 +101,40 @@ fun HomeScreen(
     var showAllMonths by rememberSaveable { mutableStateOf(false) }
     val insets = WindowInsets.safeDrawing.asPaddingValues()
     val layoutDirection = LocalLayoutDirection.current
+    val ready = !state.loading && state.totalCount > 0
 
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Paper {
         LazyColumn(
             contentPadding = PaddingValues(
-                start = 20.dp + insets.calculateStartPadding(layoutDirection),
-                end = 20.dp + insets.calculateEndPadding(layoutDirection),
-                top = insets.calculateTopPadding() + 8.dp,
-                bottom = insets.calculateBottomPadding() + 32.dp,
+                start = PAGE + insets.calculateStartPadding(layoutDirection),
+                end = PAGE + insets.calculateEndPadding(layoutDirection),
+                top = insets.calculateTopPadding() + 4.dp,
+                bottom = insets.calculateBottomPadding() + 28.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { TopBar(onOpenTrash) }
+            item { TopBar(onOpenTrash, Modifier.reveal(0)) }
 
             if (partialAccess) {
-                item { PartialAccessBanner(onRequestFullAccess) }
+                item { PartialAccessBanner(onRequestFullAccess, Modifier.padding(top = 8.dp).reveal(1)) }
             }
 
-            item { HeroCard(state, onStart = { onOpenDeck(DeckSource.All) }) }
+            item { Hero(state, onStart = { onOpenDeck(DeckSource.All) }, Modifier.padding(top = 28.dp).reveal(1)) }
 
-            if (!state.loading && state.totalCount > 0) {
-                item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatTile(
-                            icon = rememberVectorPainter(Icons.Filled.Delete),
-                            tint = DeleteRed,
-                            value = formatCount(state.markedCount),
-                            label = stringResource(R.string.home_stat_bin),
-                            detail = formatSize(LocalContext.current, state.markedBytes),
-                            onClick = onOpenReview,
-                            modifier = Modifier.weight(1f),
-                        )
-                        StatTile(
-                            icon = painterResource(R.drawable.ic_sparkle),
-                            tint = KeepGreen,
-                            value = formatSize(LocalContext.current, state.stats.cleanedBytes),
-                            label = stringResource(R.string.home_stat_cleaned),
-                            detail = pluralStringResource(
-                                R.plurals.items_count,
-                                state.stats.cleanedCount.toInt(),
-                                formatCount(state.stats.cleanedCount),
-                            ),
-                            onClick = onOpenTrash,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+            if (ready) {
+                if (state.recent.isNotEmpty()) {
+                    item { SectionHeader(1, stringResource(R.string.home_section_recent), Modifier.reveal(3)) }
+                    item { FilmStrip(state.recent, onClick = { onOpenDeck(DeckSource.All) }, Modifier.reveal(3)) }
                 }
 
+                item { Stats(state, onOpenReview, onOpenTrash, Modifier.padding(top = 28.dp).reveal(4)) }
+
                 if (state.quickDecks.isNotEmpty()) {
-                    item { SectionHeader(stringResource(R.string.home_section_quick)) }
+                    item { SectionHeader(2, stringResource(R.string.home_section_quick), Modifier.reveal(5)) }
                     item {
                         LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            // Let tiles scroll edge to edge while staying aligned with the page.
-                            contentPadding = PaddingValues(horizontal = 20.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .layoutBleed(20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            contentPadding = PaddingValues(horizontal = PAGE),
+                            modifier = Modifier.fillMaxWidth().bleed(PAGE).reveal(5),
                         ) {
                             items(state.quickDecks, key = { it.source.toString() }) { summary ->
                                 QuickDeckTile(summary, onClick = { onOpenDeck(summary.source) })
@@ -162,321 +146,385 @@ fun HomeScreen(
                 if (state.folders.isNotEmpty()) {
                     item {
                         SectionHeader(
+                            number = 3,
                             title = stringResource(R.string.home_section_folders),
-                            action = if (state.folders.size > COLLAPSED_FOLDERS) {
-                                if (showAllFolders) stringResource(R.string.show_less) else stringResource(R.string.show_all, state.folders.size)
-                            } else {
-                                null
-                            },
+                            action = toggleLabel(state.folders.size, COLLAPSED_FOLDERS, showAllFolders),
                             onAction = { showAllFolders = !showAllFolders },
                         )
                     }
                     val folders = if (showAllFolders) state.folders else state.folders.take(COLLAPSED_FOLDERS)
-                    items(folders, key = { "folder-" + it.source.toString() }) { summary ->
-                        DeckRow(summary, onClick = { onOpenDeck(summary.source) })
+                    itemsIndexed(folders, key = { _, it -> "folder-" + it.source.toString() }) { index, summary ->
+                        if (index > 0) Hairline()
+                        FolderRow(summary, onClick = { onOpenDeck(summary.source) })
                     }
                 }
 
                 if (state.months.isNotEmpty()) {
                     item {
                         SectionHeader(
+                            number = 4,
                             title = stringResource(R.string.home_section_months),
-                            action = if (state.months.size > COLLAPSED_MONTHS) {
-                                if (showAllMonths) stringResource(R.string.show_less) else stringResource(R.string.show_all, state.months.size)
-                            } else {
-                                null
-                            },
+                            action = toggleLabel(state.months.size, COLLAPSED_MONTHS, showAllMonths),
                             onAction = { showAllMonths = !showAllMonths },
                         )
                     }
                     val months = if (showAllMonths) state.months else state.months.take(COLLAPSED_MONTHS)
-                    items(months, key = { "month-" + it.source.toString() }) { summary ->
-                        DeckRow(summary, onClick = { onOpenDeck(summary.source) })
+                    items(months.chunked(MONTH_COLUMNS), key = { row -> "months-" + row.first().source.toString() }) { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
+                            for (summary in row) MonthChip(summary, onClick = { onOpenDeck(summary.source) }, Modifier.weight(1f))
+                            repeat(MONTH_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                        }
                     }
                 }
 
-                item { Spacer(Modifier.height(4.dp)) }
+                item { SectionHeader(5, stringResource(R.string.home_section_archive)) }
                 item { RecentlyCleanedRow(onOpenTrash) }
             }
 
-            item { PrivacyNote() }
+            item { PrivacyNote(Modifier.padding(top = 36.dp)) }
         }
     }
 }
 
-/** Lets a horizontally scrolling row extend into the page's side padding. */
-private fun Modifier.layoutBleed(bleed: Dp): Modifier = this.layout { measurable, constraints ->
+@Composable
+private fun toggleLabel(size: Int, collapsed: Int, expanded: Boolean): String? = when {
+    size <= collapsed -> null
+    expanded -> stringResource(R.string.show_less)
+    else -> stringResource(R.string.show_all, size)
+}
+
+/** Lets a horizontally scrolling row run under the page's side margins, edge to edge. */
+private fun Modifier.bleed(bleed: Dp): Modifier = this.layout { measurable, constraints ->
     val extra = bleed.roundToPx() * 2
     val placeable = measurable.measure(constraints.copy(maxWidth = constraints.maxWidth + extra, minWidth = constraints.minWidth + extra))
     layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
 }
 
+// ---- Header & hero ------------------------------------------------------------------------------
+
 @Composable
-private fun TopBar(onOpenTrash: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(11.dp))
-                .background(Brush.linearGradient(listOf(Violet, VioletDeep))),
-        ) {
-            Image(
-                painterResource(R.drawable.ic_launcher_foreground),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+private fun TopBar(onOpenTrash: () -> Unit, modifier: Modifier = Modifier) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth().height(56.dp)) {
         Text(
             stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(start = 10.dp).weight(1f),
+            style = MaterialTheme.typography.headlineMedium,
+            fontStyle = FontStyle.Italic,
+            color = Sweepy.colors.ink,
         )
-        CircleIconButton(
-            icon = painterResource(R.drawable.ic_restore),
-            contentDescription = stringResource(R.string.trash_title),
-            onClick = onOpenTrash,
-        )
+        Spacer(Modifier.width(8.dp))
+        MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 14.dp, strokeWidth = 0.14f, modifier = Modifier.padding(top = 4.dp))
+        Spacer(Modifier.weight(1f))
+        QuietIconButton(stringResource(R.string.trash_title), onOpenTrash, Modifier.padding(end = 0.dp)) {
+            Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+        }
     }
 }
 
 @Composable
-private fun PartialAccessBanner(onRequestFullAccess: () -> Unit) {
+private fun PartialAccessBanner(onRequestFullAccess: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(start = 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+            .border(1.dp, Sweepy.colors.later.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
     ) {
         Text(
             stringResource(R.string.partial_access),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            style = MaterialTheme.typography.bodySmall,
+            color = Sweepy.colors.ink,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = onRequestFullAccess) { Text(stringResource(R.string.partial_access_action)) }
+        Eyebrow(
+            stringResource(R.string.partial_access_action),
+            color = Sweepy.colors.ink,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .pressable(onRequestFullAccess)
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+        )
     }
 }
 
 @Composable
-private fun HeroCard(state: HomeUiState, onStart: () -> Unit) {
+private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val onHero = Color.White
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(32.dp))
-            .background(Brush.linearGradient(listOf(Violet, VioletDeep, VioletNight), start = Offset.Zero, end = Offset.Infinite))
-            .drawBehind {
-                // Soft decorative circles.
-                drawCircle(Color.White.copy(alpha = 0.08f), radius = size.width * 0.42f, center = Offset(size.width * 0.95f, size.height * 0.05f))
-                drawCircle(Color.White.copy(alpha = 0.05f), radius = size.width * 0.3f, center = Offset(size.width * 0.8f, size.height * 1.05f))
+    val remaining = state.totalCount - state.reviewedCount
+    Column(modifier.fillMaxWidth()) {
+        Eyebrow(
+            if (state.loading) stringResource(R.string.home_scanning)
+            else stringResource(R.string.home_library_eyebrow, formatSize(context, state.totalBytes)),
+        )
+        Spacer(Modifier.height(4.dp))
+        when {
+            state.loading -> {
+                Text("—", style = MaterialTheme.typography.displayLarge, color = Sweepy.colors.inkMuted)
             }
-            .padding(24.dp),
-    ) {
-        if (state.loading) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 36.dp)) {
-                CircularProgressIndicator(color = onHero, trackColor = onHero.copy(alpha = 0.2f))
-                Spacer(Modifier.height(16.dp))
-                Text(stringResource(R.string.home_scanning), color = onHero.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium)
-            }
-            return@Box
-        }
-
-        Column {
-            Text(stringResource(R.string.home_your_gallery), color = onHero.copy(alpha = 0.75f), style = MaterialTheme.typography.labelLarge)
-            Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(formatCount(state.totalCount), color = onHero, style = MaterialTheme.typography.displayMedium)
+            state.totalCount == 0 -> {
                 Text(
-                    " " + pluralStringResource(R.plurals.items_word, state.totalCount),
-                    color = onHero.copy(alpha = 0.85f),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 7.dp),
+                    stringResource(R.string.home_empty),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Sweepy.colors.ink,
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
-            Text(
-                stringResource(R.string.home_on_phone, formatSize(context, state.totalBytes)),
-                color = onHero.copy(alpha = 0.75f),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-
-            if (state.totalCount > 0) {
-                Spacer(Modifier.height(22.dp))
-                ProgressTrack(
-                    progress = state.progress,
-                    color = onHero,
-                    trackColor = onHero.copy(alpha = 0.2f),
-                    height = 8.dp,
+            else -> {
+                CountUp(remaining.toLong(), style = MaterialTheme.typography.displayLarge)
+                Text(
+                    if (remaining == 0) stringResource(R.string.home_all_sorted)
+                    else pluralStringResource(R.plurals.home_left_caption, remaining),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontStyle = FontStyle.Italic,
+                    color = Sweepy.colors.inkMuted,
+                )
+                Spacer(Modifier.height(24.dp))
+                Ruler(state.progress)
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth()) {
+                    Eyebrow(stringResource(R.string.home_sorted_pct, (state.progress * 100).roundToInt()), small = true, color = Sweepy.colors.ink)
+                    Spacer(Modifier.weight(1f))
+                    Eyebrow(
+                        stringResource(R.string.home_sorted_of, formatCount(state.reviewedCount), formatCount(state.totalCount)),
+                        small = true,
+                    )
+                }
+                Spacer(Modifier.height(24.dp))
+                InkButton(
+                    text = stringResource(if (state.reviewedCount == 0) R.string.home_start else R.string.home_continue),
+                    trailing = "→",
+                    onClick = onStart,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(Modifier.height(8.dp))
-                Row {
-                    Text(
-                        stringResource(R.string.home_reviewed_pct, (state.progress * 100).roundToInt()),
-                        color = onHero,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        stringResource(R.string.home_to_go, formatCount(state.totalCount - state.reviewedCount)),
-                        color = onHero.copy(alpha = 0.75f),
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                }
-                Spacer(Modifier.height(22.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(onHero)
-                        .pressable(onStart),
-                ) {
-                    Text(
-                        stringResource(if (state.reviewedCount == 0) R.string.home_start else R.string.home_continue),
-                        color = VioletDeep,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = VioletDeep, modifier = Modifier.size(20.dp))
-                }
-            } else {
-                Spacer(Modifier.height(12.dp))
-                Text(stringResource(R.string.home_empty), color = onHero, style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
 }
 
+// ---- Film strip ---------------------------------------------------------------------------------
+
+private val FilmBase = Color(0xFF1B1916)
+private val FilmEdgeText = Color(0xFFE39B4B)
+private val FRAME = 74.dp
+private val FRAME_GAP = 8.dp
+
+/** The newest photos still waiting, shown as a strip of negative film with sprocket holes. */
 @Composable
-private fun StatTile(
-    icon: Painter,
-    tint: Color,
-    value: String,
+private fun FilmStrip(items: List<MediaItem>, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .bleed(PAGE)
+            .background(FilmBase)
+            .pressable(onClick, pressedScale = 0.99f),
+    ) {
+        item { FilmFrame(null, null, leader = true) }
+        itemsIndexed(items, key = { _, it -> it.id }) { index, item -> FilmFrame(item, index + 1) }
+        item { FilmFrame(null, null, leader = true) }
+    }
+}
+
+@Composable
+private fun FilmFrame(item: MediaItem?, number: Int?, leader: Boolean = false) {
+    val width = if (leader) PAGE else FRAME + FRAME_GAP
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(width)
+            .drawBehind {
+                // Sprocket holes along both edges.
+                val hole = Size(5.dp.toPx(), 3.5.dp.toPx())
+                val step = 11.dp.toPx()
+                val color = Color(0xFFF2EFE8).copy(alpha = 0.85f)
+                var x = step / 2 - hole.width / 2
+                while (x < size.width) {
+                    drawRoundRect(color, Offset(x, 5.dp.toPx()), hole, CornerRadius(1.dp.toPx()))
+                    drawRoundRect(color, Offset(x, size.height - 5.dp.toPx() - hole.height), hole, CornerRadius(1.dp.toPx()))
+                    x += step
+                }
+            }
+            .padding(top = 16.dp, bottom = 6.dp),
+    ) {
+        Box(Modifier.size(FRAME)) {
+            if (item != null) MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = 3.dp, showBadge = false)
+        }
+        Text(
+            if (number != null) "$number ▸" else " ",
+            style = MaterialTheme.typography.labelSmall,
+            color = FilmEdgeText,
+            modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
+        )
+    }
+}
+
+// ---- Stats --------------------------------------------------------------------------------------
+
+@Composable
+private fun Stats(state: HomeUiState, onOpenReview: () -> Unit, onOpenTrash: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Column(modifier.fillMaxWidth()) {
+        Hairline()
+        Row(Modifier.height(IntrinsicSize.Min)) {
+            Stat(
+                mark = Mark.CROSS,
+                markColor = Sweepy.colors.pencil,
+                label = stringResource(R.string.home_stat_bin),
+                value = formatCount(state.markedCount),
+                detail = formatSize(context, state.markedBytes),
+                onClick = onOpenReview,
+                modifier = Modifier.weight(1f),
+            )
+            Box(Modifier.width(1.dp).fillMaxHeight().background(Sweepy.colors.hairline))
+            Stat(
+                mark = Mark.CIRCLE,
+                markColor = Sweepy.colors.keep,
+                label = stringResource(R.string.home_stat_cleaned),
+                value = formatSize(context, state.stats.cleanedBytes),
+                detail = pluralStringResource(R.plurals.items_count, state.stats.cleanedCount.toInt(), formatCount(state.stats.cleanedCount)),
+                onClick = onOpenTrash,
+                modifier = Modifier.weight(1f).padding(start = 18.dp),
+            )
+        }
+        Hairline()
+    }
+}
+
+@Composable
+private fun Stat(
+    mark: Mark,
+    markColor: Color,
     label: String,
+    value: String,
     detail: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .pressable(onClick)
-            .padding(16.dp),
+    Column(modifier.pressable(onClick, pressedScale = 0.98f).padding(vertical = 16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MarkIcon(mark, markColor, size = 13.dp, strokeWidth = 0.14f)
+            Spacer(Modifier.width(7.dp))
+            Eyebrow(label, small = true)
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(value, style = MaterialTheme.typography.headlineLarge, color = Sweepy.colors.ink, maxLines = 1)
+        Eyebrow(detail, small = true)
+    }
+}
+
+// ---- Sections -----------------------------------------------------------------------------------
+
+@Composable
+private fun SectionHeader(number: Int, title: String, modifier: Modifier = Modifier, action: String? = null, onAction: () -> Unit = {}) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth().padding(top = 36.dp, bottom = 12.dp),
     ) {
-        IconBadge(icon, tint, size = 36.dp)
-        Spacer(Modifier.height(12.dp))
-        Text(value, style = MaterialTheme.typography.titleLarge, maxLines = 1)
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-        Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), maxLines = 1)
+        Eyebrow(String.format(Locale.ROOT, "%02d", number), color = Sweepy.colors.pencil)
+        Eyebrow(" — $title", color = Sweepy.colors.ink, modifier = Modifier.weight(1f))
+        if (action != null) {
+            Eyebrow(
+                action,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .pressable(onAction)
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
+            )
+        }
     }
 }
 
 @Composable
-private fun SectionHeader(title: String, action: String? = null, onAction: () -> Unit = {}) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 2.dp).height(36.dp),
-    ) {
-        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-        if (action != null) {
-            TextButton(onClick = onAction) { Text(action, style = MaterialTheme.typography.labelMedium) }
-        }
-    }
-}
+private fun leftLabel(summary: DeckSummary): String =
+    if (summary.remainingCount == 0) stringResource(R.string.label_done)
+    else stringResource(R.string.left_short, formatCount(summary.remainingCount))
 
 @Composable
 private fun QuickDeckTile(summary: DeckSummary, onClick: () -> Unit) {
     val context = LocalContext.current
-    val color = deckColor(summary.source)
-    val isLater = summary.source == DeckSource.Later
-    Column(
-        modifier = Modifier
-            .width(158.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .pressable(onClick)
-            .padding(16.dp),
-    ) {
-        IconBadge(painterResource(deckIcon(summary.source)), color, size = 42.dp)
-        Spacer(Modifier.height(14.dp))
-        Text(deckTitle(summary.source), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = when {
-                summary.remainingCount == 0 -> stringResource(R.string.deck_all_done)
-                isLater -> pluralStringResource(R.plurals.waiting_count, summary.remainingCount, formatCount(summary.remainingCount))
-                else -> stringResource(
-                    R.string.left_and_size,
-                    formatCount(summary.remainingCount),
-                    formatSize(context, summary.totalBytes),
+    val done = summary.remainingCount == 0
+    Column(Modifier.width(150.dp).pressable(onClick)) {
+        Box {
+            Mosaic(summary.covers, Modifier.fillMaxWidth())
+            if (done) {
+                MarkIcon(
+                    Mark.CIRCLE,
+                    Sweepy.colors.keep,
+                    size = 150.dp,
+                    strokeWidth = 0.03f,
+                    modifier = Modifier.align(Alignment.Center),
                 )
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-        )
-        Spacer(Modifier.height(14.dp))
-        ProgressTrack(
-            progress = if (isLater) 0f else summary.progress,
-            color = color,
-            height = 5.dp,
-            modifier = Modifier.fillMaxWidth(),
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(deckTitle(summary.source), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(2.dp))
+        Eyebrow(leftLabel(summary) + " · " + formatSize(context, summary.totalBytes), small = true, color = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted)
+        Spacer(Modifier.height(8.dp))
+        ThinProgress(summary.progress, color = if (done) Sweepy.colors.keep else Sweepy.colors.ink)
+    }
+}
+
+@Composable
+private fun FolderRow(summary: DeckSummary, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val done = summary.remainingCount == 0
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().pressable(onClick, pressedScale = 0.985f).padding(vertical = 12.dp),
+    ) {
+        Box(Modifier.size(52.dp)) {
+            val cover = summary.cover
+            if (cover != null) MediaThumbnail(cover, Modifier.fillMaxSize(), cornerRadius = 6.dp, showBadge = false)
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(deckTitle(summary.source), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(3.dp))
+            Eyebrow(leftLabel(summary) + " · " + formatSize(context, summary.totalBytes), small = true, color = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted)
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            "${(summary.progress * 100).roundToInt()}%",
+            style = MaterialTheme.typography.headlineSmall,
+            color = if (done) Sweepy.colors.keep else Sweepy.colors.ink,
         )
     }
 }
 
 @Composable
-private fun DeckRow(summary: DeckSummary, onClick: () -> Unit) {
-    val context = LocalContext.current
+private fun MonthChip(summary: DeckSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val ym = (summary.source as DeckSource.Month).yearMonth
+    val month = YearMonth.of(ym / 100, ym % 100)
     val done = summary.remainingCount == 0
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .pressable(onClick, pressedScale = 0.98f)
-            .padding(10.dp),
+    val locale = LocalLocale.current.platformLocale
+    Box(
+        modifier
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, Sweepy.colors.hairline, RoundedCornerShape(12.dp))
+            .pressable(onClick),
     ) {
-        val cover = summary.cover
-        if (cover != null) {
-            MediaThumbnail(cover, Modifier.size(58.dp), cornerRadius = 16.dp, showBadge = false)
-        } else {
-            IconBadge(painterResource(deckIcon(summary.source)), deckColor(summary.source), size = 58.dp)
+        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    month.month.getDisplayName(JavaTextStyle.SHORT, locale),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Sweepy.colors.ink,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.width(4.dp))
+                Eyebrow("’" + (month.year % 100).toString().padStart(2, '0'), small = true, modifier = Modifier.padding(bottom = 5.dp))
+            }
+            Spacer(Modifier.height(6.dp))
+            Eyebrow(leftLabel(summary), small = true, color = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted)
         }
-        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(deckTitle(summary.source), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                stringResource(
-                    R.string.count_and_size,
-                    pluralStringResource(R.plurals.items_count, summary.totalCount, formatCount(summary.totalCount)),
-                    formatSize(context, summary.totalBytes),
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-            Spacer(Modifier.height(8.dp))
-            ProgressTrack(
-                progress = summary.progress,
-                color = if (done) KeepGreen else MaterialTheme.colorScheme.primary,
-                height = 4.dp,
-                modifier = Modifier.fillMaxWidth(),
+        if (done) {
+            // Finished months get circled, like a keeper on a contact sheet.
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .padding(3.dp)
+                    .pencilMark(Mark.CIRCLE, Sweepy.colors.keep.copy(alpha = 0.75f), { 1f }, strokeWidth = 0.04f),
             )
         }
-        Text(
-            text = if (done) "✓" else "${(summary.progress * 100).roundToInt()}%",
-            style = MaterialTheme.typography.labelMedium,
-            color = if (done) KeepGreen else MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.End,
-            modifier = Modifier.width(36.dp).padding(end = 4.dp),
-        )
     }
 }
 
@@ -486,42 +534,32 @@ private fun RecentlyCleanedRow(onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .pressable(onClick, pressedScale = 0.98f)
-            .padding(16.dp),
+            .clip(RoundedCornerShape(14.dp))
+            .background(Sweepy.colors.surface)
+            .border(1.dp, Sweepy.colors.hairline, RoundedCornerShape(14.dp))
+            .pressable(onClick, pressedScale = 0.985f)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
-        IconBadge(painterResource(R.drawable.ic_restore), MaterialTheme.colorScheme.primary, size = 42.dp)
-        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(stringResource(R.string.trash_title), style = MaterialTheme.typography.titleMedium)
-            Text(
-                stringResource(R.string.home_trash_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.trash_title), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
+            Text(stringResource(R.string.home_trash_subtitle), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("→", style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.inkMuted)
     }
 }
 
 @Composable
-private fun PrivacyNote() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_shield),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.size(14.dp),
-        )
-        Spacer(Modifier.width(6.dp))
+private fun PrivacyNote(modifier: Modifier = Modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxWidth()) {
+        MarkIcon(Mark.CIRCLE, Sweepy.colors.inkMuted.copy(alpha = 0.5f), size = 18.dp, strokeWidth = 0.1f)
+        Spacer(Modifier.height(8.dp))
         Text(
-            stringResource(R.string.privacy_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            stringResource(R.string.privacy_note).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = Sweepy.colors.inkMuted,
+            textAlign = TextAlign.Center,
         )
     }
 }

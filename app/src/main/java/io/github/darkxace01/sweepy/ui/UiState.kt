@@ -12,8 +12,10 @@ data class DeckSummary(
     val totalBytes: Long,
     /** Items in this deck still waiting for a decision. */
     val remainingCount: Int,
-    val cover: MediaItem?,
+    /** Up to four items to show as the deck's cover. */
+    val covers: List<MediaItem>,
 ) {
+    val cover: MediaItem? get() = covers.firstOrNull()
     val progress: Float get() = if (totalCount == 0) 1f else (totalCount - remainingCount) / totalCount.toFloat()
 }
 
@@ -26,6 +28,8 @@ data class HomeUiState(
     val markedBytes: Long = 0,
     val laterCount: Int = 0,
     val stats: CleanStats = CleanStats(),
+    /** Newest items still waiting, for the strip on the home screen. */
+    val recent: List<MediaItem> = emptyList(),
     val quickDecks: List<DeckSummary> = emptyList(),
     val folders: List<DeckSummary> = emptyList(),
     val months: List<DeckSummary> = emptyList(),

@@ -7,95 +7,123 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// Swipe action colors. Same in light and dark so the meaning never changes.
-val DeleteRed = Color(0xFFFF4D5E)
-val KeepGreen = Color(0xFF18C088)
-val LaterAmber = Color(0xFFFFAE1A)
-val FavoritePink = Color(0xFFFF5FA2)
-
-// Deck accent colors for the home screen tiles.
-val ScreenshotBlue = Color(0xFF3B82F6)
-val ChatGreen = Color(0xFF22C55E)
-val VideoOrange = Color(0xFFFF7A1A)
-
-// Brand
-val Violet = Color(0xFF6C4BFF)
-val VioletDeep = Color(0xFF4329D6)
-val VioletNight = Color(0xFF241673)
-
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF5B3DF5),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFE8E2FF),
-    onPrimaryContainer = Color(0xFF1F0E6E),
-    secondary = Color(0xFF5E5A73),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE6E3F0),
-    onSecondaryContainer = Color(0xFF1C1A27),
-    background = Color(0xFFF5F4F9),
-    onBackground = Color(0xFF13121A),
-    surface = Color(0xFFF5F4F9),
-    onSurface = Color(0xFF13121A),
-    surfaceVariant = Color(0xFFE7E5EF),
-    onSurfaceVariant = Color(0xFF63617A),
-    surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color(0xFFFBFAFD),
-    surfaceContainer = Color.White,
-    surfaceContainerHigh = Color(0xFFEDEBF4),
-    surfaceContainerHighest = Color(0xFFE4E1EE),
-    outline = Color(0xFFCFCCDB),
-    outlineVariant = Color(0xFFE4E2EC),
-    error = DeleteRed,
-    onError = Color.White,
+/**
+ * Sweepy's look is a photographer's contact sheet: warm paper, ink, and a red grease pencil.
+ * Photos supply the color; the interface stays quiet.
+ */
+@Immutable
+data class SweepyColors(
+    /** Page background. */
+    val paper: Color,
+    /** Slightly raised surfaces: tiles, sheets. */
+    val surface: Color,
+    /** The photo "print" cards. */
+    val print: Color,
+    /** Main text and primary buttons. */
+    val ink: Color,
+    /** Secondary text, captions. */
+    val inkMuted: Color,
+    /** Thin dividers and outlines. */
+    val hairline: Color,
+    /** Grease-pencil red: delete marks and destructive actions. */
+    val pencil: Color,
+    val keep: Color,
+    val later: Color,
+    val favorite: Color,
+    val isDark: Boolean,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFFA08BFF),
-    onPrimary = Color(0xFF16093F),
-    primaryContainer = Color(0xFF2F2370),
-    onPrimaryContainer = Color(0xFFE6DFFF),
-    secondary = Color(0xFFC8C4D9),
-    onSecondary = Color(0xFF2B2838),
-    secondaryContainer = Color(0xFF2A2836),
-    onSecondaryContainer = Color(0xFFE6E2F2),
-    background = Color(0xFF0B0A10),
-    onBackground = Color(0xFFF2F1F7),
-    surface = Color(0xFF0B0A10),
-    onSurface = Color(0xFFF2F1F7),
-    surfaceVariant = Color(0xFF1C1B24),
-    onSurfaceVariant = Color(0xFFA4A2B5),
-    surfaceContainerLowest = Color(0xFF07060B),
-    surfaceContainerLow = Color(0xFF111017),
-    surfaceContainer = Color(0xFF16151D),
-    surfaceContainerHigh = Color(0xFF1E1D27),
-    surfaceContainerHighest = Color(0xFF282733),
-    outline = Color(0xFF393845),
-    outlineVariant = Color(0xFF25242E),
-    error = DeleteRed,
-    onError = Color.White,
+private val Paper = SweepyColors(
+    paper = Color(0xFFF2EFE8),
+    surface = Color(0xFFF8F6F1),
+    print = Color(0xFFFDFCF9),
+    ink = Color(0xFF1C1A17),
+    inkMuted = Color(0xFF746E63),
+    hairline = Color(0xFFDDD7CB),
+    pencil = Color(0xFFD4432A),
+    keep = Color(0xFF4F7F5A),
+    later = Color(0xFFB98322),
+    favorite = Color(0xFFBF4F72),
+    isDark = false,
 )
+
+private val Darkroom = SweepyColors(
+    paper = Color(0xFF12110F),
+    surface = Color(0xFF1A1916),
+    print = Color(0xFF201E1B),
+    ink = Color(0xFFEDE8DE),
+    inkMuted = Color(0xFF9A9488),
+    hairline = Color(0xFF2E2B27),
+    pencil = Color(0xFFE5553A),
+    keep = Color(0xFF7DB287),
+    later = Color(0xFFD9A441),
+    favorite = Color(0xFFDB7193),
+    isDark = true,
+)
+
+val LocalSweepyColors = staticCompositionLocalOf { Paper }
+
+/** Shorthand: `Sweepy.colors.ink`. */
+object Sweepy {
+    val colors: SweepyColors
+        @Composable @ReadOnlyComposable get() = LocalSweepyColors.current
+}
+
+private fun materialColors(c: SweepyColors) = if (c.isDark) {
+    darkColorScheme(
+        primary = c.ink, onPrimary = c.paper,
+        primaryContainer = c.surface, onPrimaryContainer = c.ink,
+        secondary = c.inkMuted, onSecondary = c.paper,
+        background = c.paper, onBackground = c.ink,
+        surface = c.paper, onSurface = c.ink,
+        surfaceVariant = c.surface, onSurfaceVariant = c.inkMuted,
+        surfaceContainerLowest = c.paper, surfaceContainerLow = c.surface,
+        surfaceContainer = c.surface, surfaceContainerHigh = c.print, surfaceContainerHighest = c.hairline,
+        inverseSurface = c.ink, inverseOnSurface = c.paper,
+        outline = c.hairline, outlineVariant = c.hairline,
+        error = c.pencil, onError = Color.White,
+    )
+} else {
+    lightColorScheme(
+        primary = c.ink, onPrimary = c.paper,
+        primaryContainer = c.surface, onPrimaryContainer = c.ink,
+        secondary = c.inkMuted, onSecondary = c.paper,
+        background = c.paper, onBackground = c.ink,
+        surface = c.paper, onSurface = c.ink,
+        surfaceVariant = c.surface, onSurfaceVariant = c.inkMuted,
+        surfaceContainerLowest = c.print, surfaceContainerLow = c.surface,
+        surfaceContainer = c.surface, surfaceContainerHigh = c.print, surfaceContainerHighest = c.hairline,
+        inverseSurface = c.ink, inverseOnSurface = c.paper,
+        outline = c.hairline, outlineVariant = c.hairline,
+        error = c.pencil, onError = Color.White,
+    )
+}
 
 private val SweepyShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(18.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(32.dp),
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(14.dp),
+    large = RoundedCornerShape(18.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
-/**
- * Sweepy's own colors instead of the wallpaper-based "Material You" ones, so the brand looks the
- * same on every phone. Follows the system light/dark setting.
- */
+/** Follows the system light/dark setting. */
 @Composable
 fun SweepyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = SweepyTypography,
-        shapes = SweepyShapes,
-        content = content,
-    )
+    val colors = if (darkTheme) Darkroom else Paper
+    CompositionLocalProvider(LocalSweepyColors provides colors) {
+        MaterialTheme(
+            colorScheme = materialColors(colors),
+            typography = SweepyTypography,
+            shapes = SweepyShapes,
+            content = content,
+        )
+    }
 }
