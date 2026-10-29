@@ -1,7 +1,12 @@
 package io.github.darkxace01.sweepy.ui.settings
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +45,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.Appearance
@@ -117,6 +123,29 @@ fun SettingsScreen(
                     checked = settings.haptics,
                     onChange = { value -> onChange { it.copy(haptics = value) } },
                 )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Hairline()
+                    var canManage by remember { mutableStateOf(canManageMedia(context)) }
+                    LifecycleResumeEffect(Unit) {
+                        canManage = canManageMedia(context)
+                        onPauseOrDispose { }
+                    }
+                    Toggle(
+                        title = stringResource(R.string.setting_smooth_cleanup),
+                        body = stringResource(R.string.setting_smooth_cleanup_body),
+                        checked = canManage,
+                        // Only the system can grant or take back this access, so open its page either way.
+                        onChange = {
+                            try {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA, Uri.fromParts("package", context.packageName, null)),
+                                )
+                            } catch (_: ActivityNotFoundException) {
+                                // Some trimmed-down Android builds don't have this screen.
+                            }
+                        },
+                    )
+                }
                 Hairline()
                 Toggle(
                     title = stringResource(R.string.setting_autoplay),
@@ -273,3 +302,7 @@ private fun InfoRow(title: String, body: String) {
         Text(body, style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
     }
 }
+
+/** True when the user has given Sweepy "Media management" access, so trashing needs no confirmation. */
+private fun canManageMedia(context: Context): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && runCatching { MediaStore.canManageMedia(context) }.getOrDefault(false)

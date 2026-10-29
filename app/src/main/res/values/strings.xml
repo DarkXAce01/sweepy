@@ -191,6 +191,8 @@
     <string name="setting_left_handed_body">Swipe left to keep and right to delete.</string>
     <string name="setting_haptics">Haptics</string>
     <string name="setting_haptics_body">A small buzz when a swipe will count.</string>
+    <string name="setting_smooth_cleanup">Skip the trash confirmation</string>
+    <string name="setting_smooth_cleanup_body">Opens Android\'s \u201cMedia management\u201d setting. When it\'s on, files move to the trash without asking every time. They still stay in the trash for 30 days.</string>
     <string name="setting_autoplay">Play videos on the card</string>
     <string name="setting_autoplay_body">Muted and looping, so you can tell what each video is.</string>
     <string name="setting_forget_kept">Forget kept photos</string>
