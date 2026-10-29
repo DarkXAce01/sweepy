@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -16,15 +18,37 @@ android {
         minSdk = 30
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0-beta.1"
+    }
+
+    // Release signing reads keystore.properties at the project root (never committed). Without it,
+    // release builds are simply unsigned, so anyone can still build from source.
+    val keystoreFile = rootProject.file("keystore.properties")
+    val releaseSigning = if (keystoreFile.exists()) {
+        val keys = Properties().apply { keystoreFile.inputStream().use(::load) }
+        signingConfigs.create("release") {
+            storeFile = file(keys.getProperty("storeFile"))
+            storePassword = keys.getProperty("storePassword")
+            keyAlias = keys.getProperty("keyAlias")
+            keyPassword = keys.getProperty("keyPassword")
+        }
+    } else {
+        null
     }
 
     // "play" = Google Play build, "foss" = F-Droid build (only open-source dependencies).
     // Identical for now; play will later add ML Kit for the smart decks.
     flavorDimensions += "distribution"
     productFlavors {
-        create("play") { dimension = "distribution" }
-        create("foss") { dimension = "distribution" }
+        create("play") {
+            dimension = "distribution"
+            // The Play build doesn't advertise where the source lives.
+            buildConfigField("boolean", "SHOW_SOURCE_LINK", "false")
+        }
+        create("foss") {
+            dimension = "distribution"
+            buildConfigField("boolean", "SHOW_SOURCE_LINK", "true")
+        }
     }
 
     buildTypes {
@@ -32,6 +56,7 @@ android {
             applicationIdSuffix = ".debug"
         }
         release {
+            signingConfig = releaseSigning
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -45,6 +70,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {

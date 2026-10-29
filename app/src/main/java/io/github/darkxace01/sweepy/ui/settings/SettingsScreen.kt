@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import io.github.darkxace01.sweepy.BuildConfig
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.Appearance
@@ -191,19 +192,21 @@ fun SettingsScreen(
                 )
 
                 Section(4, stringResource(R.string.settings_section_about))
-                ActionRow(
-                    title = stringResource(R.string.setting_source),
-                    body = SOURCE_URL.removePrefix("https://"),
-                    trailing = "↗",
-                    onClick = {
-                        try {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, SOURCE_URL.toUri()))
-                        } catch (_: ActivityNotFoundException) {
-                            // No browser installed.
-                        }
-                    },
-                )
-                Hairline()
+                if (BuildConfig.SHOW_SOURCE_LINK) {
+                    ActionRow(
+                        title = stringResource(R.string.setting_source),
+                        body = SOURCE_URL.removePrefix("https://"),
+                        trailing = "↗",
+                        onClick = {
+                            try {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, SOURCE_URL.toUri()))
+                            } catch (_: ActivityNotFoundException) {
+                                // No browser installed.
+                            }
+                        },
+                    )
+                    Hairline()
+                }
                 InfoRow(stringResource(R.string.setting_privacy), stringResource(R.string.setting_privacy_body))
                 Hairline()
                 InfoRow(stringResource(R.string.setting_licenses), stringResource(R.string.setting_licenses_body))
