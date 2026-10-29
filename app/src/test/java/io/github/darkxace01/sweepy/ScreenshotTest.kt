@@ -217,6 +217,10 @@ class ScreenshotTest {
 
     @Test fun review_light() = capture("review_light") { Review() }
 
+    @Test fun review_circled() = capture("review_circled") { Review(circled = setOf(1L, 4L)) }
+
+    @Test fun pop_review_circled() = capture("pop_review_circled", theme = ThemeChoice.POP) { Review(circled = setOf(2L)) }
+
     @Test fun review_dark() = capture("review_dark", dark = true) { Review() }
 
     @Test fun trash_light() = capture("trash_light") {
@@ -286,7 +290,7 @@ class ScreenshotTest {
     }
 
     @Composable
-    private fun Review() {
+    private fun Review(circled: Set<Long> = emptySet()) {
         ReviewScreen(
             state = ReviewUiState(
                 groups = listOf(
@@ -296,7 +300,7 @@ class ScreenshotTest {
                 count = 12,
                 bytes = 48_000_000,
             ),
-            onBack = {}, onUnmark = {}, onUnmarkAll = {}, onCommit = {},
+            onBack = {}, onKeep = {}, onUnmarkAll = {}, onCommit = {}, initiallyCircled = circled,
         )
     }
 

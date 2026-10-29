@@ -223,7 +223,7 @@ fun SweepyApp() {
                         ReviewScreen(
                             state = state,
                             onBack = ::back,
-                            onUnmark = viewModel::unmark,
+                            onKeep = viewModel::unmarkAll,
                             onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
                             onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
                         )

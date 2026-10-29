@@ -136,10 +136,15 @@
     <string name="review_eyebrow">Nothing deleted yet</string>
     <string name="review_empty_title">Your review bin is empty</string>
     <string name="review_empty_body">Swipe left on photos you don\'t need. They\'ll wait here until you\'re ready.</string>
-    <string name="review_unmark">Keep this one</string>
+    <string name="review_unmark">Circle to keep</string>
+    <plurals name="review_keep_circled">
+        <item quantity="one">Keep %1$s</item>
+        <item quantity="other">Keep %1$s</item>
+    </plurals>
+    <string name="review_keep_note">Circled prints leave the bin. Tap a print again to uncircle it.</string>
     <plurals name="review_summary">
-        <item quantity="one">across %1$s print. Tap it to keep it.</item>
-        <item quantity="other">across %1$s prints. Tap one to keep it.</item>
+        <item quantity="one">across %1$s print. Tap it to circle it if you\'d rather keep it.</item>
+        <item quantity="other">across %1$s prints. Tap any you\'d rather keep to circle them.</item>
     </plurals>
     <plurals name="review_commit">
         <item quantity="one">Move %1$s item to trash</item>

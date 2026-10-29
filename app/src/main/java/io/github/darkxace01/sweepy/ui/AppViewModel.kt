@@ -275,10 +275,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- Review bin ----------------------------------------------------------------------------
 
-    fun unmark(item: MediaItem) {
-        store.put(listOf(item), Decision.KEEP)
-    }
-
     fun unmarkAll(items: List<MediaItem>) {
         if (items.isEmpty()) return
         val at = store.put(items, Decision.KEEP)
