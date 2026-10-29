@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.Decision
+import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.DeckUiState
@@ -104,6 +105,7 @@ fun DeckScreen(
     onUndo: () -> Decision?,
     onOpenReview: () -> Unit,
     onDismissHint: () -> Unit,
+    onFilterChange: (DeckFilter) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -112,6 +114,7 @@ fun DeckScreen(
     // Set by undo: the next card to appear flies in from the side it was swiped to.
     var enterFrom by remember { mutableStateOf<SwipeDirection?>(null) }
     var infoItem by remember { mutableStateOf<MediaItem?>(null) }
+    var showFilter by remember { mutableStateOf(false) }
 
     val mirrored = LocalAppSettings.current.leftHanded
     val cardState = remember(current?.id, mirrored) {
@@ -151,7 +154,9 @@ fun DeckScreen(
                     else -> stringResource(R.string.left_and_size, formatCount(state.deck.size), formatSize(context, state.remainingBytes))
                 },
                 markedCount = state.markedCount,
+                filterActive = state.isFiltered,
                 onBack = onBack,
+                onOpenFilter = { showFilter = true },
                 onOpenReview = onOpenReview,
             )
             if (source != DeckSource.Later) {
@@ -185,7 +190,7 @@ fun DeckScreen(
             ) {
                 when {
                     state.loading -> CircularProgressIndicator(color = Sweepy.colors.ink, strokeWidth = 1.5.dp, modifier = Modifier.size(28.dp))
-                    current == null -> DoneState(source, state, onOpenReview, onBack)
+                    current == null -> DoneState(source, state, onOpenReview, onBack, onShowAll = { onFilterChange(state.defaultFilter) })
                     else -> {
                         // Prints underneath, drawn back to front. They straighten up and come forward
                         // as the top one is dragged away.
@@ -240,6 +245,7 @@ fun DeckScreen(
     }
 
     infoItem?.let { item -> InfoSheet(item = item, onDismiss = { infoItem = null }) }
+    if (showFilter) FilterSheet(state, onFilterChange, onDismiss = { showFilter = false })
 }
 
 @Composable
@@ -247,7 +253,9 @@ private fun TopBar(
     title: String,
     eyebrow: String,
     markedCount: Int,
+    filterActive: Boolean,
     onBack: () -> Unit,
+    onOpenFilter: () -> Unit,
     onOpenReview: () -> Unit,
 ) {
     Row(
@@ -267,6 +275,8 @@ private fun TopBar(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        FilterButton(filterActive, onOpenFilter)
+        Spacer(Modifier.width(8.dp))
         BinChip(markedCount, onOpenReview)
     }
 }
@@ -444,7 +454,7 @@ private fun HintLabel(direction: SwipeDirection, arrow: String, modifier: Modifi
 }
 
 @Composable
-private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -> Unit, onBack: () -> Unit) {
+private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -> Unit, onBack: () -> Unit, onShowAll: () -> Unit) {
     val context = LocalContext.current
     val inspection = LocalInspectionMode.current
     val draw = remember { Animatable(if (inspection) 1f else 0f) }
@@ -469,7 +479,9 @@ private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -
         }
         Spacer(Modifier.height(12.dp))
         Text(
-            text = if (source == DeckSource.Later) {
+            text = if (state.hiddenCount > 0) {
+                pluralStringResource(R.plurals.done_body_filtered, state.hiddenCount, formatCount(state.hiddenCount))
+            } else if (source == DeckSource.Later) {
                 stringResource(R.string.done_body_later)
             } else {
                 pluralStringResource(R.plurals.done_body, state.totalCount, formatCount(state.totalCount))
@@ -480,6 +492,10 @@ private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -
             modifier = Modifier.padding(horizontal = 12.dp),
         )
         Spacer(Modifier.height(32.dp))
+        if (state.hiddenCount > 0) {
+            InkButton(text = stringResource(R.string.filter_show_all), onClick = onShowAll, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(10.dp))
+        }
         if (state.markedCount > 0) {
             InkButton(
                 text = pluralStringResource(R.plurals.done_review, state.markedCount, formatCount(state.markedCount)),

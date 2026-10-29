@@ -8,6 +8,7 @@ import io.github.darkxace01.sweepy.SweepyApplication
 import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.CleanStats
 import io.github.darkxace01.sweepy.data.Decision
+import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.TrashedItem
@@ -195,27 +196,37 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     private val decks = HashMap<DeckSource, StateFlow<DeckUiState>>()
 
+    /** Per-deck "show" and "order" choices. Kept while the app is open; each visit starts where you left it. */
+    private val filters = MutableStateFlow<Map<DeckSource, DeckFilter>>(emptyMap())
+
     fun deck(source: DeckSource): StateFlow<DeckUiState> = decks.getOrPut(source) {
-        combine(media, store.state, history) { media, decisions, history ->
+        combine(media, store.state, history, filters) { media, decisions, history, filters ->
             if (media == null || decisions == null) return@combine DeckUiState()
+            val filter = filters[source] ?: DeckFilter.defaultFor(source)
             val inSource = media.filter(source::matches)
-            var deck = if (source == DeckSource.Later) {
+            val waiting = if (source == DeckSource.Later) {
                 inSource.filter { decisions.decisionFor(it) == Decision.LATER }
             } else {
                 inSource.filter { decisions.decisionFor(it) == null }
             }
-            if (source.sortBySize) deck = deck.sortedByDescending { it.sizeBytes }
+            val deck = filter.sort(waiting.filter(filter::matches))
             val marked = media.filter { decisions.decisionFor(it) == Decision.DELETE }
             DeckUiState(
                 loading = false,
                 deck = deck,
-                totalCount = if (source == DeckSource.Later) deck.size else inSource.size,
+                totalCount = if (source == DeckSource.Later) deck.size else inSource.count(filter::matches),
                 markedCount = marked.size,
                 markedBytes = marked.sumOf { it.sizeBytes },
                 canUndo = history.any { it.source == source },
+                filter = filter,
+                defaultFilter = DeckFilter.defaultFor(source),
+                waitingPhotos = waiting.count { !it.isVideo },
+                waitingVideos = waiting.count { it.isVideo },
             )
         }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DeckUiState())
     }
+
+    fun setFilter(source: DeckSource, filter: DeckFilter) = filters.update { it + (source to filter) }
 
     fun decide(source: DeckSource, item: MediaItem, decision: Decision) {
         val previous = store.state.value?.get(item.id)

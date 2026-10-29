@@ -47,6 +47,7 @@ import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Hairline
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.ScreenTopBar
+import io.github.darkxace01.sweepy.ui.components.Segment
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
@@ -206,26 +207,6 @@ private fun Section(number: Int, title: String) {
     Row(Modifier.padding(top = 30.dp, bottom = 10.dp)) {
         Eyebrow(String.format(Locale.ROOT, "%02d", number), color = Sweepy.colors.pencil)
         Eyebrow(" — $title", color = Sweepy.colors.ink)
-    }
-}
-
-@Composable
-private fun Segment(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(12.dp)
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .height(48.dp)
-            .clip(shape)
-            .background(if (selected) Sweepy.colors.ink else Color.Transparent)
-            .border(1.dp, if (selected) Sweepy.colors.ink else Sweepy.colors.hairline, shape)
-            .pressable(onClick, role = Role.RadioButton),
-    ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (selected) Sweepy.colors.paper else Sweepy.colors.ink,
-        )
     }
 }
 

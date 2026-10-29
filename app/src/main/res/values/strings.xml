@@ -82,6 +82,23 @@
     <string name="hint_title">Swipe to sort</string>
     <string name="hint_body">Nothing is deleted yet: swiped photos wait in the review bin. Tap to start.</string>
     <string name="done_title">That\'s a wrap.</string>
+    <plurals name="done_body_filtered">
+        <item quantity="one">That\'s everything this filter shows. %1$s more is waiting outside it.</item>
+        <item quantity="other">That\'s everything this filter shows. %1$s more are waiting outside it.</item>
+    </plurals>
+    <string name="filter_show_all">Show everything</string>
+    <string name="filter_title">Sort &amp; show</string>
+    <string name="filter_eyebrow">This deck only</string>
+    <string name="filter_show">Show</string>
+    <string name="filter_kind_all">All</string>
+    <string name="filter_kind_photos">Photos %1$s</string>
+    <string name="filter_kind_videos">Videos %1$s</string>
+    <string name="filter_order">Order</string>
+    <string name="filter_order_newest">Newest</string>
+    <string name="filter_order_oldest">Oldest</string>
+    <string name="filter_order_largest">Largest</string>
+    <string name="filter_reset">Reset</string>
+    <string name="filter_done">Done</string>
     <plurals name="done_body">
         <item quantity="one">You\'ve been through the only item in this deck.</item>
         <item quantity="other">You\'ve been through all %1$s items in this deck.</item>

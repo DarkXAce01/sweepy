@@ -8,11 +8,14 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onSizeChanged
@@ -26,7 +29,12 @@ import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
 import com.github.takahirom.roborazzi.captureRoboImage
 import io.github.darkxace01.sweepy.data.CleanStats
+import io.github.darkxace01.sweepy.data.DeckFilter
+import io.github.darkxace01.sweepy.data.DeckOrder
 import io.github.darkxace01.sweepy.data.DeckSource
+import io.github.darkxace01.sweepy.data.MediaKind
+import io.github.darkxace01.sweepy.ui.deck.FilterSheetContent
+import io.github.darkxace01.sweepy.ui.theme.Sweepy
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.TrashedItem
 import io.github.darkxace01.sweepy.ui.DeckSummary
@@ -139,6 +147,28 @@ class ScreenshotTest {
             state = DeckUiState(loading = false, deck = emptyList(), totalCount = 214, markedCount = 38, markedBytes = 96_000_000),
             showHint = false, onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
         )
+    }
+
+    @Test fun deck_filtered_done() = capture("deck_filtered_done", dark = true) {
+        DeckScreen(
+            source = DeckSource.All,
+            state = DeckUiState(
+                loading = false, deck = emptyList(), totalCount = 412, markedCount = 12, markedBytes = 640_000_000,
+                filter = DeckFilter(MediaKind.VIDEOS, DeckOrder.LARGEST), waitingPhotos = 2_318,
+            ),
+            showHint = false, onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
+        )
+    }
+
+    @Test fun filter_sheet() = capture("filter_sheet") {
+        Box(Modifier.fillMaxSize().background(Sweepy.colors.paper), contentAlignment = Alignment.BottomCenter) {
+            Box(Modifier.fillMaxWidth().background(Sweepy.colors.surface).padding(top = 24.dp)) {
+                FilterSheetContent(
+                    DeckUiState(loading = false, deck = library, filter = DeckFilter(MediaKind.PHOTOS, DeckOrder.OLDEST), waitingPhotos = 2_318, waitingVideos = 412),
+                    onChange = {}, onDone = {},
+                )
+            }
+        }
     }
 
     @Test fun swipe_left() = captureDrag("swipe_left", Offset(-330f, 30f))

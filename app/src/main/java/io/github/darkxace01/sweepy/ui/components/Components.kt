@@ -280,6 +280,27 @@ fun OutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
 }
 
 /** A plain icon button with a generous touch target and no background. */
+/** One choice in a row of mutually exclusive options; the chosen one is inked in. */
+@Composable
+fun Segment(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .height(48.dp)
+            .clip(shape)
+            .background(if (selected) Sweepy.colors.ink else Color.Transparent)
+            .border(1.dp, if (selected) Sweepy.colors.ink else Sweepy.colors.hairline, shape)
+            .pressable(onClick, role = Role.RadioButton),
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) Sweepy.colors.paper else Sweepy.colors.ink,
+        )
+    }
+}
+
 @Composable
 fun QuietIconButton(
     contentDescription: String,

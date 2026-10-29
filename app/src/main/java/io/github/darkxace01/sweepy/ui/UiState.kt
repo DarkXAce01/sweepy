@@ -1,8 +1,10 @@
 package io.github.darkxace01.sweepy.ui
 
 import io.github.darkxace01.sweepy.data.CleanStats
+import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
+import io.github.darkxace01.sweepy.data.MediaKind
 import io.github.darkxace01.sweepy.data.TrashedItem
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.KeepReason
@@ -50,8 +52,20 @@ data class DeckUiState(
     val markedCount: Int = 0,
     val markedBytes: Long = 0,
     val canUndo: Boolean = false,
+    val filter: DeckFilter = DeckFilter(),
+    val defaultFilter: DeckFilter = DeckFilter(),
+    /** Undecided photos and videos in this deck, before [filter] narrows them. */
+    val waitingPhotos: Int = 0,
+    val waitingVideos: Int = 0,
 ) {
     val current: MediaItem? get() = deck.firstOrNull()
+    val isFiltered: Boolean get() = filter != defaultFilter
+
+    /** Files still waiting that the current filter hides. */
+    val hiddenCount: Int get() = waitingPhotos + waitingVideos - deck.size
+
+    /** Only offer photos/videos when the deck actually has both. */
+    val canFilterKind: Boolean get() = waitingPhotos > 0 && waitingVideos > 0 || filter.kind != MediaKind.ALL
     val remainingBytes: Long get() = deck.sumOf { it.sizeBytes }
     val progress: Float get() = if (totalCount == 0) 1f else (totalCount - deck.size) / totalCount.toFloat()
 }
