@@ -254,7 +254,7 @@ private fun GroupView(group: DuplicateGroupUi, onResolve: (Set<Long>) -> Unit, o
                     text = stringResource(R.string.dup_bin, formatCount(bins.size)),
                     trailing = formatSize(context, bins.sumOf { it.sizeBytes }),
                     color = Sweepy.colors.pencil,
-                    contentColor = Color.White,
+                    contentColor = Sweepy.colors.onPencil,
                     onClick = { onResolve(keep) },
                     modifier = Modifier.weight(1.4f),
                 )

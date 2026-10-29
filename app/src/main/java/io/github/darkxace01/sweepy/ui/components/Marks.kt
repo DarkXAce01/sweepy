@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.darkxace01.sweepy.ui.theme.MarkStyle
+import io.github.darkxace01.sweepy.ui.theme.Sweepy
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -103,32 +105,40 @@ private fun handStar(s: Size): Path = Path().apply {
 }
 
 /**
- * Draws [mark] in grease pencil, revealed up to [progress] (0..1), so it can follow a finger.
- * [strokeWidth] is a fraction of the mark's size.
+ * Draws [mark] in the active theme's hand (grease pencil, two-ink riso, or glowing line),
+ * revealed up to [progress] (0..1), so it can follow a finger. [strokeWidth] is a fraction of the mark's size.
  */
+@Composable
 fun Modifier.pencilMark(
     mark: Mark,
     color: Color,
     progress: () -> Float,
     strokeWidth: Float = 0.055f,
-): Modifier = drawWithCache {
-    val strokes = strokesFor(mark).map { it to it.points(size) }
-    val measure = PathMeasure()
-    val segment = Path()
-    val width = min(size.width, size.height) * strokeWidth
-    onDrawWithContent {
-        drawContent()
-        drawPencil(strokes, measure, segment, progress(), color, width)
+): Modifier {
+    val look = Sweepy.look
+    val style = look.markStyle
+    val secondInk = look.secondInk
+    return drawWithCache {
+        val strokes = strokesFor(mark).map { it to it.points(size) }
+        val measure = PathMeasure()
+        val segment = Path()
+        val width = min(size.width, size.height) * strokeWidth
+        onDrawWithContent {
+            drawContent()
+            drawMark(strokes, measure, segment, progress(), color, width, style, secondInk)
+        }
     }
 }
 
-private fun DrawScope.drawPencil(
+private fun DrawScope.drawMark(
     strokes: List<Pair<PencilStroke, Path>>,
     measure: PathMeasure,
     segment: Path,
     progress: Float,
     color: Color,
     width: Float,
+    style: MarkStyle,
+    secondInk: Color,
 ) {
     if (progress <= 0f) return
     for ((stroke, path) in strokes) {
@@ -137,10 +147,24 @@ private fun DrawScope.drawPencil(
         measure.setPath(path, false)
         segment.reset()
         measure.getSegment(0f, measure.length * local, segment, true)
-        // A main stroke plus a faint offset one gives the waxy, uneven edge of a china marker.
-        drawPath(segment, color.copy(alpha = color.alpha * 0.92f), style = Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round))
-        translate(width * 0.18f, -width * 0.12f) {
-            drawPath(segment, color.copy(alpha = color.alpha * 0.35f), style = Stroke(width * 0.55f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        fun line(c: Color, w: Float) = drawPath(segment, c, style = Stroke(w, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        when (style) {
+            // A main stroke plus a faint offset one gives the waxy, uneven edge of a china marker.
+            MarkStyle.PENCIL -> {
+                line(color.copy(alpha = color.alpha * 0.92f), width)
+                translate(width * 0.18f, -width * 0.12f) { line(color.copy(alpha = color.alpha * 0.35f), width * 0.55f) }
+            }
+            // The second ink lands a little off, as on a real risograph.
+            MarkStyle.RISO -> {
+                translate(width * 0.42f, width * 0.32f) { line(secondInk.copy(alpha = color.alpha * 0.7f), width * 0.92f) }
+                line(color.copy(alpha = color.alpha * 0.92f), width)
+            }
+            // A soft halo around a thin bright core.
+            MarkStyle.GLOW -> {
+                line(color.copy(alpha = color.alpha * 0.12f), width * 2.8f)
+                line(color.copy(alpha = color.alpha * 0.3f), width * 1.6f)
+                line(color, width * 0.7f)
+            }
         }
     }
 }

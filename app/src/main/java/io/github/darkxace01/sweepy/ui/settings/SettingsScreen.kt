@@ -9,11 +9,13 @@ import android.provider.MediaStore
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +32,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +45,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -49,14 +54,20 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.Appearance
+import io.github.darkxace01.sweepy.data.ThemeChoice
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Hairline
+import io.github.darkxace01.sweepy.ui.components.Mark
+import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.ScreenTopBar
 import io.github.darkxace01.sweepy.ui.components.Segment
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pressable
+import io.github.darkxace01.sweepy.ui.theme.LocalSweepyLook
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.lookFor
+import io.github.darkxace01.sweepy.ui.theme.typographyFor
 import java.util.Locale
 
 private const val SOURCE_URL = "https://github.com/DarkXAce01/sweepy"
@@ -92,21 +103,48 @@ fun SettingsScreen(
                     .padding(start = 22.dp, end = 22.dp, bottom = 40.dp),
             ) {
                 Section(1, stringResource(R.string.settings_section_look))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (option in Appearance.entries) {
-                        Segment(
-                            text = stringResource(
-                                when (option) {
-                                    Appearance.SYSTEM -> R.string.appearance_system
-                                    Appearance.LIGHT -> R.string.appearance_light
-                                    Appearance.DARK -> R.string.appearance_dark
-                                },
-                            ),
-                            selected = settings.appearance == option,
-                            onClick = { onChange { it.copy(appearance = option) } },
+                val systemDark = isSystemInDarkTheme()
+                val dark = when (settings.appearance) {
+                    Appearance.SYSTEM -> systemDark
+                    Appearance.LIGHT -> false
+                    Appearance.DARK -> true
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    for (theme in ThemeChoice.entries) {
+                        ThemeCard(
+                            theme = theme,
+                            dark = dark,
+                            selected = settings.theme == theme,
+                            onClick = { onChange { it.copy(theme = theme) } },
                             modifier = Modifier.weight(1f),
                         )
                     }
+                }
+                Spacer(Modifier.height(16.dp))
+                if (settings.theme.hasLightAndDark) {
+                    val riso = settings.theme == ThemeChoice.RISO
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (option in Appearance.entries) {
+                            Segment(
+                                text = stringResource(
+                                    when (option) {
+                                        Appearance.SYSTEM -> R.string.appearance_system
+                                        Appearance.LIGHT -> if (riso) R.string.appearance_light_riso else R.string.appearance_light
+                                        Appearance.DARK -> if (riso) R.string.appearance_dark_riso else R.string.appearance_dark
+                                    },
+                                ),
+                                selected = settings.appearance == option,
+                                onClick = { onChange { it.copy(appearance = option) } },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        stringResource(R.string.theme_phosphor_dark_only),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Sweepy.colors.inkMuted,
+                    )
                 }
 
                 Section(2, stringResource(R.string.settings_section_swiping))
@@ -236,6 +274,58 @@ private fun Section(number: Int, title: String) {
     Row(Modifier.padding(top = 30.dp, bottom = 10.dp)) {
         Eyebrow(String.format(Locale.ROOT, "%02d", number), color = Sweepy.colors.pencil)
         Eyebrow(" — $title", color = Sweepy.colors.ink)
+    }
+}
+
+/**
+ * A small sample of [theme], drawn in that theme itself: its paper, its headline type and its
+ * marks. Tapping it switches the whole app.
+ */
+@Composable
+private fun ThemeCard(theme: ThemeChoice, dark: Boolean, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val name = stringResource(
+        when (theme) {
+            ThemeChoice.CONTACT_SHEET -> R.string.theme_contact_sheet
+            ThemeChoice.RISO -> R.string.theme_riso
+            ThemeChoice.PHOSPHOR -> R.string.theme_phosphor
+        },
+    )
+    val shape = RoundedCornerShape(14.dp)
+    Column(
+        modifier
+            .pressable(onClick, pressedScale = 0.96f, role = Role.RadioButton)
+            .semantics { this.selected = selected },
+    ) {
+        val look = lookFor(theme, dark)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(0.82f)
+                .clip(shape)
+                .border(if (selected) 2.dp else 1.dp, if (selected) Sweepy.colors.ink else Sweepy.colors.hairline, shape),
+        ) {
+            CompositionLocalProvider(LocalSweepyLook provides look) {
+                MaterialTheme(typography = typographyFor(theme, look)) {
+                    Paper {
+                        Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                            Text("Aa", style = MaterialTheme.typography.headlineLarge, color = look.colors.ink)
+                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                MarkIcon(Mark.CROSS, look.colors.pencil, size = 20.dp, strokeWidth = 0.12f)
+                                MarkIcon(Mark.CIRCLE, look.colors.keep, size = 20.dp, strokeWidth = 0.1f)
+                                MarkIcon(Mark.STAR, look.colors.favorite, size = 20.dp, strokeWidth = 0.1f)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Text(
+            name,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) Sweepy.colors.ink else Sweepy.colors.inkMuted,
+            maxLines = 1,
+            modifier = Modifier.padding(top = 8.dp, start = 2.dp),
+        )
     }
 }
 

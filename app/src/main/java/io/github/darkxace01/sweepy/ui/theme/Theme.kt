@@ -10,13 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import io.github.darkxace01.sweepy.data.ThemeChoice
 
 /**
- * Sweepy's look is a photographer's contact sheet: warm paper, ink, and a red grease pencil.
- * Photos supply the color; the interface stays quiet.
+ * The colors of one theme. Every theme keeps the same roles, so screens never need to know
+ * which one is active: photos supply the color, the interface stays quiet.
  */
 @Immutable
 data class SweepyColors(
@@ -34,6 +36,8 @@ data class SweepyColors(
     val hairline: Color,
     /** Grease-pencil red: delete marks and destructive actions. */
     val pencil: Color,
+    /** Text on a [pencil] button. */
+    val onPencil: Color,
     val keep: Color,
     val later: Color,
     val favorite: Color,
@@ -48,6 +52,7 @@ private val Paper = SweepyColors(
     inkMuted = Color(0xFF746E63),
     hairline = Color(0xFFDDD7CB),
     pencil = Color(0xFFD4432A),
+    onPencil = Color.White,
     keep = Color(0xFF4F7F5A),
     later = Color(0xFFB98322),
     favorite = Color(0xFFBF4F72),
@@ -62,18 +67,104 @@ private val Darkroom = SweepyColors(
     inkMuted = Color(0xFF9A9488),
     hairline = Color(0xFF2E2B27),
     pencil = Color(0xFFE5553A),
+    onPencil = Color.White,
     keep = Color(0xFF7DB287),
     later = Color(0xFFD9A441),
     favorite = Color(0xFFDB7193),
     isDark = true,
 )
 
-val LocalSweepyColors = staticCompositionLocalOf { Paper }
+// Riso: a zine printed on a risograph. Cream newsprint, deep blue ink, fluorescent pink.
+private val RisoCream = SweepyColors(
+    paper = Color(0xFFF3EDDD),
+    surface = Color(0xFFF9F4E7),
+    print = Color(0xFFFFFCF4),
+    ink = Color(0xFF1F2C74),
+    inkMuted = Color(0xFF666A93),
+    hairline = Color(0xFFE0D6BF),
+    pencil = Color(0xFFF2369E),
+    onPencil = Color(0xFF1F2C74),
+    keep = Color(0xFF00955A),
+    later = Color(0xFFE08A00),
+    favorite = Color(0xFF7457B5),
+    isDark = false,
+)
+
+private val RisoMidnight = SweepyColors(
+    paper = Color(0xFF161A38),
+    surface = Color(0xFF1E2247),
+    print = Color(0xFF262B55),
+    ink = Color(0xFFF6EEDB),
+    inkMuted = Color(0xFFA3A6C9),
+    hairline = Color(0xFF323866),
+    pencil = Color(0xFFFF59B6),
+    onPencil = Color(0xFF161A38),
+    keep = Color(0xFF39D38B),
+    later = Color(0xFFFFD047),
+    favorite = Color(0xFFB59BFF),
+    isDark = true,
+)
+
+// Phosphor: a green-screen terminal on an AMOLED black. Always dark.
+private val PhosphorGreen = SweepyColors(
+    paper = Color(0xFF000000),
+    surface = Color(0xFF050D08),
+    print = Color(0xFF09140D),
+    ink = Color(0xFFB4FFC6),
+    inkMuted = Color(0xFF5E9470),
+    hairline = Color(0xFF173322),
+    pencil = Color(0xFFFF6A55),
+    onPencil = Color(0xFF000000),
+    keep = Color(0xFF6CFF94),
+    later = Color(0xFFFFC452),
+    favorite = Color(0xFFFF8AD6),
+    isDark = true,
+)
+
+/** What the page is printed on. */
+enum class Texture { GRAIN, HALFTONE, SCANLINES }
+
+/** How grease-pencil marks are drawn. */
+enum class MarkStyle {
+    /** A waxy china marker. */
+    PENCIL,
+
+    /** Two inks printed slightly out of register. */
+    RISO,
+
+    /** A glowing vector line, like an old radar screen. */
+    GLOW,
+}
+
+/** Everything a theme decides. */
+@Immutable
+data class SweepyLook(
+    val colors: SweepyColors,
+    val texture: Texture,
+    val markStyle: MarkStyle,
+    /** Riso's second ink, printed under marks and headlines a little out of register. */
+    val secondInk: Color = Color.Transparent,
+)
+
+val LocalSweepyLook = staticCompositionLocalOf { SweepyLook(Paper, Texture.GRAIN, MarkStyle.PENCIL) }
 
 /** Shorthand: `Sweepy.colors.ink`. */
 object Sweepy {
     val colors: SweepyColors
-        @Composable @ReadOnlyComposable get() = LocalSweepyColors.current
+        @Composable @ReadOnlyComposable get() = LocalSweepyLook.current.colors
+
+    val look: SweepyLook
+        @Composable @ReadOnlyComposable get() = LocalSweepyLook.current
+}
+
+/** The look for [theme], light or dark. Phosphor ignores [dark]: it only exists in the dark. */
+fun lookFor(theme: ThemeChoice, dark: Boolean): SweepyLook = when (theme) {
+    ThemeChoice.CONTACT_SHEET -> SweepyLook(if (dark) Darkroom else Paper, Texture.GRAIN, MarkStyle.PENCIL)
+    ThemeChoice.RISO -> {
+        val colors = if (dark) RisoMidnight else RisoCream
+        SweepyLook(colors, Texture.HALFTONE, MarkStyle.RISO, secondInk = if (dark) Color(0xFF3D7BFF) else Color(0xFF3F8FE0))
+    }
+    ThemeChoice.PHOSPHOR -> SweepyLook(PhosphorGreen, Texture.SCANLINES, MarkStyle.GLOW)
 }
 
 private fun materialColors(c: SweepyColors) = if (c.isDark) {
@@ -114,14 +205,19 @@ private val SweepyShapes = Shapes(
     extraLarge = RoundedCornerShape(24.dp),
 )
 
-/** Follows the system light/dark setting. */
+/** Follows the system light/dark setting unless told otherwise. */
 @Composable
-fun SweepyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val colors = if (darkTheme) Darkroom else Paper
-    CompositionLocalProvider(LocalSweepyColors provides colors) {
+fun SweepyTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    theme: ThemeChoice = ThemeChoice.CONTACT_SHEET,
+    content: @Composable () -> Unit,
+) {
+    val look = lookFor(theme, darkTheme)
+    val colors = look.colors
+    CompositionLocalProvider(LocalSweepyLook provides look) {
         MaterialTheme(
             colorScheme = materialColors(colors),
-            typography = SweepyTypography,
+            typography = remember(look) { typographyFor(theme, look) },
             shapes = SweepyShapes,
             content = content,
         )

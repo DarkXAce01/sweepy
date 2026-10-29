@@ -47,6 +47,9 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import io.github.darkxace01.sweepy.ui.theme.Texture
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
@@ -99,14 +102,47 @@ fun Modifier.grain(strength: Float = 0.55f): Modifier = drawWithCache {
     onDrawBehind { drawRect(brush, alpha = strength) }
 }
 
-/** The page every screen sits on: paper (or darkroom) with grain. */
+/** Halftone screen: a dot every 16 px on a 45° grid, the way a risograph lays down tone. */
+private val halftoneBitmap: ImageBitmap by lazy {
+    val n = 16
+    val centers = listOf(0f to 0f, 8f to 8f, 16f to 0f, 0f to 16f, 16f to 16f)
+    val pixels = IntArray(n * n) { i ->
+        val x = i % n + 0.5f
+        val y = i / n + 0.5f
+        val d = centers.minOf { (cx, cy) -> kotlin.math.hypot(x - cx, y - cy) }
+        val alpha = ((2.4f - d).coerceIn(0f, 1f) * 255).toInt()
+        (alpha shl 24) or 0xFFFFFF
+    }
+    Bitmap.createBitmap(pixels, n, n, Bitmap.Config.ARGB_8888).asImageBitmap()
+}
+
+/** One lit row in four: the raster lines of an old monitor. */
+private val scanlineBitmap: ImageBitmap by lazy {
+    val pixels = intArrayOf(0xFFFFFFFF.toInt(), 0, 0, 0)
+    Bitmap.createBitmap(pixels, 1, 4, Bitmap.Config.ARGB_8888).asImageBitmap()
+}
+
+/** Tiles a white [pattern] across the element, tinted with [color]. */
+private fun Modifier.pattern(pattern: ImageBitmap, color: Color, alpha: Float): Modifier = drawWithCache {
+    val brush = ShaderBrush(ImageShader(pattern, TileMode.Repeated, TileMode.Repeated))
+    val tint = ColorFilter.tint(color, BlendMode.SrcIn)
+    onDrawBehind { drawRect(brush, alpha = alpha, colorFilter = tint) }
+}
+
+/** The page every screen sits on, with the active theme's texture: film grain, halftone or scanlines. */
 @Composable
 fun Paper(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+    val look = Sweepy.look
+    val texture = when (look.texture) {
+        Texture.GRAIN -> Modifier.grain()
+        Texture.HALFTONE -> Modifier.grain(0.3f).pattern(halftoneBitmap, look.colors.ink, if (look.colors.isDark) 0.07f else 0.05f)
+        Texture.SCANLINES -> Modifier.pattern(scanlineBitmap, look.colors.ink, 0.05f)
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Sweepy.colors.paper)
-            .grain(),
+            .background(look.colors.paper)
+            .then(texture),
         content = content,
     )
 }

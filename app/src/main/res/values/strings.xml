@@ -197,6 +197,12 @@
     <string name="appearance_system">Auto</string>
     <string name="appearance_light">Paper</string>
     <string name="appearance_dark">Darkroom</string>
+    <string name="appearance_light_riso">Cream</string>
+    <string name="appearance_dark_riso">Midnight</string>
+    <string name="theme_contact_sheet">Contact sheet</string>
+    <string name="theme_riso">Riso</string>
+    <string name="theme_phosphor">Phosphor</string>
+    <string name="theme_phosphor_dark_only">Phosphor only comes in the dark: a true-black screen that\'s easy on AMOLED batteries.</string>
     <string name="setting_left_handed">Left-handed</string>
     <string name="setting_left_handed_body">Swipe left to keep and right to delete.</string>
     <string name="setting_haptics">Haptics</string>
@@ -219,7 +225,7 @@
     <string name="setting_privacy">Privacy</string>
     <string name="setting_privacy_body">Sweepy has no internet permission. It can\'t send anything anywhere: no analytics, no ads, no accounts. Your choices are stored only on this phone.</string>
     <string name="setting_licenses">Licenses</string>
-    <string name="setting_licenses_body">Sweepy is free software under the GNU GPL v3. Fonts: Instrument Serif, Geist and Geist Mono, under the SIL Open Font License 1.1.</string>
+    <string name="setting_licenses_body">Sweepy is free software under the GNU GPL v3. Fonts: Instrument Serif, Geist, Geist Mono and Bricolage Grotesque, under the SIL Open Font License 1.1.</string>
     <string name="settings_signoff">Made with care, for free.</string>
     <!-- Duplicates -->
     <string name="deck_duplicates">Duplicates</string>

@@ -52,6 +52,7 @@ import io.github.darkxace01.sweepy.ui.review.ReviewScreen
 import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
 import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.data.AppSettings
+import io.github.darkxace01.sweepy.data.ThemeChoice
 import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
@@ -103,13 +104,33 @@ class ScreenshotTest {
         CompositionLocalProvider(LocalAppSettings provides AppSettings(leftHanded = true)) { Deck(showHint = true) }
     }
 
+    @Test fun riso_home() = capture("riso_home", theme = ThemeChoice.RISO) { Home() }
+
+    @Test fun riso_deck() = capture("riso_deck", theme = ThemeChoice.RISO) { Deck() }
+
+    @Test fun riso_night_deck() = capture("riso_night_deck", dark = true, theme = ThemeChoice.RISO) { Deck() }
+
+    @Test fun riso_done() = capture("riso_done", theme = ThemeChoice.RISO) { DeckDone() }
+
+    @Test fun phosphor_home() = capture("phosphor_home", dark = true, theme = ThemeChoice.PHOSPHOR) { Home() }
+
+    @Test fun phosphor_deck() = capture("phosphor_deck", dark = true, theme = ThemeChoice.PHOSPHOR) { Deck() }
+
+    @Test fun phosphor_review() = capture("phosphor_review", dark = true, theme = ThemeChoice.PHOSPHOR) { Review() }
+
+    @Test fun phosphor_done() = capture("phosphor_done", dark = true, theme = ThemeChoice.PHOSPHOR) { DeckDone() }
+
+    @Test fun settings_riso() = capture("settings_riso", theme = ThemeChoice.RISO) { Settings(ThemeChoice.RISO) }
+
+    @Test fun settings_phosphor() = capture("settings_phosphor", dark = true, theme = ThemeChoice.PHOSPHOR) { Settings(ThemeChoice.PHOSPHOR) }
+
     @Test fun settings_light() = capture("settings_light") { Settings() }
 
     @Test fun settings_dark() = capture("settings_dark", dark = true) { Settings() }
 
     @Composable
-    private fun Settings() = SettingsScreen(
-        settings = AppSettings(leftHanded = true),
+    private fun Settings(theme: ThemeChoice = ThemeChoice.CONTACT_SHEET) = SettingsScreen(
+        settings = AppSettings(theme = theme, leftHanded = true),
         keptCount = 1_204,
         onBack = {},
         onChange = {},
@@ -141,7 +162,10 @@ class ScreenshotTest {
         DuplicatesScreen(DuplicatesUiState(scanning = true, progress = 0.42f), onBack = {}, onResolve = { _, _ -> }, onUndo = {})
     }
 
-    @Test fun deck_done() = capture("deck_done") {
+    @Test fun deck_done() = capture("deck_done") { DeckDone() }
+
+    @Composable
+    private fun DeckDone() {
         DeckScreen(
             source = DeckSource.Screenshots,
             state = DeckUiState(loading = false, deck = emptyList(), totalCount = 214, markedCount = 38, markedBytes = 96_000_000),
@@ -278,7 +302,7 @@ class ScreenshotTest {
     // ---- Rendering --------------------------------------------------------------------------------
 
     @OptIn(ExperimentalCoilApi::class)
-    private fun capture(name: String, dark: Boolean = false, content: @Composable () -> Unit) {
+    private fun capture(name: String, dark: Boolean = false, theme: ThemeChoice = ThemeChoice.CONTACT_SHEET, content: @Composable () -> Unit) {
         captureRoboImage("build/outputs/roborazzi/$name.png") {
             CompositionLocalProvider(
                 LocalInspectionMode provides true,
@@ -287,7 +311,7 @@ class ScreenshotTest {
                     if (id == null) ColorImage(0xFF444444.toInt()) else fakePhoto(id).asImage()
                 },
             ) {
-                SweepyTheme(darkTheme = dark, content = content)
+                SweepyTheme(darkTheme = dark, theme = theme, content = content)
             }
         }
     }

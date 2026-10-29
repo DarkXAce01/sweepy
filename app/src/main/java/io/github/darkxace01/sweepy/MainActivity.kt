@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 Appearance.DARK -> true
             }
             CompositionLocalProvider(LocalAppSettings provides settings) {
-                SweepyTheme(darkTheme = dark) {
+                SweepyTheme(darkTheme = dark, theme = settings.theme) {
                     SweepyApp()
                 }
             }

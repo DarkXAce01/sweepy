@@ -501,7 +501,7 @@ private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -
                 text = pluralStringResource(R.plurals.done_review, state.markedCount, formatCount(state.markedCount)),
                 trailing = formatSize(context, state.markedBytes),
                 color = Sweepy.colors.pencil,
-                contentColor = Color.White,
+                contentColor = Sweepy.colors.onPencil,
                 onClick = onOpenReview,
                 modifier = Modifier.fillMaxWidth(),
             )

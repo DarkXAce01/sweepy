@@ -10,8 +10,20 @@ data class CleanStats(val cleanedCount: Long = 0, val cleanedBytes: Long = 0)
 
 enum class Appearance { SYSTEM, LIGHT, DARK }
 
+/** The app's whole look: colors, type, paper and marks. */
+enum class ThemeChoice {
+    CONTACT_SHEET,
+    RISO,
+    PHOSPHOR,
+    ;
+
+    /** Phosphor is dark only, so light/dark doesn't apply. */
+    val hasLightAndDark: Boolean get() = this != PHOSPHOR
+}
+
 /** User choices from the settings screen. */
 data class AppSettings(
+    val theme: ThemeChoice = ThemeChoice.CONTACT_SHEET,
     val appearance: Appearance = Appearance.SYSTEM,
     /** Swaps the sides: swipe right to delete, left to keep. */
     val leftHanded: Boolean = false,
@@ -33,6 +45,8 @@ class Prefs(context: Context) {
 
     private val _settings = MutableStateFlow(
         AppSettings(
+            theme = prefs.getString(KEY_THEME, null)
+                ?.let { name -> ThemeChoice.entries.firstOrNull { it.name == name } } ?: ThemeChoice.CONTACT_SHEET,
             appearance = prefs.getString(KEY_APPEARANCE, null)
                 ?.let { name -> Appearance.entries.firstOrNull { it.name == name } } ?: Appearance.SYSTEM,
             leftHanded = prefs.getBoolean(KEY_LEFT_HANDED, false),
@@ -46,6 +60,7 @@ class Prefs(context: Context) {
         val updated = transform(_settings.value)
         _settings.value = updated
         prefs.edit {
+            putString(KEY_THEME, updated.theme.name)
             putString(KEY_APPEARANCE, updated.appearance.name)
             putBoolean(KEY_LEFT_HANDED, updated.leftHanded)
             putBoolean(KEY_HAPTICS, updated.haptics)
@@ -72,6 +87,7 @@ class Prefs(context: Context) {
         const val KEY_CLEANED_COUNT = "cleaned_count"
         const val KEY_CLEANED_BYTES = "cleaned_bytes"
         const val KEY_HINT_SEEN = "swipe_hint_seen"
+        const val KEY_THEME = "theme"
         const val KEY_APPEARANCE = "appearance"
         const val KEY_LEFT_HANDED = "left_handed"
         const val KEY_HAPTICS = "haptics"
