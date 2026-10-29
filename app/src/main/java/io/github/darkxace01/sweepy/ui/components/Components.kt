@@ -153,8 +153,8 @@ fun CountUp(
  * so a page settles in from top to bottom instead of popping.
  */
 @Composable
-fun Modifier.reveal(index: Int): Modifier {
-    if (LocalInspectionMode.current) return this
+fun Modifier.reveal(index: Int, enabled: Boolean = true): Modifier {
+    if (!enabled || LocalInspectionMode.current) return this
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         delay(60L * index.coerceAtMost(8))

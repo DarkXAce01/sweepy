@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -106,6 +107,8 @@ fun SweepyApp() {
     }
 
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
+    // Keeps each screen's saved state (scroll position, expanded lists) while it's under another one.
+    val screenStates = rememberSaveableStateHolder()
     var navigatingBack by remember { mutableStateOf(false) }
     fun navigate(screen: Screen) {
         navigatingBack = false
@@ -114,7 +117,7 @@ fun SweepyApp() {
     fun back() {
         if (backStack.size > 1) {
             navigatingBack = true
-            backStack.removeAt(backStack.lastIndex)
+            screenStates.removeState(backStack.removeAt(backStack.lastIndex).toString())
         }
     }
     BackHandler(enabled = backStack.size > 1) { back() }
@@ -156,75 +159,77 @@ fun SweepyApp() {
             },
             label = "navigation",
         ) { screen ->
-            when (screen) {
-                Screen.Home -> {
-                    val state by viewModel.home.collectAsStateWithLifecycle()
-                    HomeScreen(
-                        state = state,
-                        partialAccess = access == MediaAccess.PARTIAL,
-                        onOpenDeck = { navigate(Screen.Deck(it)) },
-                        onOpenReview = { navigate(Screen.Review) },
-                        onOpenTrash = { navigate(Screen.Trash) },
-                        onOpenSettings = { navigate(Screen.Settings) },
-                        onOpenDuplicates = { navigate(Screen.Duplicates) },
-                        onRequestFullAccess = { permissionLauncher.launch(MediaPermissions.requested) },
-                    )
-                }
-                is Screen.Deck -> {
-                    val state by viewModel.deck(screen.source).collectAsStateWithLifecycle()
-                    val hintSeen by viewModel.swipeHintSeen.collectAsStateWithLifecycle()
-                    DeckScreen(
-                        source = screen.source,
-                        state = state,
-                        showHint = !hintSeen,
-                        onBack = ::back,
-                        onDecide = { item, decision -> viewModel.decide(screen.source, item, decision) },
-                        onUndo = { viewModel.undo(screen.source) },
-                        onOpenReview = { navigate(Screen.Review) },
-                        onDismissHint = viewModel::dismissSwipeHint,
-                        onFilterChange = { viewModel.setFilter(screen.source, it) },
-                    )
-                }
-                Screen.Review -> {
-                    val state by viewModel.review.collectAsStateWithLifecycle()
-                    ReviewScreen(
-                        state = state,
-                        onBack = ::back,
-                        onUnmark = viewModel::unmark,
-                        onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
-                        onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
-                    )
-                }
-                Screen.Duplicates -> {
-                    val state by viewModel.duplicates.collectAsStateWithLifecycle()
-                    DuplicatesScreen(
-                        state = state,
-                        onBack = ::back,
-                        onResolve = viewModel::resolveDuplicates,
-                        onUndo = viewModel::undoDuplicates,
-                    )
-                }
-                Screen.Settings -> {
-                    val settings by viewModel.settings.collectAsStateWithLifecycle()
-                    val keptCount by viewModel.keptCount.collectAsStateWithLifecycle()
-                    SettingsScreen(
-                        settings = settings,
-                        keptCount = keptCount,
-                        onBack = ::back,
-                        onChange = viewModel::updateSettings,
-                        onForgetKept = viewModel::forgetKept,
-                        onForgetEverything = viewModel::forgetEverything,
-                    )
-                }
-                Screen.Trash -> {
-                    LaunchedEffect(Unit) { viewModel.loadTrash() }
-                    val state by viewModel.trash.collectAsStateWithLifecycle()
-                    TrashScreen(
-                        state = state,
-                        onBack = ::back,
-                        onRestore = { viewModel.createRestoreRequest(it)?.launchWith(trashActionLauncher) },
-                        onDeleteForever = { viewModel.createDeleteForeverRequest(it)?.launchWith(trashActionLauncher) },
-                    )
+            screenStates.SaveableStateProvider(screen.toString()) {
+                when (screen) {
+                    Screen.Home -> {
+                        val state by viewModel.home.collectAsStateWithLifecycle()
+                        HomeScreen(
+                            state = state,
+                            partialAccess = access == MediaAccess.PARTIAL,
+                            onOpenDeck = { navigate(Screen.Deck(it)) },
+                            onOpenReview = { navigate(Screen.Review) },
+                            onOpenTrash = { navigate(Screen.Trash) },
+                            onOpenSettings = { navigate(Screen.Settings) },
+                            onOpenDuplicates = { navigate(Screen.Duplicates) },
+                            onRequestFullAccess = { permissionLauncher.launch(MediaPermissions.requested) },
+                        )
+                    }
+                    is Screen.Deck -> {
+                        val state by viewModel.deck(screen.source).collectAsStateWithLifecycle()
+                        val hintSeen by viewModel.swipeHintSeen.collectAsStateWithLifecycle()
+                        DeckScreen(
+                            source = screen.source,
+                            state = state,
+                            showHint = !hintSeen,
+                            onBack = ::back,
+                            onDecide = { item, decision -> viewModel.decide(screen.source, item, decision) },
+                            onUndo = { viewModel.undo(screen.source) },
+                            onOpenReview = { navigate(Screen.Review) },
+                            onDismissHint = viewModel::dismissSwipeHint,
+                            onFilterChange = { viewModel.setFilter(screen.source, it) },
+                        )
+                    }
+                    Screen.Review -> {
+                        val state by viewModel.review.collectAsStateWithLifecycle()
+                        ReviewScreen(
+                            state = state,
+                            onBack = ::back,
+                            onUnmark = viewModel::unmark,
+                            onUnmarkAll = { viewModel.unmarkAll(state.groups.flatMap { it.items }) },
+                            onCommit = { viewModel.createTrashRequest()?.launchWith(trashLauncher) },
+                        )
+                    }
+                    Screen.Duplicates -> {
+                        val state by viewModel.duplicates.collectAsStateWithLifecycle()
+                        DuplicatesScreen(
+                            state = state,
+                            onBack = ::back,
+                            onResolve = viewModel::resolveDuplicates,
+                            onUndo = viewModel::undoDuplicates,
+                        )
+                    }
+                    Screen.Settings -> {
+                        val settings by viewModel.settings.collectAsStateWithLifecycle()
+                        val keptCount by viewModel.keptCount.collectAsStateWithLifecycle()
+                        SettingsScreen(
+                            settings = settings,
+                            keptCount = keptCount,
+                            onBack = ::back,
+                            onChange = viewModel::updateSettings,
+                            onForgetKept = viewModel::forgetKept,
+                            onForgetEverything = viewModel::forgetEverything,
+                        )
+                    }
+                    Screen.Trash -> {
+                        LaunchedEffect(Unit) { viewModel.loadTrash() }
+                        val state by viewModel.trash.collectAsStateWithLifecycle()
+                        TrashScreen(
+                            state = state,
+                            onBack = ::back,
+                            onRestore = { viewModel.createRestoreRequest(it)?.launchWith(trashActionLauncher) },
+                            onDeleteForever = { viewModel.createDeleteForeverRequest(it)?.launchWith(trashActionLauncher) },
+                        )
+                    }
                 }
             }
         }

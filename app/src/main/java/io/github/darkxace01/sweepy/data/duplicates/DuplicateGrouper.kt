@@ -50,7 +50,7 @@ data class DuplicateGroup(
  */
 object DuplicateGrouper {
     const val BURST_WINDOW_MILLIS = 60_000L
-    const val BURST_DISTANCE = 10
+    const val BURST_DISTANCE = 7
     const val FAR_DISTANCE = 2
 
     /** Hashes with fewer than this many 1-bits (or 0-bits) carry too little picture to compare. */

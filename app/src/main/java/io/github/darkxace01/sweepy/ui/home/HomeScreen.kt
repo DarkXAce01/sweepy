@@ -34,6 +34,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -104,6 +106,10 @@ fun HomeScreen(
 ) {
     var showAllFolders by rememberSaveable { mutableStateOf(false) }
     var showAllMonths by rememberSaveable { mutableStateOf(false) }
+    // The page settles in once. Coming back from a deck should look like it never left.
+    var introPlayed by rememberSaveable { mutableStateOf(false) }
+    val animateIn = remember { !introPlayed }
+    SideEffect { introPlayed = true }
     val insets = WindowInsets.safeDrawing.asPaddingValues()
     val layoutDirection = LocalLayoutDirection.current
     val ready = !state.loading && state.totalCount > 0
@@ -117,29 +123,29 @@ fun HomeScreen(
                 bottom = insets.calculateBottomPadding() + 28.dp,
             ),
         ) {
-            item { TopBar(onOpenTrash, onOpenSettings, Modifier.reveal(0)) }
+            item { TopBar(onOpenTrash, onOpenSettings, Modifier.reveal(0, animateIn)) }
 
             if (partialAccess) {
-                item { PartialAccessBanner(onRequestFullAccess, Modifier.padding(top = 8.dp).reveal(1)) }
+                item { PartialAccessBanner(onRequestFullAccess, Modifier.padding(top = 8.dp).reveal(1, animateIn)) }
             }
 
-            item { Hero(state, onStart = { onOpenDeck(DeckSource.All) }, Modifier.padding(top = 28.dp).reveal(1)) }
+            item { Hero(state, onStart = { onOpenDeck(DeckSource.All) }, Modifier.padding(top = 28.dp).reveal(1, animateIn)) }
 
             if (ready) {
                 if (state.recent.isNotEmpty()) {
-                    item { SectionHeader(1, stringResource(R.string.home_section_recent), Modifier.reveal(3)) }
-                    item { FilmStrip(state.recent, onClick = { onOpenDeck(DeckSource.All) }, Modifier.reveal(3)) }
+                    item { SectionHeader(1, stringResource(R.string.home_section_recent), Modifier.reveal(3, animateIn)) }
+                    item { FilmStrip(state.recent, onClick = { onOpenDeck(DeckSource.All) }, Modifier.reveal(3, animateIn)) }
                 }
 
-                item { Stats(state, onOpenReview, onOpenTrash, Modifier.padding(top = 28.dp).reveal(4)) }
+                item { Stats(state, onOpenReview, onOpenTrash, Modifier.padding(top = 28.dp).reveal(4, animateIn)) }
 
                 run {
-                    item { SectionHeader(2, stringResource(R.string.home_section_quick), Modifier.reveal(5)) }
+                    item { SectionHeader(2, stringResource(R.string.home_section_quick), Modifier.reveal(5, animateIn)) }
                     item {
                         LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
                             contentPadding = PaddingValues(horizontal = PAGE),
-                            modifier = Modifier.fillMaxWidth().bleed(PAGE).reveal(5),
+                            modifier = Modifier.fillMaxWidth().bleed(PAGE).reveal(5, animateIn),
                         ) {
                             item(key = "duplicates") { DuplicatesTile(state.duplicates, onClick = onOpenDuplicates) }
                             items(state.quickDecks, key = { it.source.toString() }) { summary ->

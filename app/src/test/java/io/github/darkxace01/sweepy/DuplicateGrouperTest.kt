@@ -51,11 +51,16 @@ class DuplicateGrouperTest {
 
     @Test fun `a burst of slightly different shots is one look-alike group`() {
         val groups = DuplicateGrouper.group(
-            listOf(sig(item(1, takenAt = 0)), sig(item(2, takenAt = 800), near(6)), sig(item(3, takenAt = 1_900), near(9))),
+            listOf(sig(item(1, takenAt = 0)), sig(item(2, takenAt = 800), near(4)), sig(item(3, takenAt = 1_900), near(7))),
         )
         assertEquals(1, groups.size)
         assertEquals(DuplicateKind.SIMILAR, groups[0].kind)
         assertEquals(3, groups[0].items.size)
+    }
+
+    @Test fun `burst shots that changed noticeably stay apart`() {
+        val groups = DuplicateGrouper.group(listOf(sig(item(1, takenAt = 0)), sig(item(2, takenAt = 800), near(9))))
+        assertEquals(0, groups.size)
     }
 
     @Test fun `similar shots taken far apart only match when practically identical`() {
