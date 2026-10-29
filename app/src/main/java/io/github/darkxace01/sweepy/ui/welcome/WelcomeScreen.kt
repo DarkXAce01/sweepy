@@ -36,6 +36,7 @@ import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.ThemeSample
+import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.reveal
 import io.github.darkxace01.sweepy.ui.permission.PrintPile
@@ -115,6 +116,7 @@ private fun ThemeOption(theme: ThemeChoice, dark: Boolean, selected: Boolean, on
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .chunky(shape, fill = Sweepy.colors.surface, offset = if (selected) 4.dp else 2.dp)
             .clip(shape)
             .border(if (selected) 1.5.dp else 1.dp, border, shape)
             .pressable(onClick, pressedScale = 0.98f, role = Role.RadioButton)
@@ -136,7 +138,7 @@ private fun ThemeOption(theme: ThemeChoice, dark: Boolean, selected: Boolean, on
                     when (theme) {
                         ThemeChoice.CONTACT_SHEET -> R.string.theme_contact_sheet_body
                         ThemeChoice.RISO -> R.string.theme_riso_body
-                        ThemeChoice.HERBARIUM -> R.string.theme_herbarium_body
+                        ThemeChoice.POP -> R.string.theme_pop_body
                     },
                 ),
                 style = MaterialTheme.typography.bodySmall,

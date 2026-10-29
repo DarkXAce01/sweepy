@@ -105,7 +105,7 @@ private fun handStar(s: Size): Path = Path().apply {
 }
 
 /**
- * Draws [mark] in the active theme's hand (grease pencil, two-ink riso, or glowing line),
+ * Draws [mark] in the active theme's hand (grease pencil, two-ink riso, or sticker),
  * revealed up to [progress] (0..1), so it can follow a finger. [strokeWidth] is a fraction of the mark's size.
  */
 @Composable
@@ -118,6 +118,7 @@ fun Modifier.pencilMark(
     val look = Sweepy.look
     val style = look.markStyle
     val secondInk = look.secondInk
+    val sticker = look.outline to look.shadow
     return drawWithCache {
         val strokes = strokesFor(mark).map { it to it.points(size) }
         val measure = PathMeasure()
@@ -125,7 +126,7 @@ fun Modifier.pencilMark(
         val width = min(size.width, size.height) * strokeWidth
         onDrawWithContent {
             drawContent()
-            drawMark(strokes, measure, segment, progress(), color, width, style, secondInk)
+            drawMark(strokes, measure, segment, progress(), color, width, style, secondInk, sticker)
         }
     }
 }
@@ -139,6 +140,7 @@ private fun DrawScope.drawMark(
     width: Float,
     style: MarkStyle,
     secondInk: Color,
+    sticker: Pair<Color, Color>,
 ) {
     if (progress <= 0f) return
     for ((stroke, path) in strokes) {
@@ -159,10 +161,11 @@ private fun DrawScope.drawMark(
                 translate(width * 0.42f, width * 0.32f) { line(secondInk.copy(alpha = color.alpha * 0.7f), width * 0.92f) }
                 line(color.copy(alpha = color.alpha * 0.92f), width)
             }
-            // A pale watercolor wash laid down first, then a fine pen line drawn over it.
-            MarkStyle.INK -> {
-                translate(width * 0.25f, width * 0.2f) { line(color.copy(alpha = color.alpha * 0.2f), width * 2.1f) }
-                line(color.copy(alpha = color.alpha * 0.95f), width * 0.55f)
+            // Hard shadow, thick outline, then the color: a die-cut sticker.
+            MarkStyle.STICKER -> {
+                translate(width * 0.45f, width * 0.45f) { line(sticker.second.copy(alpha = color.alpha), width * 1.9f) }
+                line(sticker.first.copy(alpha = color.alpha), width * 1.9f)
+                line(color, width)
             }
         }
     }

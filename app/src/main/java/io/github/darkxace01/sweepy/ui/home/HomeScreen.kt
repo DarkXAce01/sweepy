@@ -335,12 +335,20 @@ private fun FilmStrip(items: List<MediaItem>, onClick: () -> Unit, modifier: Mod
             .fillMaxWidth()
             .bleed(PAGE)
             .background(Sweepy.colors.film)
+            .then(if (Sweepy.colors.film.alpha == 0f) Modifier.printedEdges(Sweepy.colors.filmHoles) else Modifier)
             .pressable(onClick, pressedScale = 0.99f),
     ) {
         item { FilmFrame(null, null, leader = true) }
         itemsIndexed(items, key = { _, it -> it.id }) { index, item -> FilmFrame(item, index + 1) }
         item { FilmFrame(null, null, leader = true) }
     }
+}
+
+/** A strip printed onto the page rather than a band of real film: just its two edges, in ink. */
+private fun Modifier.printedEdges(ink: Color): Modifier = drawBehind {
+    val stroke = 1.5.dp.toPx()
+    drawLine(ink, Offset(0f, stroke / 2), Offset(size.width, stroke / 2), stroke)
+    drawLine(ink, Offset(0f, size.height - stroke / 2), Offset(size.width, size.height - stroke / 2), stroke)
 }
 
 @Composable

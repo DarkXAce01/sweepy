@@ -61,18 +61,19 @@ import coil3.compose.AsyncImage
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.MediaItem
+import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.QuietIconButton
+import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.pencilMark
-import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatDuration
 import io.github.darkxace01.sweepy.ui.formatSize
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.min
+import kotlinx.coroutines.launch
 
 enum class SwipeDirection(val decision: Decision, val mark: Mark) {
     LEFT(Decision.DELETE, Mark.CROSS),
@@ -351,11 +352,18 @@ fun PrintCard(
     val colors = Sweepy.colors
     Column(
         modifier = modifier
-            .shadow(
-                elevation = 14.dp,
-                shape = CardShape,
-                ambientColor = Color.Black.copy(alpha = 0.25f),
-                spotColor = Color.Black.copy(alpha = if (colors.isDark) 0.6f else 0.28f),
+            .then(
+                // Pop swaps the soft drop shadow for a hard sticker shadow.
+                if (Sweepy.look.chunky) {
+                    Modifier.chunky(CardShape, offset = 6.dp)
+                } else {
+                    Modifier.shadow(
+                        elevation = 14.dp,
+                        shape = CardShape,
+                        ambientColor = Color.Black.copy(alpha = 0.25f),
+                        spotColor = Color.Black.copy(alpha = if (colors.isDark) 0.6f else 0.28f),
+                    )
+                },
             )
             .clip(CardShape)
             .background(colors.print)

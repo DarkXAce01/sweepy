@@ -11,7 +11,7 @@ data class CleanStats(val cleanedCount: Long = 0, val cleanedBytes: Long = 0)
 enum class Appearance { SYSTEM, LIGHT, DARK }
 
 /** The app's whole look: colors, type, paper and marks. */
-enum class ThemeChoice { CONTACT_SHEET, RISO, HERBARIUM }
+enum class ThemeChoice { CONTACT_SHEET, RISO, POP }
 
 /** User choices from the settings screen. */
 data class AppSettings(

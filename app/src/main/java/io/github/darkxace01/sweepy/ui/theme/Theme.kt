@@ -41,7 +41,10 @@ data class SweepyColors(
     val keep: Color,
     val later: Color,
     val favorite: Color,
-    /** The film strip on the home screen: its base, sprocket holes and edge numbers. */
+    /**
+     * The film strip on the home screen: its base, sprocket holes and edge numbers. A transparent
+     * base prints the strip straight onto the page, in ink.
+     */
     val film: Color,
     val filmHoles: Color,
     val filmText: Color,
@@ -97,9 +100,9 @@ private val RisoCream = SweepyColors(
     keep = Color(0xFF00955A),
     later = Color(0xFFE08A00),
     favorite = Color(0xFF7457B5),
-    film = Color(0xFF1F2C74),
-    filmHoles = Color(0xFFF3EDDD),
-    filmText = Color(0xFFFF7BC4),
+    film = Color.Transparent,
+    filmHoles = Color(0xFF1F2C74),
+    filmText = Color(0xFFF2369E),
     isDark = false,
 )
 
@@ -115,51 +118,51 @@ private val RisoMidnight = SweepyColors(
     keep = Color(0xFF39D38B),
     later = Color(0xFFFFD047),
     favorite = Color(0xFFB59BFF),
-    film = Color(0xFF0D1028),
+    film = Color.Transparent,
     filmHoles = Color(0xFFF6EEDB),
-    filmText = Color(0xFFFFD047),
+    filmText = Color(0xFFFF59B6),
     isDark = true,
 )
 
-// Herbarium: a botanist's journal of pressed plants. Linen paper, forest ink, terracotta and moss.
-private val HerbariumLinen = SweepyColors(
-    paper = Color(0xFFEDEBDF),
-    surface = Color(0xFFF4F2E8),
-    print = Color(0xFFFBFAF4),
-    ink = Color(0xFF1E3326),
-    inkMuted = Color(0xFF6B7A6C),
-    hairline = Color(0xFFD9D6C5),
-    pencil = Color(0xFFB9512E),
-    onPencil = Color.White,
-    keep = Color(0xFF4F7A3A),
-    later = Color(0xFFC08A2D),
-    favorite = Color(0xFF9B4D6E),
-    film = Color(0xFF1E3326),
-    filmHoles = Color(0xFFEDEBDF),
-    filmText = Color(0xFFE0A24A),
+// Pop: neo-brutalist sticker sheet. Flat loud color, thick outlines, hard offset shadows.
+private val PopDay = SweepyColors(
+    paper = Color(0xFFFFF4E0),
+    surface = Color(0xFFFFFCF5),
+    print = Color(0xFFFFFFFF),
+    ink = Color(0xFF151515),
+    inkMuted = Color(0xFF5E584E),
+    hairline = Color(0xFFE5D9C2),
+    pencil = Color(0xFFFF5530),
+    onPencil = Color(0xFF151515),
+    keep = Color(0xFF1FCB78),
+    later = Color(0xFFFFC21A),
+    favorite = Color(0xFFFF6FD0),
+    film = Color.Transparent,
+    filmHoles = Color(0xFF151515),
+    filmText = Color(0xFFFF5530),
     isDark = false,
 )
 
-private val HerbariumFern = SweepyColors(
-    paper = Color(0xFF101712),
-    surface = Color(0xFF162019),
-    print = Color(0xFF1C2820),
-    ink = Color(0xFFE8E6D6),
-    inkMuted = Color(0xFF93A08F),
-    hairline = Color(0xFF26332A),
-    pencil = Color(0xFFE0794F),
-    onPencil = Color(0xFF101712),
-    keep = Color(0xFF8DBF6E),
-    later = Color(0xFFE2B04F),
-    favorite = Color(0xFFD88BAA),
-    film = Color(0xFF080D0A),
-    filmHoles = Color(0xFFE8E6D6),
-    filmText = Color(0xFFE2B04F),
+private val PopNight = SweepyColors(
+    paper = Color(0xFF1B1726),
+    surface = Color(0xFF241F33),
+    print = Color(0xFF2C263D),
+    ink = Color(0xFFFFF4E0),
+    inkMuted = Color(0xFFADA5BE),
+    hairline = Color(0xFF3B3452),
+    pencil = Color(0xFFFF6A4A),
+    onPencil = Color(0xFF151515),
+    keep = Color(0xFF3FE08E),
+    later = Color(0xFFFFCF3D),
+    favorite = Color(0xFFFF86DD),
+    film = Color.Transparent,
+    filmHoles = Color(0xFFFFF4E0),
+    filmText = Color(0xFFFFCF3D),
     isDark = true,
 )
 
 /** What the page is printed on. */
-enum class Texture { GRAIN, HALFTONE, LAID }
+enum class Texture { GRAIN, HALFTONE, DOT_GRID }
 
 /** How grease-pencil marks are drawn. */
 enum class MarkStyle {
@@ -169,8 +172,8 @@ enum class MarkStyle {
     /** Two inks printed slightly out of register. */
     RISO,
 
-    /** A fine pen line over a light watercolor wash, like a botanical drawing. */
-    INK,
+    /** A die-cut sticker: the color inside a thick outline, with a hard shadow. */
+    STICKER,
 }
 
 /** Everything a theme decides. */
@@ -181,6 +184,10 @@ data class SweepyLook(
     val markStyle: MarkStyle,
     /** Riso's second ink, printed under marks and headlines a little out of register. */
     val secondInk: Color = Color.Transparent,
+    /** Pop: buttons, cards and chips get a thick [outline] and a hard, unblurred [shadow]. */
+    val chunky: Boolean = false,
+    val outline: Color = Color.Transparent,
+    val shadow: Color = Color.Transparent,
 )
 
 val LocalSweepyLook = staticCompositionLocalOf { SweepyLook(Paper, Texture.GRAIN, MarkStyle.PENCIL) }
@@ -201,7 +208,16 @@ fun lookFor(theme: ThemeChoice, dark: Boolean): SweepyLook = when (theme) {
         val colors = if (dark) RisoMidnight else RisoCream
         SweepyLook(colors, Texture.HALFTONE, MarkStyle.RISO, secondInk = if (dark) Color(0xFF3D7BFF) else Color(0xFF3F8FE0))
     }
-    ThemeChoice.HERBARIUM -> SweepyLook(if (dark) HerbariumFern else HerbariumLinen, Texture.LAID, MarkStyle.INK)
+    ThemeChoice.POP -> {
+        val colors = if (dark) PopNight else PopDay
+        // In the dark a black shadow would vanish, so it turns violet.
+        SweepyLook(
+            colors, Texture.DOT_GRID, MarkStyle.STICKER,
+            chunky = true,
+            outline = colors.ink,
+            shadow = if (dark) Color(0xFF7B5CFF) else colors.ink,
+        )
+    }
 }
 
 private fun materialColors(c: SweepyColors) = if (c.isDark) {

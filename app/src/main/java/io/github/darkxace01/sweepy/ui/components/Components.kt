@@ -43,19 +43,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import io.github.darkxace01.sweepy.ui.theme.Texture
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -75,6 +78,7 @@ import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.formatDuration
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Texture
 import java.text.NumberFormat
 import java.time.YearMonth
 import java.time.format.TextStyle as JavaTextStyle
@@ -116,18 +120,16 @@ private val halftoneBitmap: ImageBitmap by lazy {
     Bitmap.createBitmap(pixels, n, n, Bitmap.Config.ARGB_8888).asImageBitmap()
 }
 
-/** Laid paper: fine vertical lines from the mould's wires, and a fainter chain line every so often. */
-private val laidBitmap: ImageBitmap by lazy {
-    val n = 96
-    val row = IntArray(n) { x ->
-        val alpha = when {
-            x == 0 -> 150
-            x % 4 == 0 -> 60
-            else -> 0
-        }
+/** Dot-grid paper: one soft dot every 44 px, like a designer's notebook. */
+private val dotGridBitmap: ImageBitmap by lazy {
+    val n = 44
+    val c = n / 2f
+    val pixels = IntArray(n * n) { i ->
+        val d = kotlin.math.hypot(i % n + 0.5f - c, i / n + 0.5f - c)
+        val alpha = ((2.2f - d).coerceIn(0f, 1f) * 255).toInt()
         (alpha shl 24) or 0xFFFFFF
     }
-    Bitmap.createBitmap(row, n, 1, Bitmap.Config.ARGB_8888).asImageBitmap()
+    Bitmap.createBitmap(pixels, n, n, Bitmap.Config.ARGB_8888).asImageBitmap()
 }
 
 /** Tiles a white [pattern] across the element, tinted with [color]. */
@@ -137,14 +139,14 @@ private fun Modifier.pattern(pattern: ImageBitmap, color: Color, alpha: Float): 
     onDrawBehind { drawRect(brush, alpha = alpha, colorFilter = tint) }
 }
 
-/** The page every screen sits on, with the active theme's texture: film grain, halftone or laid paper. */
+/** The page every screen sits on, with the active theme's texture: film grain, halftone or a dot grid. */
 @Composable
 fun Paper(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val look = Sweepy.look
     val texture = when (look.texture) {
         Texture.GRAIN -> Modifier.grain()
         Texture.HALFTONE -> Modifier.grain(0.3f).pattern(halftoneBitmap, look.colors.ink, if (look.colors.isDark) 0.07f else 0.05f)
-        Texture.LAID -> Modifier.grain(0.35f).pattern(laidBitmap, look.colors.ink, if (look.colors.isDark) 0.06f else 0.05f)
+        Texture.DOT_GRID -> Modifier.pattern(dotGridBitmap, look.colors.ink, if (look.colors.isDark) 0.22f else 0.2f)
     }
     Box(
         modifier = modifier
@@ -222,6 +224,24 @@ fun Modifier.reveal(index: Int, enabled: Boolean = true): Modifier {
         alpha = progress.value
         translationY = (1f - progress.value) * 14.dp.toPx()
     }
+}
+
+/**
+ * Pop's sticker treatment: a thick outline and a hard shadow offset down and right. Does nothing
+ * in other themes. Put it before `clip` so the shadow can sit outside the shape; [fill] paints
+ * under elements that are otherwise see-through, so the shadow doesn't show through them.
+ */
+@Composable
+fun Modifier.chunky(shape: Shape, fill: Color? = null, offset: Dp = 4.dp, shadow: Color? = null): Modifier {
+    val look = Sweepy.look
+    if (!look.chunky) return this
+    val shadowColor = shadow ?: look.shadow
+    return drawBehind {
+        val outline = shape.createOutline(size, layoutDirection, this)
+        val o = offset.toPx()
+        translate(o, o) { drawOutline(outline, shadowColor) }
+        if (fill != null) drawOutline(outline, fill)
+    }.border(2.dp, look.outline, shape)
 }
 
 // ---- Progress -----------------------------------------------------------------------------------
@@ -308,6 +328,8 @@ fun InkButton(
         modifier = modifier
             .height(56.dp)
             .graphicsLayer { alpha = if (enabled) 1f else 0.4f }
+            // An ink button's own shadow would blend into it, so it sits on a yellow slab instead.
+            .chunky(RoundedCornerShape(14.dp), shadow = if (color == Sweepy.colors.ink) Sweepy.colors.later else null)
             .clip(RoundedCornerShape(14.dp))
             .background(color)
             .pressable(onClick, enabled = enabled)
@@ -328,6 +350,7 @@ fun OutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         contentAlignment = Alignment.Center,
         modifier = modifier
             .height(56.dp)
+            .chunky(RoundedCornerShape(14.dp), fill = Sweepy.colors.surface)
             .clip(RoundedCornerShape(14.dp))
             .border(1.dp, Sweepy.colors.hairline, RoundedCornerShape(14.dp))
             .pressable(onClick)
@@ -346,6 +369,7 @@ fun Segment(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modi
         contentAlignment = Alignment.Center,
         modifier = modifier
             .height(48.dp)
+            .chunky(shape, fill = Sweepy.colors.surface, offset = if (selected) 4.dp else 2.dp)
             .clip(shape)
             .background(if (selected) Sweepy.colors.ink else Color.Transparent)
             .border(1.dp, if (selected) Sweepy.colors.ink else Sweepy.colors.hairline, shape)
@@ -415,6 +439,7 @@ fun Mosaic(items: List<MediaItem>, modifier: Modifier = Modifier, gap: Dp = 2.dp
         verticalArrangement = Arrangement.spacedBy(gap),
         modifier = modifier
             .aspectRatio(1f)
+            .chunky(RoundedCornerShape(cornerRadius))
             .clip(RoundedCornerShape(cornerRadius))
             .background(Sweepy.colors.hairline),
     ) {

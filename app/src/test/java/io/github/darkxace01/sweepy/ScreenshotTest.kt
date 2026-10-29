@@ -115,27 +115,27 @@ class ScreenshotTest {
 
     @Test fun riso_done() = capture("riso_done", theme = ThemeChoice.RISO) { DeckDone() }
 
-    @Test fun herbarium_home() = capture("herbarium_home", theme = ThemeChoice.HERBARIUM) { Home() }
+    @Test fun pop_home() = capture("pop_home", theme = ThemeChoice.POP) { Home() }
 
-    @Test fun herbarium_deck() = capture("herbarium_deck", theme = ThemeChoice.HERBARIUM) { Deck() }
+    @Test fun pop_deck() = capture("pop_deck", theme = ThemeChoice.POP) { Deck() }
 
-    @Test fun herbarium_fern_home() = capture("herbarium_fern_home", dark = true, theme = ThemeChoice.HERBARIUM) { Home() }
+    @Test fun pop_night_home() = capture("pop_night_home", dark = true, theme = ThemeChoice.POP) { Home() }
 
-    @Test fun herbarium_review() = capture("herbarium_review", theme = ThemeChoice.HERBARIUM) { Review() }
+    @Test fun pop_review() = capture("pop_review", theme = ThemeChoice.POP) { Review() }
 
-    @Test fun herbarium_fern_done() = capture("herbarium_fern_done", dark = true, theme = ThemeChoice.HERBARIUM) { DeckDone() }
+    @Test fun pop_night_done() = capture("pop_night_done", dark = true, theme = ThemeChoice.POP) { DeckDone() }
 
     @Test fun settings_riso() = capture("settings_riso", theme = ThemeChoice.RISO) { Settings(ThemeChoice.RISO) }
 
-    @Test fun settings_herbarium() = capture("settings_herbarium", theme = ThemeChoice.HERBARIUM) { Settings(ThemeChoice.HERBARIUM) }
+    @Test fun settings_pop() = capture("settings_pop", theme = ThemeChoice.POP) { Settings(ThemeChoice.POP) }
 
     @Test fun welcome_riso() = capture("welcome_riso", theme = ThemeChoice.RISO) {
         WelcomeScreen(selected = ThemeChoice.RISO, onSelect = {}, onContinue = {})
     }
 
     @Config(qualifiers = "w412dp-h1400dp-xxhdpi")
-    @Test fun welcome_herbarium() = capture("welcome_herbarium", theme = ThemeChoice.HERBARIUM) {
-        WelcomeScreen(selected = ThemeChoice.HERBARIUM, onSelect = {}, onContinue = {})
+    @Test fun welcome_pop() = capture("welcome_pop", theme = ThemeChoice.POP) {
+        WelcomeScreen(selected = ThemeChoice.POP, onSelect = {}, onContinue = {})
     }
 
     @Test fun settings_light() = capture("settings_light") { Settings() }

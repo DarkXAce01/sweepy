@@ -77,6 +77,7 @@ import io.github.darkxace01.sweepy.ui.components.OutlineButton
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.QuietIconButton
 import io.github.darkxace01.sweepy.ui.components.Ruler
+import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.deckTitle
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pencilMark
@@ -291,6 +292,7 @@ private fun BinChip(count: Int, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .height(40.dp)
+            .chunky(RoundedCornerShape(10.dp), fill = Sweepy.colors.surface, offset = 3.dp)
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, if (active) color.copy(alpha = 0.45f) else Sweepy.colors.hairline, RoundedCornerShape(10.dp))
             .pressable(onClick, pressedScale = 0.92f)
@@ -382,6 +384,7 @@ private fun MarkButton(
                 scaleY = 1f + 0.12f * e
                 alpha = if (enabled) 1f else 0.35f
             }
+            .chunky(CircleShape)
             .clip(CircleShape)
             .drawBehind {
                 drawRect(print)

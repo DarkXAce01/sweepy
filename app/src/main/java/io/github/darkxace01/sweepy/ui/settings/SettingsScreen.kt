@@ -265,7 +265,7 @@ fun themeName(theme: ThemeChoice): String = stringResource(
     when (theme) {
         ThemeChoice.CONTACT_SHEET -> R.string.theme_contact_sheet
         ThemeChoice.RISO -> R.string.theme_riso
-        ThemeChoice.HERBARIUM -> R.string.theme_herbarium
+        ThemeChoice.POP -> R.string.theme_pop
     },
 )
 
@@ -275,7 +275,7 @@ fun lightName(theme: ThemeChoice): String = stringResource(
     when (theme) {
         ThemeChoice.CONTACT_SHEET -> R.string.appearance_light
         ThemeChoice.RISO -> R.string.appearance_light_riso
-        ThemeChoice.HERBARIUM -> R.string.appearance_light_herbarium
+        ThemeChoice.POP -> R.string.appearance_light_pop
     },
 )
 
@@ -285,7 +285,7 @@ fun darkName(theme: ThemeChoice): String = stringResource(
     when (theme) {
         ThemeChoice.CONTACT_SHEET -> R.string.appearance_dark
         ThemeChoice.RISO -> R.string.appearance_dark_riso
-        ThemeChoice.HERBARIUM -> R.string.appearance_dark_herbarium
+        ThemeChoice.POP -> R.string.appearance_dark_pop
     },
 )
 

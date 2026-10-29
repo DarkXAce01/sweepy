@@ -19,7 +19,7 @@ import io.github.darkxace01.sweepy.data.ThemeChoice
 //  - Geist: interface text
 //  - Geist Mono: film-edge metadata (sizes, dates, counts, small labels)
 //  - Bricolage Grotesque: the Riso theme's heavy, condensed headlines
-//  - Fraunces: the Herbarium theme's soft, wonky serif headlines
+//  - Archivo: the Pop theme's extra-wide, extra-heavy headlines
 
 val Serif = FontFamily(
     Font(R.font.instrument_serif, FontWeight.Normal, FontStyle.Normal),
@@ -56,19 +56,17 @@ val Zine = FontFamily(
     ),
 )
 
-/** Soft and a little wonky, at display optical size. */
-val Botanical = FontFamily(
-    Font(
-        R.font.fraunces,
-        weight = FontWeight.Normal,
-        variationSettings = FontVariation.Settings(
-            FontVariation.weight(380),
-            FontVariation.Setting("opsz", 96f),
-            FontVariation.Setting("SOFT", 100f),
-            FontVariation.Setting("WONK", 1f),
-        ),
-    ),
+private fun archivo(weight: Int, width: Float) = Font(
+    R.font.archivo,
+    weight = FontWeight(weight),
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight), FontVariation.width(width)),
 )
+
+/** Archivo stretched as wide as it goes, for big Pop headlines. */
+val Wide = FontFamily(archivo(800, 125f))
+
+/** A little less wide, so smaller headlines like screen titles still fit. */
+val WideSmall = FontFamily(archivo(750, 112f))
 
 private fun style(family: FontFamily, size: Double, line: Double, weight: FontWeight = FontWeight.Normal, tracking: Double = 0.0) =
     TextStyle(fontFamily = family, fontWeight = weight, fontSize = size.sp, lineHeight = line.sp, letterSpacing = tracking.em)
@@ -109,21 +107,23 @@ private fun risoTypography(look: SweepyLook): Typography {
     )
 }
 
-/** Herbarium: soft, slightly wonky old-style serif headlines, like a hand-lettered specimen label. */
-private fun herbariumTypography(): Typography {
-    fun headline(size: Double, line: Double, tracking: Double) = style(Botanical, size, line, tracking = tracking)
+/** Pop: extra-wide, extra-heavy headlines, like a sticker sheet's header. */
+private fun popTypography(): Typography {
+    fun headline(family: FontFamily, size: Double, line: Double, tracking: Double) = style(family, size, line, FontWeight.ExtraBold, tracking)
     return ContactSheetTypography.copy(
-        displayLarge = headline(64.0, 66.0, -0.03),
-        displayMedium = headline(48.0, 52.0, -0.025),
-        displaySmall = headline(37.0, 42.0, -0.02),
-        headlineLarge = headline(31.0, 36.0, -0.015),
-        headlineMedium = headline(26.0, 31.0, -0.01),
-        headlineSmall = headline(22.0, 28.0, -0.005),
+        displayLarge = headline(Wide, 52.0, 56.0, -0.035),
+        displayMedium = headline(Wide, 40.0, 44.0, -0.03),
+        displaySmall = headline(Wide, 31.0, 36.0, -0.025),
+        headlineLarge = headline(Wide, 27.0, 32.0, -0.02),
+        headlineMedium = headline(Wide, 23.0, 28.0, -0.015),
+        headlineSmall = headline(WideSmall, 20.0, 26.0, -0.01),
+        titleMedium = style(Sans, 16.0, 22.0, FontWeight.SemiBold, -0.005),
+        labelLarge = style(Sans, 15.0, 20.0, FontWeight.SemiBold, -0.005),
     )
 }
 
 fun typographyFor(theme: ThemeChoice, look: SweepyLook): Typography = when (theme) {
     ThemeChoice.CONTACT_SHEET -> ContactSheetTypography
     ThemeChoice.RISO -> risoTypography(look)
-    ThemeChoice.HERBARIUM -> herbariumTypography()
+    ThemeChoice.POP -> popTypography()
 }

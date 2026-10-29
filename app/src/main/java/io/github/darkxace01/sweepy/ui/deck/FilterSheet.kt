@@ -36,6 +36,7 @@ import io.github.darkxace01.sweepy.ui.DeckUiState
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.OutlineButton
 import io.github.darkxace01.sweepy.ui.components.Segment
+import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
@@ -50,6 +51,7 @@ fun FilterButton(active: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(40.dp)
+            .chunky(RoundedCornerShape(10.dp), fill = Sweepy.colors.surface, offset = 3.dp)
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, if (active) color.copy(alpha = 0.45f) else Sweepy.colors.hairline, RoundedCornerShape(10.dp))
             .pressable(onClick, pressedScale = 0.92f)
