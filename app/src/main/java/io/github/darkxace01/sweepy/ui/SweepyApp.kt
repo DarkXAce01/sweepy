@@ -11,18 +11,24 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,11 +40,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
@@ -58,7 +67,11 @@ import io.github.darkxace01.sweepy.ui.review.ReviewScreen
 import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
 import io.github.darkxace01.sweepy.ui.welcome.WelcomeScreen
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.math.abs
+import kotlin.math.sign
 
 /** The app's screens. Kept in a simple back stack; the last one is shown. */
 sealed interface Screen {
@@ -149,7 +162,8 @@ fun SweepyApp() {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+        // collectLatest: a new message replaces the one on screen instead of queuing behind it.
+        viewModel.events.collectLatest { event ->
             if (event is UiEvent.KeptAll) {
                 // A short undo window, then the decision stands.
                 val result = withTimeoutOrNull(KEEP_ALL_UNDO_MILLIS) {
@@ -160,7 +174,7 @@ fun SweepyApp() {
                     )
                 }
                 if (result == SnackbarResult.ActionPerformed) viewModel.undoKeepAll(event.at)
-                return@collect
+                return@collectLatest
             }
             val message = when (event) {
                 is UiEvent.Trashed -> resources.getQuantityString(
@@ -170,11 +184,15 @@ fun SweepyApp() {
                 is UiEvent.DeletedForever -> resources.getQuantityString(
                     R.plurals.snack_deleted, event.count, formatCount(event.count), formatSize(context, event.bytes),
                 )
-                is UiEvent.KeptAll -> return@collect
+                is UiEvent.KeptAll -> return@collectLatest
             }
             // After a cleanup, offer a way to the trash in case something went that shouldn't have.
             val action = if (event is UiEvent.Trashed) resources.getString(R.string.snack_view_trash) else null
-            if (snackbar.showSnackbar(message, actionLabel = action) == SnackbarResult.ActionPerformed) navigate(Screen.Trash)
+            // Material keeps a snackbar with a button up until it's tapped, so time it out ourselves.
+            val result = withTimeoutOrNull(MESSAGE_MILLIS) {
+                snackbar.showSnackbar(message, actionLabel = action, duration = SnackbarDuration.Indefinite)
+            }
+            if (result == SnackbarResult.ActionPerformed) navigate(Screen.Trash)
         }
     }
 
@@ -266,14 +284,43 @@ fun SweepyApp() {
         SnackbarHost(
             hostState = snackbar,
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 96.dp),
-        ) { data ->
-            Snackbar(
-                snackbarData = data,
-                shape = MaterialTheme.shapes.medium,
-                containerColor = MaterialTheme.colorScheme.inverseSurface,
-            )
-        }
+        ) { data -> SwipeableSnackbar(data) }
     }
 }
 
+/** A snackbar that can be flicked away sideways. Swiping it away counts as ignoring it. */
+@Composable
+private fun SwipeableSnackbar(data: SnackbarData) {
+    val offset = remember(data) { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var width by remember { mutableIntStateOf(1) }
+    Snackbar(
+        snackbarData = data,
+        shape = MaterialTheme.shapes.medium,
+        containerColor = MaterialTheme.colorScheme.inverseSurface,
+        modifier = Modifier
+            .onSizeChanged { width = it.width.coerceAtLeast(1) }
+            .graphicsLayer {
+                translationX = offset.value
+                alpha = 1f - (abs(offset.value) / width).coerceIn(0f, 1f)
+            }
+            .draggable(
+                orientation = Orientation.Horizontal,
+                state = rememberDraggableState { delta -> scope.launch { offset.snapTo(offset.value + delta) } },
+                onDragStopped = { velocity ->
+                    if (abs(offset.value) > width * 0.25f || abs(velocity) > 800f) {
+                        val direction = if (offset.value != 0f) sign(offset.value) else sign(velocity)
+                        offset.animateTo(direction * width, tween(160))
+                        data.dismiss()
+                    } else {
+                        offset.animateTo(0f, spring())
+                    }
+                },
+            ),
+    )
+}
+
 private const val KEEP_ALL_UNDO_MILLIS = 3_500L
+
+/** How long other messages stay up. Long enough to read and tap "View", short enough not to linger. */
+private const val MESSAGE_MILLIS = 2_500L
