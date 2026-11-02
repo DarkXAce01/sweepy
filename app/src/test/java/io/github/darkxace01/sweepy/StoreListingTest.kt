@@ -9,6 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -190,10 +192,17 @@ class StoreListingTest {
 
     @Test fun shot6_themes() = render("phone_6_themes") {
         Slide(listOf("Pick a look", "you'll {love}."), "Three themes, each in light and dark.") {
+            // The same screen in each theme, so the difference is the only thing that changes.
             Box(Modifier.fillMaxSize()) {
-                Phone(width = 170.dp, top = 52.dp, rotation = -9f, x = (-100).dp, theme = ThemeChoice.RISO) { Deck() }
-                Phone(width = 170.dp, top = 52.dp, rotation = 9f, x = 100.dp, dark = true) { Review() }
-                Phone(width = 200.dp, top = 22.dp, theme = ThemeChoice.POP) { Home() }
+                for ((i, look) in listOf(
+                    Triple("Contact sheet", ThemeChoice.CONTACT_SHEET, false),
+                    Triple("Riso", ThemeChoice.RISO, true),
+                    Triple("Pop", ThemeChoice.POP, false),
+                ).withIndex()) {
+                    val x = 118.dp * (i - 1)
+                    ThemeLabel(look.first, x = x, top = 22.dp)
+                    Phone(width = 108.dp, top = 46.dp, x = x, theme = look.second, dark = look.third) { Home() }
+                }
             }
         }
     }
@@ -241,12 +250,14 @@ class StoreListingTest {
                             for (chip in listOf("Works offline", "No ads", "No account")) Chip(chip)
                         }
                     }
-                    Column(verticalArrangement = Arrangement.spacedBy((-12).dp)) { headline.forEach { Headline(it, size = 40) } }
+                    Column(verticalArrangement = Arrangement.spacedBy((-4).dp)) { headline.forEach { Headline(it, size = 40) } }
                     Spacer(Modifier.height(4.dp))
                     Text(sub, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 20.sp), color = Sweepy.colors.inkMuted)
                 }
                 // Everything below the words; phones are placed from the top of this area.
-                Box(Modifier.fillMaxWidth().weight(1f), content = content)
+                BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                    CompositionLocalProvider(LocalArea provides maxHeight) { content() }
+                }
             }
         }
     }
@@ -276,16 +287,21 @@ class StoreListingTest {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(before, style = style, color = Sweepy.colors.ink)
             if (circled.isNotEmpty()) {
-                Text(
-                    circled,
-                    style = style.copy(fontStyle = FontStyle.Italic),
-                    color = Sweepy.colors.ink,
-                    modifier = Modifier
-                        .pencilMark(Mark.CIRCLE, Sweepy.colors.pencil, { 1f }, strokeWidth = 0.075f)
-                        .padding(horizontal = (size * 0.22).dp, vertical = (size * 0.06).dp),
-                )
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = (size * 0.2).dp)) {
+                    // Behind the word and larger than it: the loop goes round the letters, never through them.
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .graphicsLayer {
+                                scaleX = 1.2f
+                                scaleY = 1.28f
+                            }
+                            .pencilMark(Mark.CIRCLE, Sweepy.colors.pencil, { 1f }, strokeWidth = 0.06f),
+                    )
+                    Text(circled, style = style.copy(fontStyle = FontStyle.Italic), color = Sweepy.colors.ink)
+                }
             }
-            Text(after, style = style, color = Sweepy.colors.ink, modifier = Modifier.offset(x = -(size * 0.16).dp))
+            Text(after, style = style, color = Sweepy.colors.ink, modifier = Modifier.offset(x = -(size * 0.12).dp))
         }
     }
 
@@ -295,8 +311,9 @@ class StoreListingTest {
      */
     @Composable
     private fun BoxScope.Phone(
-        width: Dp = 236.dp,
-        top: Dp = 18.dp,
+        /** Null: as big as fits, whole phone in frame. */
+        width: Dp? = null,
+        top: Dp = 16.dp,
         rotation: Float = 0f,
         x: Dp = 0.dp,
         theme: ThemeChoice = ThemeChoice.CONTACT_SHEET,
@@ -305,6 +322,8 @@ class StoreListingTest {
         screen: @Composable () -> Unit,
     ) {
         val real = DpSize(412.dp, 892.dp)
+        // A phone is about 2.1 times as tall as it is wide, bezel included.
+        val width = width ?: ((LocalArea.current - top - 14.dp) / 2.1f).coerceAtMost(250.dp)
         val bezel = width * 0.028f
         val glass = width - bezel * 2
         val scale = glass / real.width
@@ -342,6 +361,11 @@ class StoreListingTest {
                 }
             }
         }
+    }
+
+    @Composable
+    private fun BoxScope.ThemeLabel(text: String, x: Dp, top: Dp) {
+        Eyebrow(text, color = Sweepy.colors.pencil, small = true, modifier = Modifier.align(Alignment.TopCenter).offset(x, top))
     }
 
     @Composable
@@ -500,5 +524,8 @@ class StoreListingTest {
 
     private companion object {
         const val BURST = 5_000L
+
+        /** Height of the space under a slide's words. */
+        val LocalArea = staticCompositionLocalOf { 470.dp }
     }
 }
