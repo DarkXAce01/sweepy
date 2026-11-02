@@ -17,7 +17,7 @@ android {
         // Android 11: first version with the system trash (MediaStore.createTrashRequest).
         minSdk = 30
         targetSdk = 36
-        versionCode = 2
+        versionCode = 3
         versionName = "1.0.0"
     }
 
