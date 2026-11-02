@@ -58,11 +58,10 @@ import io.github.darkxace01.sweepy.data.Appearance
 import io.github.darkxace01.sweepy.data.ThemeChoice
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Hairline
-import io.github.darkxace01.sweepy.ui.components.Mark
-import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.ScreenTopBar
 import io.github.darkxace01.sweepy.ui.components.Segment
+import io.github.darkxace01.sweepy.ui.components.StudioLockup
 import io.github.darkxace01.sweepy.ui.components.ThemeSample
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pressable
@@ -235,8 +234,9 @@ fun SettingsScreen(
                 Spacer(Modifier.height(36.dp))
                 // Plain facts to end on: which version this is, and what it never does.
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    MarkIcon(Mark.CIRCLE, Sweepy.colors.inkMuted.copy(alpha = 0.5f), size = 18.dp, strokeWidth = 0.1f)
-                    Spacer(Modifier.height(8.dp))
+                    // The studio's own mark: the same in every app and every theme.
+                    StudioLockup(ink = Sweepy.colors.ink, height = 34.dp, muted = Sweepy.colors.inkMuted)
+                    Spacer(Modifier.height(14.dp))
                     Eyebrow(stringResource(R.string.settings_footer, version), small = true)
                 }
             }

@@ -168,6 +168,12 @@ class ScreenshotTest {
 
     @Test fun settings_dark() = capture("settings_dark", dark = true) { Settings() }
 
+    @Config(qualifiers = "w412dp-h1900dp-xxhdpi")
+    @Test fun settings_full_light() = capture("settings_full_light") { Settings() }
+
+    @Config(qualifiers = "w412dp-h1900dp-xxhdpi")
+    @Test fun settings_full_riso_dark() = capture("settings_full_riso_dark", dark = true, theme = ThemeChoice.RISO) { Settings(ThemeChoice.RISO) }
+
     @Composable
     private fun Settings(theme: ThemeChoice = ThemeChoice.CONTACT_SHEET) = SettingsScreen(
         onOpenTipJar = {},
