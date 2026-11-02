@@ -95,4 +95,4 @@ Sweepy is free software under the [GNU GPL v3](LICENSE): you can use, study, cha
 and changed versions must stay open source under the same license.
 
 Fonts are under the SIL Open Font License 1.1 (see [`third_party/`](third_party)): Instrument Serif,
-Geist, Geist Mono, Bricolage Grotesque and Archivo..
+Geist, Geist Mono, Bricolage Grotesque and Archivo.
