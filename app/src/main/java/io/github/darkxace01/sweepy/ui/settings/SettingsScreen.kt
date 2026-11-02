@@ -58,6 +58,8 @@ import io.github.darkxace01.sweepy.data.Appearance
 import io.github.darkxace01.sweepy.data.ThemeChoice
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Hairline
+import io.github.darkxace01.sweepy.ui.components.Mark
+import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.ScreenTopBar
 import io.github.darkxace01.sweepy.ui.components.Segment
@@ -219,14 +221,13 @@ fun SettingsScreen(
                 Hairline()
                 InfoRow(stringResource(R.string.setting_licenses), stringResource(R.string.setting_licenses_body))
 
-                Spacer(Modifier.height(32.dp))
-                Text(
-                    stringResource(R.string.settings_signoff),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontStyle = FontStyle.Italic,
-                    color = Sweepy.colors.inkMuted,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                )
+                Spacer(Modifier.height(36.dp))
+                // Plain facts to end on: which version this is, and what it never does.
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    MarkIcon(Mark.CIRCLE, Sweepy.colors.inkMuted.copy(alpha = 0.5f), size = 18.dp, strokeWidth = 0.1f)
+                    Spacer(Modifier.height(8.dp))
+                    Eyebrow(stringResource(R.string.settings_footer, version), small = true)
+                }
             }
         }
     }

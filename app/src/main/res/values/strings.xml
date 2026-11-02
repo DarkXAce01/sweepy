@@ -241,7 +241,7 @@
     <string name="setting_privacy_body">Sweepy has no internet permission. It can\'t send anything anywhere: no analytics, no ads, no accounts. Your choices are stored only on this phone.</string>
     <string name="setting_licenses">Licenses</string>
     <string name="setting_licenses_body">Sweepy is free software under the GNU GPL v3. Fonts: Instrument Serif, Geist, Geist Mono, Bricolage Grotesque and Archivo, under the SIL Open Font License 1.1.</string>
-    <string name="settings_signoff">Made with care, for free.</string>
+    <string name="settings_footer">Sweepy %1$s · No internet · No ads · No account</string>
     <!-- Duplicates -->
     <string name="deck_duplicates">Duplicates</string>
     <string name="dup_position">Group %1$s of %2$s</string>
