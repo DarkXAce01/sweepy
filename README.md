@@ -19,17 +19,6 @@ them out into a few minutes of swiping.** Left to delete, right to keep.
 It does this without ever seeing the internet. Sweepy has no internet permission at all, so your
 photos physically cannot leave your phone. No ads, no account, no tracking, no subscription.
 
-<p align="center">
-  <img src=".github/readme/swipe.jpg" width="32%" alt="Swipe left to delete, right to keep">
-  <img src=".github/readme/private.jpg" width="32%" alt="No internet permission: nothing can be uploaded">
-  <img src=".github/readme/review.jpg" width="32%" alt="Swiped photos wait in a review bin first">
-</p>
-<p align="center">
-  <img src=".github/readme/duplicates.jpg" width="32%" alt="Duplicates and look-alikes, with the sharpest picked">
-  <img src=".github/readme/home.jpg" width="32%" alt="See where your space went">
-  <img src=".github/readme/themes.jpg" width="32%" alt="Three themes, each in light and dark">
-</p>
-
 ## What it does
 
 **Swipe through your photos and videos**
@@ -106,5 +95,4 @@ Sweepy is free software under the [GNU GPL v3](LICENSE): you can use, study, cha
 and changed versions must stay open source under the same license.
 
 Fonts are under the SIL Open Font License 1.1 (see [`third_party/`](third_party)): Instrument Serif,
-Geist, Geist Mono, Bricolage Grotesque and Archivo. Sample photos in the screenshots are from
-[Unsplash](https://unsplash.com).
+Geist, Geist Mono, Bricolage Grotesque and Archivo..
