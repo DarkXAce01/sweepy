@@ -84,6 +84,7 @@ import io.github.darkxace01.sweepy.ui.components.OutlineButton
 import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.tips.CoffeeIcon
 import io.github.darkxace01.sweepy.ui.tips.TipArt
+import io.github.darkxace01.sweepy.data.tips.TIP_NUDGE_BIG_BYTES
 import io.github.darkxace01.sweepy.data.tips.Tip
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.reveal
@@ -676,8 +677,9 @@ private fun RecentlyCleanedRow(onClick: () -> Unit) {
 private fun TipNudge(cleanedBytes: Long, onOpen: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     NoteCard(
         art = { TipArt(Tip.COFFEE, Modifier.size(44.dp)) },
-        title = stringResource(R.string.tips_nudge_title, formatSize(LocalContext.current, cleanedBytes)),
-        body = stringResource(R.string.tips_nudge_body),
+        // No-break space, so "12 GB" never splits across two lines.
+        title = stringResource(R.string.tips_nudge_title, formatSize(LocalContext.current, cleanedBytes).replace(' ', '\u00A0')),
+        body = stringResource(if (cleanedBytes >= TIP_NUDGE_BIG_BYTES) R.string.tips_nudge_body_big else R.string.tips_nudge_body),
         no = stringResource(R.string.tips_nudge_later),
         yes = stringResource(R.string.tips_nudge_open),
         onNo = onDismiss,

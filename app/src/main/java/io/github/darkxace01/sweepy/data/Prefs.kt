@@ -88,14 +88,20 @@ class Prefs(context: Context) {
         prefs.edit { putInt(KEY_TIPS_GIVEN, _tipsGiven.value) }
     }
 
-    private val _tipNudgeDone = MutableStateFlow(prefs.getBoolean(KEY_TIP_NUDGE_DONE, false))
+    private val _tipNudgeSeenAt = MutableStateFlow(
+        prefs.getLong(KEY_TIP_NUDGE_SEEN_AT, if (prefs.getBoolean(KEY_TIP_NUDGE_DONE, false)) 1_000_000_000L else 0L),
+    )
 
-    /** The one-time "Sweepy freed 1 GB for you" card has been seen and closed. */
-    val tipNudgeDone: StateFlow<Boolean> = _tipNudgeDone.asStateFlow()
+    /**
+     * The biggest "Sweepy has cleared X for you" milestone (in bytes) whose card has been seen and closed.
+     * 0 if none. (Before there were two milestones this was a yes/no for the first one, at 1 GB.)
+     */
+    val tipNudgeSeenAt: StateFlow<Long> = _tipNudgeSeenAt.asStateFlow()
 
-    fun markTipNudgeDone() {
-        _tipNudgeDone.value = true
-        prefs.edit { putBoolean(KEY_TIP_NUDGE_DONE, true) }
+    fun markTipNudgeSeen(milestone: Long) {
+        if (milestone <= _tipNudgeSeenAt.value) return
+        _tipNudgeSeenAt.value = milestone
+        prefs.edit { putLong(KEY_TIP_NUDGE_SEEN_AT, milestone) }
     }
 
     // ---- Reminders ---------------------------------------------------------------------------------
@@ -149,6 +155,7 @@ class Prefs(context: Context) {
         const val KEY_AUTOPLAY = "autoplay_videos"
         const val KEY_TIPS_GIVEN = "tips_given"
         const val KEY_TIP_NUDGE_DONE = "tip_nudge_done"
+        const val KEY_TIP_NUDGE_SEEN_AT = "tip_nudge_seen_at"
         const val KEY_REMINDERS = "reminders"
         const val KEY_LAST_OPENED = "last_opened_at"
         const val KEY_LAST_REMINDER = "last_reminder_at"

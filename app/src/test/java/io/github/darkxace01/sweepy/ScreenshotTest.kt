@@ -157,6 +157,9 @@ class ScreenshotTest {
     @Test fun home_tip_nudge() = capture("home_tip_nudge") { Home(nudge = true) }
 
     @Config(qualifiers = "w412dp-h1400dp-xxhdpi")
+    @Test fun home_tip_nudge_big() = capture("home_tip_nudge_big", theme = ThemeChoice.POP) { Home(nudge = true, cleanedBytes = 12_400_000_000) }
+
+    @Config(qualifiers = "w412dp-h1400dp-xxhdpi")
     @Test fun home_reminder_ask() = capture("home_reminder_ask", dark = true) { Home(reminderAsk = true) }
 
     @Composable
@@ -261,7 +264,7 @@ class ScreenshotTest {
     // ---- Screens with fake data ------------------------------------------------------------------
 
     @Composable
-    private fun Home(nudge: Boolean = false, reminderAsk: Boolean = false) {
+    private fun Home(nudge: Boolean = false, reminderAsk: Boolean = false, cleanedBytes: Long = 7_300_000_000) {
         val folders = listOf(
             "Camera" to 4210, "WhatsApp Images" to 3122, "Screenshots" to 1840, "Download" to 611,
             "Instagram" to 402, "Telegram" to 120,
@@ -280,7 +283,7 @@ class ScreenshotTest {
                 markedCount = 312,
                 markedBytes = 1_420_000_000,
                 laterCount = 24,
-                stats = CleanStats(cleanedCount = 2_840, cleanedBytes = 7_300_000_000),
+                stats = CleanStats(cleanedCount = 2_840, cleanedBytes = cleanedBytes),
                 recent = library.take(10),
                 duplicates = DuplicatesSummary(scanning = false, groupCount = 41, reclaimableBytes = 2_300_000_000, covers = library.drop(5).take(4)),
                 quickDecks = listOf(

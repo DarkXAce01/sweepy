@@ -45,3 +45,6 @@ interface TipJar {
     fun refresh()
     fun buy(activity: Activity, tip: Tip)
 }
+
+/** The second, bigger "Sweepy has cleared X for you" milestone (10 GB). */
+const val TIP_NUDGE_BIG_BYTES = 10_000_000_000L

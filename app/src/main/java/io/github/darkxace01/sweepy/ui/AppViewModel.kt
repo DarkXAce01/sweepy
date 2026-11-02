@@ -18,6 +18,7 @@ import io.github.darkxace01.sweepy.data.decisionFor
 import io.github.darkxace01.sweepy.data.db.DuplicateReviewEntity
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGrouper
+import io.github.darkxace01.sweepy.data.tips.TIP_NUDGE_BIG_BYTES
 import io.github.darkxace01.sweepy.data.tips.Tip
 import io.github.darkxace01.sweepy.data.tips.TipJarState
 import io.github.darkxace01.sweepy.data.tips.TipOutcome
@@ -66,17 +67,26 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val tipsGiven: StateFlow<Int> = prefs.tipsGiven
     val tipOutcomes: Flow<TipOutcome> = tipJar.outcomes
 
-    /** Once someone has cleaned up a gigabyte, ask (once) whether they'd like to say thanks. */
+    /**
+     * The milestone to say thanks for, if any: after 1 GB cleaned, and once more after 10 GB. Each card
+     * shows once, and never to someone who has already tipped.
+     */
+    private val tipNudgeMilestone: StateFlow<Long?> =
+        combine(prefs.stats, prefs.tipNudgeSeenAt, prefs.tipsGiven) { stats, seenAt, tips ->
+            TIP_MILESTONES.lastOrNull { stats.cleanedBytes >= it }
+                ?.takeIf { tipJar.supported && tips == 0 && it > seenAt }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     val showTipNudge: StateFlow<Boolean> =
-        combine(prefs.stats, prefs.tipNudgeDone, prefs.tipsGiven) { stats, done, tips ->
-            tipJar.supported && !done && tips == 0 && stats.cleanedBytes >= TIP_NUDGE_BYTES
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+        tipNudgeMilestone.map { it != null }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun refreshTipJar() = tipJar.refresh()
 
     fun buyTip(activity: Activity, tip: Tip) = tipJar.buy(activity, tip)
 
-    fun dismissTipNudge() = prefs.markTipNudgeDone()
+    fun dismissTipNudge() {
+        tipNudgeMilestone.value?.let(prefs::markTipNudgeSeen)
+    }
 
     // ---- Reminders ---------------------------------------------------------------------------------
 
@@ -422,7 +432,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         /** Keep each system request a reasonable size; the user can simply tap again for the rest. */
         const val MAX_BATCH = 1000
 
-        const val TIP_NUDGE_BYTES = 1_000_000_000L
+        /** Cleaned-up amounts that earn a one-time thank-you card: 1 GB, then 10 GB. */
+        val TIP_MILESTONES = listOf(1_000_000_000L, TIP_NUDGE_BIG_BYTES)
     }
 }
 

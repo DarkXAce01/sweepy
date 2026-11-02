@@ -317,6 +317,8 @@
     <string name="tips_support_body">Buy me a coffee. It keeps the app free and ad-free.</string>
     <string name="tips_nudge_title">Sweepy has cleared %1$s for you.</string>
     <string name="tips_nudge_body">It\'s made by one person, with no ads. If it helped, you can say thanks with a coffee.</string>
+    <!-- The second thank-you card, after 10 GB. Shown once, only to people who haven't tipped. -->
+    <string name="tips_nudge_body_big">That\'s a whole lot of photos you\'ll never scroll past again. Sweepy is still made by one person, with no ads. If it\'s earned a coffee, the tip jar is right here.</string>
     <string name="tips_nudge_open">Tip jar</string>
     <string name="tips_nudge_later">Not now</string>
     <!-- Reminders: the occasional notification when there's something worth sorting. Never more than once a week. -->
