@@ -70,6 +70,8 @@ import io.github.darkxace01.sweepy.ui.tips.TipJarScreen
 import io.github.darkxace01.sweepy.ui.tips.TipNote
 import io.github.darkxace01.sweepy.data.tips.Tip
 import io.github.darkxace01.sweepy.data.tips.TipOutcome
+import io.github.darkxace01.sweepy.data.reminders.ReminderKind
+import io.github.darkxace01.sweepy.reminders.ReminderLink
 import androidx.activity.compose.LocalActivity
 import io.github.darkxace01.sweepy.ui.welcome.WelcomeScreen
 import kotlinx.coroutines.flow.collectLatest
@@ -90,7 +92,11 @@ sealed interface Screen {
 }
 
 @Composable
-fun SweepyApp() {
+fun SweepyApp(
+    /** A tapped reminder: the screen to open once the app is ready. */
+    openRequest: ReminderKind? = null,
+    onOpenRequestHandled: () -> Unit = {},
+) {
     val context = LocalContext.current
     val viewModel: AppViewModel = viewModel()
 
@@ -155,6 +161,19 @@ fun SweepyApp() {
     }
     BackHandler(enabled = backStack.size > 1) { back() }
 
+    // A reminder was tapped: go straight to what it was about, with home underneath for "back".
+    LaunchedEffect(openRequest) {
+        val kind = openRequest ?: return@LaunchedEffect
+        val target = ReminderLink.deckFor(kind)?.let { Screen.Deck(it) } ?: Screen.Review
+        if (backStack.last() != target) {
+            while (backStack.size > 1) screenStates.removeState(backStack.removeAt(backStack.lastIndex).toString())
+            navigate(target)
+        }
+        onOpenRequestHandled()
+    }
+
+    val notifications = rememberNotificationAccess { viewModel.dismissReminderAsk() }
+
     // System dialogs (move to trash / restore / delete forever) report back here.
     val trashLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
         viewModel.onTrashResult(confirmed = it.resultCode == Activity.RESULT_OK)
@@ -218,6 +237,7 @@ fun SweepyApp() {
                     Screen.Home -> {
                         val state by viewModel.home.collectAsStateWithLifecycle()
                         val showTipNudge by viewModel.showTipNudge.collectAsStateWithLifecycle()
+                        val reminderAskWanted by viewModel.showReminderAsk.collectAsStateWithLifecycle()
                         HomeScreen(
                             state = state,
                             partialAccess = access == MediaAccess.PARTIAL,
@@ -230,6 +250,10 @@ fun SweepyApp() {
                             onOpenTipJar = if (viewModel.tipsSupported) ({ navigate(Screen.TipJar) }) else null,
                             showTipNudge = showTipNudge,
                             onDismissTipNudge = viewModel::dismissTipNudge,
+                            // One card at a time, and only to people who haven't decided about notifications yet.
+                            showReminderAsk = reminderAskWanted && !showTipNudge && !notifications.allowed,
+                            onAcceptReminders = notifications::request,
+                            onDeclineReminders = viewModel::declineReminders,
                         )
                     }
                     is Screen.Deck -> {
@@ -276,6 +300,11 @@ fun SweepyApp() {
                             onChange = viewModel::updateSettings,
                             onForgetKept = viewModel::forgetKept,
                             onForgetEverything = viewModel::forgetEverything,
+                            remindersOn = settings.reminders && notifications.allowed,
+                            onRemindersChange = { on ->
+                                viewModel.updateSettings { it.copy(reminders = on) }
+                                if (on && !notifications.allowed) notifications.request()
+                            },
                             onOpenTipJar = if (viewModel.tipsSupported) ({ navigate(Screen.TipJar) }) else null,
                         )
                     }

@@ -319,4 +319,102 @@
     <string name="tips_nudge_body">It\'s made by one person, with no ads. If it helped, you can say thanks with a coffee.</string>
     <string name="tips_nudge_open">Tip jar</string>
     <string name="tips_nudge_later">Not now</string>
+    <!-- Reminders: the occasional notification when there's something worth sorting. Never more than once a week. -->
+    <string name="reminder_channel">Gentle reminders</string>
+    <string name="reminder_channel_body">Only when there\'s something worth sorting, and never more than once a week.</string>
+
+    <!-- Titles: %1$d = how full the phone is, in percent. Texts: %1$s = size of big unsorted videos, e.g. "1.2 GB". -->
+    <string name="reminder_storage_title_0">Your phone is %1$d%% full</string>
+    <string name="reminder_storage_body_0">Your big unsorted videos add up to %1$s. Start with the biggest and keep what matters.</string>
+    <string name="reminder_storage_title_1">Running out of room?</string>
+    <string name="reminder_storage_body_1">%1$s of big videos have never had a second look. A few swipes could free most of it.</string>
+    <string name="reminder_storage_title_2">Before your phone says \"storage full\"</string>
+    <string name="reminder_storage_body_2">Start with the giants: %1$s of videos you haven\'t sorted yet.</string>
+
+    <!-- %1$s = number of things in the review bin, %2$s = their size. -->
+    <plurals name="reminder_bin_title_0">
+        <item quantity="one">%2$s is packed and ready to go</item>
+        <item quantity="other">%2$s is packed and ready to go</item>
+    </plurals>
+    <plurals name="reminder_bin_body_0">
+        <item quantity="one">You already said goodbye to %1$s photo. One tap and the space is yours again.</item>
+        <item quantity="other">You already said goodbye to %1$s photos and videos. One tap and the space is yours again.</item>
+    </plurals>
+    <plurals name="reminder_bin_title_1">
+        <item quantity="one">Your review bin is still holding %2$s</item>
+        <item quantity="other">Your review bin is still holding %2$s</item>
+    </plurals>
+    <plurals name="reminder_bin_body_1">
+        <item quantity="one">Nothing leaves until you say so. One last look?</item>
+        <item quantity="other">Nothing leaves until you say so. One last look?</item>
+    </plurals>
+    <plurals name="reminder_bin_title_2">
+        <item quantity="one">Ready to let go?</item>
+        <item quantity="other">Ready to let go?</item>
+    </plurals>
+    <plurals name="reminder_bin_body_2">
+        <item quantity="one">%1$s photo is waiting in your review bin, %2$s in all.</item>
+        <item quantity="other">%1$s photos and videos are waiting in your review bin, %2$s in all.</item>
+    </plurals>
+
+    <!-- %1$s = number of new screenshots. -->
+    <plurals name="reminder_screenshots_title_0">
+        <item quantity="one">%1$s new screenshot</item>
+        <item quantity="other">%1$s new screenshots</item>
+    </plurals>
+    <plurals name="reminder_screenshots_body_0">
+        <item quantity="one">Boarding passes, memes, that one recipe. Most of them have done their job.</item>
+        <item quantity="other">Boarding passes, memes, that one recipe. Most of them have done their job.</item>
+    </plurals>
+    <plurals name="reminder_screenshots_title_1">
+        <item quantity="one">Your screenshots are piling up</item>
+        <item quantity="other">Your screenshots are piling up</item>
+    </plurals>
+    <plurals name="reminder_screenshots_body_1">
+        <item quantity="one">%1$s since you last looked. Swipe through in a minute or two?</item>
+        <item quantity="other">%1$s since you last looked. Swipe through in a minute or two?</item>
+    </plurals>
+    <plurals name="reminder_screenshots_title_2">
+        <item quantity="one">Remember why you took these?</item>
+        <item quantity="other">Remember why you took these?</item>
+    </plurals>
+    <plurals name="reminder_screenshots_body_2">
+        <item quantity="one">%1$s new screenshot. Keep it if it still matters.</item>
+        <item quantity="other">%1$s new screenshots. Keep the ones that still matter.</item>
+    </plurals>
+
+    <!-- %1$s = number of new photos and videos. -->
+    <plurals name="reminder_new_title_0">
+        <item quantity="one">%1$s new shot moved in</item>
+        <item quantity="other">%1$s new shots moved in</item>
+    </plurals>
+    <plurals name="reminder_new_body_0">
+        <item quantity="one">Keep the keepers, wave off the blurry ones. Easier while they\'re fresh.</item>
+        <item quantity="other">Keep the keepers, wave off the blurry ones. Easier while they\'re fresh.</item>
+    </plurals>
+    <plurals name="reminder_new_title_1">
+        <item quantity="one">Fresh prints are in</item>
+        <item quantity="other">Fresh prints are in</item>
+    </plurals>
+    <plurals name="reminder_new_body_1">
+        <item quantity="one">%1$s photo since your last sweep. Sort it while you still remember why you took it.</item>
+        <item quantity="other">%1$s photos and videos since your last sweep. Sort them while you still remember why you took them.</item>
+    </plurals>
+    <plurals name="reminder_new_title_2">
+        <item quantity="one">Your camera roll grew by %1$s</item>
+        <item quantity="other">Your camera roll grew by %1$s</item>
+    </plurals>
+    <plurals name="reminder_new_body_2">
+        <item quantity="one">Sorting a few hundred now beats a few thousand later.</item>
+        <item quantity="other">Sorting a few hundred now beats a few thousand later.</item>
+    </plurals>
+
+    <!-- Settings switch and the one-time home card asking about reminders. -->
+    <string name="settings_section_reminders">Reminders</string>
+    <string name="setting_reminders">Sorting reminders</string>
+    <string name="setting_reminders_body">A nudge when screenshots pile up, the review bin is full or space runs low. At most once a week, worked out on your phone.</string>
+    <string name="reminder_ask_title">Want a heads-up when it piles up again?</string>
+    <string name="reminder_ask_body">Sweepy can let you know when there\'s something worth sorting. At most once a week, never at night, and you can turn it off in Settings.</string>
+    <string name="reminder_ask_yes">Sure</string>
+    <string name="reminder_ask_no">No thanks</string>
 </resources>

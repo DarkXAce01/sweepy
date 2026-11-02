@@ -156,6 +156,9 @@ class ScreenshotTest {
     @Config(qualifiers = "w412dp-h1400dp-xxhdpi")
     @Test fun home_tip_nudge() = capture("home_tip_nudge") { Home(nudge = true) }
 
+    @Config(qualifiers = "w412dp-h1400dp-xxhdpi")
+    @Test fun home_reminder_ask() = capture("home_reminder_ask", dark = true) { Home(reminderAsk = true) }
+
     @Composable
     private fun Tips(state: TipJarState = TipJarState.Ready(mapOf(Tip.COFFEE to "$1.99", Tip.LUNCH to "$4.99", Tip.DINNER to "$9.99")), tipsGiven: Int = 0, thanked: Tip? = null) =
         TipJarScreen(state = state, tipsGiven = tipsGiven, thanked = thanked, note = null, onBuy = {}, onDismissThanks = {}, onBack = {})
@@ -165,6 +168,7 @@ class ScreenshotTest {
     @Composable
     private fun Settings(theme: ThemeChoice = ThemeChoice.CONTACT_SHEET) = SettingsScreen(
         onOpenTipJar = {},
+        remindersOn = true,
         settings = AppSettings(theme = theme, leftHanded = true),
         keptCount = 1_204,
         onBack = {},
@@ -257,7 +261,7 @@ class ScreenshotTest {
     // ---- Screens with fake data ------------------------------------------------------------------
 
     @Composable
-    private fun Home(nudge: Boolean = false) {
+    private fun Home(nudge: Boolean = false, reminderAsk: Boolean = false) {
         val folders = listOf(
             "Camera" to 4210, "WhatsApp Images" to 3122, "Screenshots" to 1840, "Download" to 611,
             "Instagram" to 402, "Telegram" to 120,
@@ -290,7 +294,7 @@ class ScreenshotTest {
             ),
             partialAccess = false,
             onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onOpenDuplicates = {}, onRequestFullAccess = {},
-            onOpenTipJar = {}, showTipNudge = nudge,
+            onOpenTipJar = {}, showTipNudge = nudge, showReminderAsk = reminderAsk,
         )
     }
 

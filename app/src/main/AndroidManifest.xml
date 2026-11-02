@@ -25,6 +25,10 @@
         android:name="android.permission.MANAGE_MEDIA"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- The occasional sorting reminder (asked for on Android 13+), kept running after a restart. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- Media3 asks for these for streaming; Sweepy only plays local files, so drop them. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
@@ -40,12 +44,19 @@
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Checks the gallery every few hours for something worth a reminder. Runs on the phone only. -->
+        <service
+            android:name=".reminders.ReminderJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 
 </manifest>

@@ -85,6 +85,9 @@ fun SettingsScreen(
     onForgetEverything: () -> Unit,
     /** Null hides the tip jar (builds without Google Play billing). */
     onOpenTipJar: (() -> Unit)? = null,
+    /** On, and Android allows Sweepy to show notifications. */
+    remindersOn: Boolean = false,
+    onRemindersChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     var confirm by remember { mutableStateOf<Confirm?>(null) }
@@ -184,6 +187,14 @@ fun SettingsScreen(
                     body = stringResource(R.string.setting_autoplay_body),
                     checked = settings.autoplayVideos,
                     onChange = { value -> onChange { it.copy(autoplayVideos = value) } },
+                )
+
+                Section(stringResource(R.string.settings_section_reminders))
+                Toggle(
+                    title = stringResource(R.string.setting_reminders),
+                    body = stringResource(R.string.setting_reminders_body),
+                    checked = remindersOn,
+                    onChange = onRemindersChange,
                 )
 
                 Section(stringResource(R.string.settings_section_memory))

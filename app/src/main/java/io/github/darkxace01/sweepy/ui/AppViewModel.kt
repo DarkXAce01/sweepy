@@ -78,6 +78,26 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun dismissTipNudge() = prefs.markTipNudgeDone()
 
+    // ---- Reminders ---------------------------------------------------------------------------------
+
+    /**
+     * After the first cleanup, ask once whether a reminder now and then would be welcome. Android 13+
+     * needs permission for notifications, and right after a cleanup is when the offer makes sense.
+     */
+    val showReminderAsk: StateFlow<Boolean> =
+        combine(prefs.stats, prefs.reminderAskDone, prefs.settings) { stats, done, settings ->
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                !done && settings.reminders && stats.cleanedCount > 0
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** The card was answered (either way); it never comes back. */
+    fun dismissReminderAsk() = prefs.markReminderAskDone()
+
+    fun declineReminders() {
+        prefs.updateSettings { it.copy(reminders = false) }
+        prefs.markReminderAskDone()
+    }
+
     private val _events = Channel<UiEvent>(Channel.BUFFERED)
     val events: Flow<UiEvent> = _events.receiveAsFlow()
 

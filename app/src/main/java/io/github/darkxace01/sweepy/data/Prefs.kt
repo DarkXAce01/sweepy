@@ -23,6 +23,8 @@ data class AppSettings(
     val leftHanded: Boolean = false,
     val haptics: Boolean = true,
     val autoplayVideos: Boolean = true,
+    /** The occasional "there's something to sort" notification. */
+    val reminders: Boolean = true,
 )
 
 /** Small settings and lifetime stats. */
@@ -48,6 +50,7 @@ class Prefs(context: Context) {
             leftHanded = prefs.getBoolean(KEY_LEFT_HANDED, false),
             haptics = prefs.getBoolean(KEY_HAPTICS, true),
             autoplayVideos = prefs.getBoolean(KEY_AUTOPLAY, true),
+            reminders = prefs.getBoolean(KEY_REMINDERS, true),
         ),
     )
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
@@ -62,6 +65,7 @@ class Prefs(context: Context) {
             putBoolean(KEY_LEFT_HANDED, updated.leftHanded)
             putBoolean(KEY_HAPTICS, updated.haptics)
             putBoolean(KEY_AUTOPLAY, updated.autoplayVideos)
+            putBoolean(KEY_REMINDERS, updated.reminders)
         }
     }
 
@@ -94,6 +98,39 @@ class Prefs(context: Context) {
         prefs.edit { putBoolean(KEY_TIP_NUDGE_DONE, true) }
     }
 
+    // ---- Reminders ---------------------------------------------------------------------------------
+
+    /** When the app was last on screen. Reminders stay away while it's in regular use. */
+    val lastOpenedAt: Long get() = prefs.getLong(KEY_LAST_OPENED, 0)
+    val lastReminderAt: Long get() = prefs.getLong(KEY_LAST_REMINDER, 0)
+
+    /** Reminders sent since the app was last opened. Two ignored in a row and they stop. */
+    val unansweredReminders: Int get() = prefs.getInt(KEY_UNANSWERED, 0)
+
+    /** Which wording was used last, so the next one reads differently. */
+    val lastReminderWording: Int get() = prefs.getInt(KEY_REMINDER_WORDING, -1)
+
+    fun markOpened(now: Long = System.currentTimeMillis()) = prefs.edit {
+        putLong(KEY_LAST_OPENED, now)
+        putInt(KEY_UNANSWERED, 0)
+    }
+
+    fun markReminderSent(wording: Int, now: Long = System.currentTimeMillis()) = prefs.edit {
+        putLong(KEY_LAST_REMINDER, now)
+        putInt(KEY_UNANSWERED, unansweredReminders + 1)
+        putInt(KEY_REMINDER_WORDING, wording)
+    }
+
+    private val _reminderAskDone = MutableStateFlow(prefs.getBoolean(KEY_REMINDER_ASK_DONE, false))
+
+    /** The home card asking whether reminders are welcome has been answered either way. */
+    val reminderAskDone: StateFlow<Boolean> = _reminderAskDone.asStateFlow()
+
+    fun markReminderAskDone() {
+        _reminderAskDone.value = true
+        prefs.edit { putBoolean(KEY_REMINDER_ASK_DONE, true) }
+    }
+
     fun markSwipeHintSeen() {
         if (_swipeHintSeen.value) return
         _swipeHintSeen.value = true
@@ -112,5 +149,11 @@ class Prefs(context: Context) {
         const val KEY_AUTOPLAY = "autoplay_videos"
         const val KEY_TIPS_GIVEN = "tips_given"
         const val KEY_TIP_NUDGE_DONE = "tip_nudge_done"
+        const val KEY_REMINDERS = "reminders"
+        const val KEY_LAST_OPENED = "last_opened_at"
+        const val KEY_LAST_REMINDER = "last_reminder_at"
+        const val KEY_UNANSWERED = "unanswered_reminders"
+        const val KEY_REMINDER_WORDING = "last_reminder_wording"
+        const val KEY_REMINDER_ASK_DONE = "reminder_ask_done"
     }
 }

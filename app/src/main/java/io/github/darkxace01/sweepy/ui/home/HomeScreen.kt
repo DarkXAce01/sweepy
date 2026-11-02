@@ -114,6 +114,10 @@ fun HomeScreen(
     onOpenTipJar: (() -> Unit)? = null,
     showTipNudge: Boolean = false,
     onDismissTipNudge: () -> Unit = {},
+    /** The one-time "want a heads-up now and then?" card. */
+    showReminderAsk: Boolean = false,
+    onAcceptReminders: () -> Unit = {},
+    onDeclineReminders: () -> Unit = {},
 ) {
     var showAllFolders by rememberSaveable { mutableStateOf(false) }
     var showAllMonths by rememberSaveable { mutableStateOf(false) }
@@ -164,6 +168,28 @@ fun HomeScreen(
                                 onOpenTipJar()
                             },
                             onDismiss = onDismissTipNudge,
+                            modifier = Modifier.padding(top = 24.dp),
+                        )
+                    }
+                }
+
+                if (showReminderAsk) {
+                    item(key = "reminder-ask") {
+                        NoteCard(
+                            art = {
+                                Icon(
+                                    painterResource(R.drawable.ic_notification),
+                                    contentDescription = null,
+                                    tint = Sweepy.colors.pencil,
+                                    modifier = Modifier.size(40.dp),
+                                )
+                            },
+                            title = stringResource(R.string.reminder_ask_title),
+                            body = stringResource(R.string.reminder_ask_body),
+                            no = stringResource(R.string.reminder_ask_no),
+                            yes = stringResource(R.string.reminder_ask_yes),
+                            onNo = onDeclineReminders,
+                            onYes = onAcceptReminders,
                             modifier = Modifier.padding(top = 24.dp),
                         )
                     }
@@ -648,7 +674,30 @@ private fun RecentlyCleanedRow(onClick: () -> Unit) {
 /** Shown once, after Sweepy has cleaned up a gigabyte: a friendly, skippable ask. */
 @Composable
 private fun TipNudge(cleanedBytes: Long, onOpen: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
+    NoteCard(
+        art = { TipArt(Tip.COFFEE, Modifier.size(44.dp)) },
+        title = stringResource(R.string.tips_nudge_title, formatSize(LocalContext.current, cleanedBytes)),
+        body = stringResource(R.string.tips_nudge_body),
+        no = stringResource(R.string.tips_nudge_later),
+        yes = stringResource(R.string.tips_nudge_open),
+        onNo = onDismiss,
+        onYes = onOpen,
+        modifier = modifier,
+    )
+}
+
+/** A one-off card in the home feed: a small drawing, a question, and two answers. */
+@Composable
+private fun NoteCard(
+    art: @Composable () -> Unit,
+    title: String,
+    body: String,
+    no: String,
+    yes: String,
+    onNo: () -> Unit,
+    onYes: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val shape = RoundedCornerShape(18.dp)
     Column(
         modifier
@@ -660,24 +709,24 @@ private fun TipNudge(cleanedBytes: Long, onOpen: () -> Unit, onDismiss: () -> Un
             .padding(18.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            TipArt(Tip.COFFEE, Modifier.size(44.dp))
+            art()
             Spacer(Modifier.width(14.dp))
             Text(
-                stringResource(R.string.tips_nudge_title, formatSize(context, cleanedBytes)),
+                title,
                 style = MaterialTheme.typography.headlineSmall,
                 color = Sweepy.colors.ink,
             )
         }
         Spacer(Modifier.height(10.dp))
         Text(
-            stringResource(R.string.tips_nudge_body),
+            body,
             style = MaterialTheme.typography.bodyMedium,
             color = Sweepy.colors.inkMuted,
         )
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlineButton(stringResource(R.string.tips_nudge_later), onDismiss, Modifier.weight(1f))
-            InkButton(stringResource(R.string.tips_nudge_open), onOpen, Modifier.weight(1f))
+            OutlineButton(no, onNo, Modifier.weight(1f))
+            InkButton(yes, onYes, Modifier.weight(1f))
         }
     }
 }
