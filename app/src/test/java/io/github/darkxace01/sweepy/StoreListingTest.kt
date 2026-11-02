@@ -192,16 +192,19 @@ class StoreListingTest {
 
     @Test fun shot6_themes() = render("phone_6_themes") {
         Slide(listOf("Pick a look", "you'll {love}."), "Three themes, each in light and dark.") {
-            // The same screen in each theme, so the difference is the only thing that changes.
+            // The same screen in every theme: light on top, dark underneath, so the look is the only thing that changes.
+            val w = ((LocalArea.current - 50.dp) / 4.24f).coerceAtMost(112.dp)
+            val rowTwo = 26.dp + w * 2.12f + 12.dp
             Box(Modifier.fillMaxSize()) {
                 for ((i, look) in listOf(
-                    Triple("Contact sheet", ThemeChoice.CONTACT_SHEET, false),
-                    Triple("Riso", ThemeChoice.RISO, true),
-                    Triple("Pop", ThemeChoice.POP, false),
+                    "Contact sheet" to ThemeChoice.CONTACT_SHEET,
+                    "Riso" to ThemeChoice.RISO,
+                    "Pop" to ThemeChoice.POP,
                 ).withIndex()) {
-                    val x = 118.dp * (i - 1)
-                    ThemeLabel(look.first, x = x, top = 22.dp)
-                    Phone(width = 108.dp, top = 46.dp, x = x, theme = look.second, dark = look.third) { Home() }
+                    val x = (w + 10.dp) * (i - 1)
+                    ThemeLabel(look.first, x = x, top = 6.dp)
+                    Phone(width = w, top = 26.dp, x = x, theme = look.second, dark = false) { Home() }
+                    Phone(width = w, top = rowTwo, x = x, theme = look.second, dark = true) { Home() }
                 }
             }
         }
