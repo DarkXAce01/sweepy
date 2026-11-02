@@ -66,6 +66,11 @@ import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
 import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
+import io.github.darkxace01.sweepy.ui.tips.TipJarScreen
+import io.github.darkxace01.sweepy.ui.tips.TipNote
+import io.github.darkxace01.sweepy.data.tips.Tip
+import io.github.darkxace01.sweepy.data.tips.TipOutcome
+import androidx.activity.compose.LocalActivity
 import io.github.darkxace01.sweepy.ui.welcome.WelcomeScreen
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -81,6 +86,7 @@ sealed interface Screen {
     data object Trash : Screen
     data object Settings : Screen
     data object Duplicates : Screen
+    data object TipJar : Screen
 }
 
 @Composable
@@ -159,6 +165,7 @@ fun SweepyApp() {
     fun PendingIntent.launchWith(launcher: ActivityResultLauncher<IntentSenderRequest>) =
         launcher.launch(IntentSenderRequest.Builder(intentSender).build())
 
+    val activity = LocalActivity.current
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
@@ -210,6 +217,7 @@ fun SweepyApp() {
                 when (screen) {
                     Screen.Home -> {
                         val state by viewModel.home.collectAsStateWithLifecycle()
+                        val showTipNudge by viewModel.showTipNudge.collectAsStateWithLifecycle()
                         HomeScreen(
                             state = state,
                             partialAccess = access == MediaAccess.PARTIAL,
@@ -219,6 +227,9 @@ fun SweepyApp() {
                             onOpenSettings = { navigate(Screen.Settings) },
                             onOpenDuplicates = { navigate(Screen.Duplicates) },
                             onRequestFullAccess = { permissionLauncher.launch(MediaPermissions.requested) },
+                            onOpenTipJar = if (viewModel.tipsSupported) ({ navigate(Screen.TipJar) }) else null,
+                            showTipNudge = showTipNudge,
+                            onDismissTipNudge = viewModel::dismissTipNudge,
                         )
                     }
                     is Screen.Deck -> {
@@ -265,6 +276,38 @@ fun SweepyApp() {
                             onChange = viewModel::updateSettings,
                             onForgetKept = viewModel::forgetKept,
                             onForgetEverything = viewModel::forgetEverything,
+                            onOpenTipJar = if (viewModel.tipsSupported) ({ navigate(Screen.TipJar) }) else null,
+                        )
+                    }
+                    Screen.TipJar -> {
+                        val state by viewModel.tipJarState.collectAsStateWithLifecycle()
+                        val tipsGiven by viewModel.tipsGiven.collectAsStateWithLifecycle()
+                        var thanked by remember { mutableStateOf<Tip?>(null) }
+                        var note by remember { mutableStateOf<TipNote?>(null) }
+                        LaunchedEffect(Unit) {
+                            viewModel.refreshTipJar()
+                            viewModel.tipOutcomes.collect { outcome ->
+                                when (outcome) {
+                                    is TipOutcome.Thanked -> {
+                                        note = null
+                                        thanked = outcome.tip
+                                    }
+                                    TipOutcome.Pending -> note = TipNote.PENDING
+                                    TipOutcome.Failed -> note = TipNote.FAILED
+                                }
+                            }
+                        }
+                        TipJarScreen(
+                            state = state,
+                            tipsGiven = tipsGiven,
+                            thanked = thanked,
+                            note = note,
+                            onBuy = { tip ->
+                                note = null
+                                activity?.let { viewModel.buyTip(it, tip) }
+                            },
+                            onDismissThanks = { thanked = null },
+                            onBack = ::back,
                         )
                     }
                     Screen.Trash -> {

@@ -74,6 +74,26 @@ class Prefs(context: Context) {
         }
     }
 
+    private val _tipsGiven = MutableStateFlow(prefs.getInt(KEY_TIPS_GIVEN, 0))
+
+    /** How many tips this person has left, for a thank-you. Only counted on this phone. */
+    val tipsGiven: StateFlow<Int> = _tipsGiven.asStateFlow()
+
+    fun addTip() {
+        _tipsGiven.value += 1
+        prefs.edit { putInt(KEY_TIPS_GIVEN, _tipsGiven.value) }
+    }
+
+    private val _tipNudgeDone = MutableStateFlow(prefs.getBoolean(KEY_TIP_NUDGE_DONE, false))
+
+    /** The one-time "Sweepy freed 1 GB for you" card has been seen and closed. */
+    val tipNudgeDone: StateFlow<Boolean> = _tipNudgeDone.asStateFlow()
+
+    fun markTipNudgeDone() {
+        _tipNudgeDone.value = true
+        prefs.edit { putBoolean(KEY_TIP_NUDGE_DONE, true) }
+    }
+
     fun markSwipeHintSeen() {
         if (_swipeHintSeen.value) return
         _swipeHintSeen.value = true
@@ -90,5 +110,7 @@ class Prefs(context: Context) {
         const val KEY_LEFT_HANDED = "left_handed"
         const val KEY_HAPTICS = "haptics"
         const val KEY_AUTOPLAY = "autoplay_videos"
+        const val KEY_TIPS_GIVEN = "tips_given"
+        const val KEY_TIP_NUDGE_DONE = "tip_nudge_done"
     }
 }

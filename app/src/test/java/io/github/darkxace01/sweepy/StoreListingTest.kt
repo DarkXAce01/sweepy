@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -109,8 +110,8 @@ class StoreListingTest {
     // ---- Phone screenshots (1080 × 1920) -----------------------------------------------------------
 
     @Test fun shot1_swipe() = render("phone_1_swipe") {
-        Slide("01 · Left deletes, right keeps", listOf("Swipe your", "gallery {clean}.")) {
-            Phone(width = 262.dp, top = 196.dp, overlay = {
+        Slide(listOf("Swipe your", "gallery {clean}."), "Left to delete, right to keep.", chips = true) {
+            Phone(overlay = {
                 // The top print, caught mid-swipe on its way out.
                 val state = SwipeCardState(initialOffset = Offset(-660f, 90f))
                 Box(Modifier.fillMaxSize().padding(start = 22.dp, end = 22.dp, top = 120.dp, bottom = 113.dp)) {
@@ -126,9 +127,34 @@ class StoreListingTest {
         }
     }
 
-    @Test fun shot2_review() = render("phone_2_review") {
-        Slide("02 · The review bin", listOf("Nothing goes", "until you say {so}.")) {
-            Phone(width = 262.dp, top = 196.dp) {
+    @Test fun shot2_private() = render("phone_2_private") {
+        Slide(listOf("Your photos never", "{leave} your phone."), "No internet permission. Nothing can be uploaded.") {
+            Column(Modifier.align(Alignment.TopStart).padding(start = 30.dp, end = 24.dp, top = 26.dp)) {
+                for (line in listOf("Internet access", "Ads", "Accounts or sign-ups", "Tracking or analytics")) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
+                        MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 28.dp)
+                        Spacer(Modifier.width(16.dp))
+                        Text(line, style = MaterialTheme.typography.headlineLarge.copy(fontSize = 29.sp), color = Sweepy.colors.ink)
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
+                    MarkIcon(Mark.CIRCLE, Sweepy.colors.keep, size = 28.dp)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Works fully offline", style = MaterialTheme.typography.headlineLarge.copy(fontSize = 29.sp, fontStyle = FontStyle.Italic), color = Sweepy.colors.ink)
+                }
+            }
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(150.dp)) {
+                Print(library[2], Modifier.align(Alignment.BottomCenter).offset((-96).dp, 78.dp), rotation = -12f, small = true)
+                Print(library[4], Modifier.align(Alignment.BottomCenter).offset(96.dp, 82.dp), rotation = 10f, small = true)
+                Print(library[1], Modifier.align(Alignment.BottomCenter).offset(0.dp, 64.dp), rotation = -3f, small = true, mark = Mark.CIRCLE)
+            }
+        }
+    }
+
+    @Test fun shot3_review() = render("phone_3_review") {
+        Slide(listOf("Nothing goes until", "you say {so}."), "Swiped photos wait in a review bin first.") {
+            Phone {
                 ReviewScreen(
                     state = ReviewUiState(
                         groups = listOf(ReviewGroup("Camera", library.drop(2).take(9)), ReviewGroup("Downloads", library.drop(14).take(5))),
@@ -141,9 +167,9 @@ class StoreListingTest {
         }
     }
 
-    @Test fun shot3_duplicates() = render("phone_3_duplicates") {
-        Slide("03 · Bursts, copies, look-alikes", listOf("Duplicates,", "{found} for you.")) {
-            Phone(width = 262.dp, top = 196.dp) {
+    @Test fun shot4_duplicates() = render("phone_4_duplicates") {
+        Slide(listOf("Duplicates,", "{found} for you."), "The sharpest shot of every burst, picked.") {
+            Phone {
                 val shots = (0 until 6).map { i ->
                     library[0].copy(id = BURST + i, dateTakenMillis = 1_760_000_000_000L + i * 600L, width = 3000, height = 4000, sizeBytes = 3_400_000L + i * 120_000L)
                 }
@@ -156,45 +182,18 @@ class StoreListingTest {
         }
     }
 
-    @Test fun shot4_home() = render("phone_4_home") {
-        Slide("04 · By folder, month or size", listOf("See where your", "space {went}.")) {
-            Phone(width = 262.dp, top = 196.dp) { Home() }
+    @Test fun shot5_home() = render("phone_5_home") {
+        Slide(listOf("See where your", "space {went}."), "By folder, by month, or biggest first.") {
+            Phone { Home() }
         }
     }
 
-    @Test fun shot5_themes() = render("phone_5_themes") {
-        Slide("05 · Three looks", listOf("Pick the one", "that feels {yours}.")) {
+    @Test fun shot6_themes() = render("phone_6_themes") {
+        Slide(listOf("Pick a look", "you'll {love}."), "Three themes, each in light and dark.") {
             Box(Modifier.fillMaxSize()) {
-                Phone(width = 176.dp, top = 250.dp, rotation = -10f, x = (-104).dp, theme = ThemeChoice.RISO) { Deck() }
-                Phone(width = 176.dp, top = 250.dp, rotation = 10f, x = 104.dp, dark = true) { Review() }
-                Phone(width = 200.dp, top = 214.dp, theme = ThemeChoice.POP) { Home() }
-            }
-        }
-    }
-
-    @Test fun shot6_private() = render("phone_6_private") {
-        Slide("06 · Private by design", listOf("Your photos stay", "on your {phone}.")) {
-            Column(Modifier.align(Alignment.TopStart).padding(start = 30.dp, end = 24.dp, top = 196.dp)) {
-                for (line in listOf("Internet access", "Ads", "Accounts or sign-ups", "Tracking or analytics")) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 9.dp)) {
-                        MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 30.dp)
-                        Spacer(Modifier.width(16.dp))
-                        Text(line, style = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp), color = Sweepy.colors.ink)
-                    }
-                }
-                Spacer(Modifier.height(18.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 9.dp)) {
-                    MarkIcon(Mark.CIRCLE, Sweepy.colors.keep, size = 30.dp)
-                    Spacer(Modifier.width(16.dp))
-                    Text("Works fully offline", style = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp, fontStyle = FontStyle.Italic), color = Sweepy.colors.ink)
-                }
-                Spacer(Modifier.height(6.dp))
-                Eyebrow("Deleted by mistake? 30 days to restore", small = true, modifier = Modifier.padding(start = 46.dp))
-            }
-            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(150.dp)) {
-                Print(library[2], Modifier.align(Alignment.BottomCenter).offset((-96).dp, 78.dp), rotation = -12f, small = true)
-                Print(library[4], Modifier.align(Alignment.BottomCenter).offset(96.dp, 82.dp), rotation = 10f, small = true)
-                Print(library[1], Modifier.align(Alignment.BottomCenter).offset(0.dp, 64.dp), rotation = -3f, small = true, mark = Mark.CIRCLE)
+                Phone(width = 170.dp, top = 52.dp, rotation = -9f, x = (-100).dp, theme = ThemeChoice.RISO) { Deck() }
+                Phone(width = 170.dp, top = 52.dp, rotation = 9f, x = 100.dp, dark = true) { Review() }
+                Phone(width = 200.dp, top = 22.dp, theme = ThemeChoice.POP) { Home() }
             }
         }
     }
@@ -228,16 +227,42 @@ class StoreListingTest {
 
     // ---- Building blocks ---------------------------------------------------------------------------
 
-    /** The page every screenshot sits on: film-edge caption, a serif headline with one word circled, then the phone. */
+    /**
+     * The page every screenshot sits on: a serif headline with one word circled, a plain-spoken line
+     * under it, then the phone. The first one also carries the privacy promises as small tags.
+     */
     @Composable
-    private fun Slide(eyebrow: String, headline: List<String>, phone: @Composable BoxScope.() -> Unit) {
+    private fun Slide(headline: List<String>, sub: String, chips: Boolean = false, content: @Composable BoxScope.() -> Unit) {
         Paper {
-            Column(Modifier.padding(start = 28.dp, end = 20.dp, top = 40.dp)) {
-                Eyebrow(eyebrow, color = Sweepy.colors.pencil)
-                Spacer(Modifier.height(6.dp))
-                Column(verticalArrangement = Arrangement.spacedBy((-14).dp)) { headline.forEach { Headline(it, size = 46) } }
+            Column(Modifier.fillMaxSize()) {
+                Column(Modifier.padding(start = 26.dp, end = 22.dp, top = if (chips) 24.dp else 34.dp)) {
+                    if (chips) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 12.dp)) {
+                            for (chip in listOf("Works offline", "No ads", "No account")) Chip(chip)
+                        }
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy((-12).dp)) { headline.forEach { Headline(it, size = 40) } }
+                    Spacer(Modifier.height(4.dp))
+                    Text(sub, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 20.sp), color = Sweepy.colors.inkMuted)
+                }
+                // Everything below the words; phones are placed from the top of this area.
+                Box(Modifier.fillMaxWidth().weight(1f), content = content)
             }
-            phone()
+        }
+    }
+
+    /** A small tag with a green pencil tick-circle. */
+    @Composable
+    private fun Chip(text: String) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .border(1.dp, Sweepy.colors.ink.copy(alpha = 0.7f), CircleShape)
+                .padding(start = 8.dp, end = 11.dp, top = 5.dp, bottom = 5.dp),
+        ) {
+            MarkIcon(Mark.CIRCLE, Sweepy.colors.keep, size = 11.dp, strokeWidth = 0.16f)
+            Spacer(Modifier.width(5.dp))
+            Text(text, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 14.sp), color = Sweepy.colors.ink, maxLines = 1)
         }
     }
 
@@ -270,8 +295,8 @@ class StoreListingTest {
      */
     @Composable
     private fun BoxScope.Phone(
-        width: Dp,
-        top: Dp,
+        width: Dp = 236.dp,
+        top: Dp = 18.dp,
         rotation: Float = 0f,
         x: Dp = 0.dp,
         theme: ThemeChoice = ThemeChoice.CONTACT_SHEET,

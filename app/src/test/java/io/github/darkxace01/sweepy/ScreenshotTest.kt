@@ -55,6 +55,9 @@ import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.ThemeChoice
 import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
+import io.github.darkxace01.sweepy.ui.tips.TipJarScreen
+import io.github.darkxace01.sweepy.data.tips.Tip
+import io.github.darkxace01.sweepy.data.tips.TipJarState
 import io.github.darkxace01.sweepy.ui.welcome.WelcomeScreen
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateKind
@@ -140,10 +143,28 @@ class ScreenshotTest {
 
     @Test fun settings_light() = capture("settings_light") { Settings() }
 
+    @Test fun tips_ready() = capture("tips_ready") { Tips() }
+
+    @Test fun tips_thanks() = capture("tips_thanks") { Tips(thanked = Tip.LUNCH) }
+
+    @Test fun tips_unavailable() = capture("tips_unavailable", dark = true) { Tips(state = TipJarState.Unavailable) }
+
+    @Test fun pop_tips() = capture("pop_tips", theme = ThemeChoice.POP) { Tips(tipsGiven = 2) }
+
+    @Test fun riso_tips() = capture("riso_tips", theme = ThemeChoice.RISO) { Tips() }
+
+    @Config(qualifiers = "w412dp-h1400dp-xxhdpi")
+    @Test fun home_tip_nudge() = capture("home_tip_nudge") { Home(nudge = true) }
+
+    @Composable
+    private fun Tips(state: TipJarState = TipJarState.Ready(mapOf(Tip.COFFEE to "$1.99", Tip.LUNCH to "$4.99", Tip.DINNER to "$9.99")), tipsGiven: Int = 0, thanked: Tip? = null) =
+        TipJarScreen(state = state, tipsGiven = tipsGiven, thanked = thanked, note = null, onBuy = {}, onDismissThanks = {}, onBack = {})
+
     @Test fun settings_dark() = capture("settings_dark", dark = true) { Settings() }
 
     @Composable
     private fun Settings(theme: ThemeChoice = ThemeChoice.CONTACT_SHEET) = SettingsScreen(
+        onOpenTipJar = {},
         settings = AppSettings(theme = theme, leftHanded = true),
         keptCount = 1_204,
         onBack = {},
@@ -236,7 +257,7 @@ class ScreenshotTest {
     // ---- Screens with fake data ------------------------------------------------------------------
 
     @Composable
-    private fun Home() {
+    private fun Home(nudge: Boolean = false) {
         val folders = listOf(
             "Camera" to 4210, "WhatsApp Images" to 3122, "Screenshots" to 1840, "Download" to 611,
             "Instagram" to 402, "Telegram" to 120,
@@ -269,6 +290,7 @@ class ScreenshotTest {
             ),
             partialAccess = false,
             onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onOpenDuplicates = {}, onRequestFullAccess = {},
+            onOpenTipJar = {}, showTipNudge = nudge,
         )
     }
 

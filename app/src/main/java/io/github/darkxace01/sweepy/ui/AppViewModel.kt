@@ -2,6 +2,7 @@ package io.github.darkxace01.sweepy.ui
 
 import android.app.Application
 import android.app.PendingIntent
+import android.app.Activity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.darkxace01.sweepy.SweepyApplication
@@ -17,6 +18,9 @@ import io.github.darkxace01.sweepy.data.decisionFor
 import io.github.darkxace01.sweepy.data.db.DuplicateReviewEntity
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGrouper
+import io.github.darkxace01.sweepy.data.tips.Tip
+import io.github.darkxace01.sweepy.data.tips.TipJarState
+import io.github.darkxace01.sweepy.data.tips.TipOutcome
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -53,6 +57,26 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val media = MutableStateFlow<List<MediaItem>?>(null)
 
     val swipeHintSeen: StateFlow<Boolean> = prefs.swipeHintSeen
+
+    // ---- Tip jar -----------------------------------------------------------------------------------
+
+    private val tipJar = container.tipJar
+    val tipsSupported: Boolean = tipJar.supported
+    val tipJarState: StateFlow<TipJarState> = tipJar.state
+    val tipsGiven: StateFlow<Int> = prefs.tipsGiven
+    val tipOutcomes: Flow<TipOutcome> = tipJar.outcomes
+
+    /** Once someone has cleaned up a gigabyte, ask (once) whether they'd like to say thanks. */
+    val showTipNudge: StateFlow<Boolean> =
+        combine(prefs.stats, prefs.tipNudgeDone, prefs.tipsGiven) { stats, done, tips ->
+            tipJar.supported && !done && tips == 0 && stats.cleanedBytes >= TIP_NUDGE_BYTES
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun refreshTipJar() = tipJar.refresh()
+
+    fun buyTip(activity: Activity, tip: Tip) = tipJar.buy(activity, tip)
+
+    fun dismissTipNudge() = prefs.markTipNudgeDone()
 
     private val _events = Channel<UiEvent>(Channel.BUFFERED)
     val events: Flow<UiEvent> = _events.receiveAsFlow()
@@ -377,6 +401,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
         /** Keep each system request a reasonable size; the user can simply tap again for the rest. */
         const val MAX_BATCH = 1000
+
+        const val TIP_NUDGE_BYTES = 1_000_000_000L
     }
 }
 

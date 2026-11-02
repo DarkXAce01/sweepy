@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.Settings
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,8 +64,10 @@ import io.github.darkxace01.sweepy.ui.components.Segment
 import io.github.darkxace01.sweepy.ui.components.ThemeSample
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pressable
+import io.github.darkxace01.sweepy.ui.components.chunky
+import io.github.darkxace01.sweepy.ui.tips.TipArt
+import io.github.darkxace01.sweepy.data.tips.Tip
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
-import java.util.Locale
 
 private const val SOURCE_URL = "https://github.com/DarkXAce01/sweepy"
 
@@ -77,6 +81,8 @@ fun SettingsScreen(
     onChange: ((AppSettings) -> AppSettings) -> Unit,
     onForgetKept: () -> Unit,
     onForgetEverything: () -> Unit,
+    /** Null hides the tip jar (builds without Google Play billing). */
+    onOpenTipJar: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var confirm by remember { mutableStateOf<Confirm?>(null) }
@@ -97,7 +103,9 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(start = 22.dp, end = 22.dp, bottom = 40.dp),
             ) {
-                Section(1, stringResource(R.string.settings_section_look))
+                if (onOpenTipJar != null) SupportCard(onOpenTipJar, Modifier.padding(top = 12.dp))
+
+                Section(stringResource(R.string.settings_section_look))
                 val systemDark = isSystemInDarkTheme()
                 val dark = when (settings.appearance) {
                     Appearance.SYSTEM -> systemDark
@@ -131,7 +139,7 @@ fun SettingsScreen(
                     }
                 }
 
-                Section(2, stringResource(R.string.settings_section_swiping))
+                Section(stringResource(R.string.settings_section_swiping))
                 Toggle(
                     title = stringResource(R.string.setting_left_handed),
                     body = stringResource(R.string.setting_left_handed_body),
@@ -176,7 +184,7 @@ fun SettingsScreen(
                     onChange = { value -> onChange { it.copy(autoplayVideos = value) } },
                 )
 
-                Section(3, stringResource(R.string.settings_section_memory))
+                Section(stringResource(R.string.settings_section_memory))
                 ActionRow(
                     title = stringResource(R.string.setting_forget_kept),
                     body = pluralStringResource(R.plurals.setting_forget_kept_body, keptCount, formatCount(keptCount)),
@@ -191,7 +199,7 @@ fun SettingsScreen(
                     onClick = { confirm = Confirm.FORGET_ALL },
                 )
 
-                Section(4, stringResource(R.string.settings_section_about))
+                Section(stringResource(R.string.settings_section_about))
                 if (BuildConfig.SHOW_SOURCE_LINK) {
                     ActionRow(
                         title = stringResource(R.string.setting_source),
@@ -255,11 +263,37 @@ fun SettingsScreen(
     }
 }
 
+/** The way into the tip jar, at the top of Settings where people will see it. */
 @Composable
-private fun Section(number: Int, title: String) {
+private fun SupportCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(18.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .chunky(shape, fill = Sweepy.colors.surface)
+            .clip(shape)
+            .background(Sweepy.colors.surface)
+            .border(1.dp, Sweepy.colors.hairline, shape)
+            .pressable(onClick, pressedScale = 0.98f)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        TipArt(Tip.COFFEE, Modifier.size(46.dp))
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.tips_support_title), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
+            Spacer(Modifier.height(2.dp))
+            Text(stringResource(R.string.tips_support_body), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+        }
+        Spacer(Modifier.width(8.dp))
+        Text("→", style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.pencil)
+    }
+}
+
+@Composable
+private fun Section(title: String) {
     Row(Modifier.padding(top = 30.dp, bottom = 10.dp)) {
-        Eyebrow(String.format(Locale.ROOT, "%02d", number), color = Sweepy.colors.pencil)
-        Eyebrow(" — $title", color = Sweepy.colors.ink)
+        Eyebrow(title, color = Sweepy.colors.ink)
     }
 }
 

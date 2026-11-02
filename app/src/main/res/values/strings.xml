@@ -279,4 +279,33 @@
         <item quantity="other">%1$s groups</item>
     </plurals>
     <string name="dup_none">None found</string>
+
+    <!-- Tip jar -->
+    <string name="tips_title">Tip jar</string>
+    <string name="tips_eyebrow">Support Sweepy</string>
+    <string name="tips_headline">Made by one person.\nNo ads, ever.</string>
+    <string name="tips_body">Sweepy is free and always will be. If it saved you some space, or some time, a tip helps keep it going.</string>
+    <string name="tip_coffee">Coffee</string>
+    <string name="tip_coffee_line">A small thank-you</string>
+    <string name="tip_lunch">Lunch</string>
+    <string name="tip_lunch_line">Fuel for an afternoon of fixes</string>
+    <string name="tip_dinner">Dinner</string>
+    <string name="tip_dinner_line">For a really big cleanup</string>
+    <string name="tips_unavailable">Tips aren\'t available on this phone right now. They need the Google Play Store and a signed-in account.</string>
+    <string name="tips_pending">Your payment is still going through. The thank-you will arrive when it clears.</string>
+    <string name="tips_failed">That didn\'t go through. You can try again whenever you like.</string>
+    <plurals name="tips_given">
+        <item quantity="one">You\'ve left a tip. Thank you!</item>
+        <item quantity="other">You\'ve left %1$d tips. Thank you!</item>
+    </plurals>
+    <string name="tips_fine_print">Tips are one-time payments through Google Play. They don\'t unlock anything: everything in Sweepy is already yours.</string>
+    <string name="tips_thanks_title">Thank you</string>
+    <string name="tips_thanks_body">That %1$s means a lot. Enjoy your clean gallery.</string>
+    <string name="tips_thanks_done">Back to Sweepy</string>
+    <string name="tips_support_title">Enjoying Sweepy?</string>
+    <string name="tips_support_body">Buy me a coffee. It keeps the app free and ad-free.</string>
+    <string name="tips_nudge_title">Sweepy has cleared %1$s for you.</string>
+    <string name="tips_nudge_body">It\'s made by one person, with no ads. If it helped, you can say thanks with a coffee.</string>
+    <string name="tips_nudge_open">Tip jar</string>
+    <string name="tips_nudge_later">Not now</string>
 </resources>

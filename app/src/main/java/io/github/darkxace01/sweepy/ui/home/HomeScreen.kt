@@ -80,6 +80,11 @@ import io.github.darkxace01.sweepy.ui.components.ThinProgress
 import io.github.darkxace01.sweepy.ui.components.deckTitle
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pencilMark
+import io.github.darkxace01.sweepy.ui.components.OutlineButton
+import io.github.darkxace01.sweepy.ui.components.chunky
+import io.github.darkxace01.sweepy.ui.tips.CoffeeIcon
+import io.github.darkxace01.sweepy.ui.tips.TipArt
+import io.github.darkxace01.sweepy.data.tips.Tip
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.reveal
 import io.github.darkxace01.sweepy.ui.formatSize
@@ -105,6 +110,10 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     onOpenDuplicates: () -> Unit,
     onRequestFullAccess: () -> Unit,
+    /** Null hides the tip jar (builds without Google Play billing). */
+    onOpenTipJar: (() -> Unit)? = null,
+    showTipNudge: Boolean = false,
+    onDismissTipNudge: () -> Unit = {},
 ) {
     var showAllFolders by rememberSaveable { mutableStateOf(false) }
     var showAllMonths by rememberSaveable { mutableStateOf(false) }
@@ -130,7 +139,7 @@ fun HomeScreen(
                 bottom = insets.calculateBottomPadding() + 28.dp,
             ),
         ) {
-            item { TopBar(onOpenTrash, onOpenSettings, Modifier.reveal(0, animateIn)) }
+            item { TopBar(onOpenTrash, onOpenSettings, onOpenTipJar, Modifier.reveal(0, animateIn)) }
 
             if (partialAccess) {
                 item { PartialAccessBanner(onRequestFullAccess, Modifier.padding(top = 8.dp).reveal(1, animateIn)) }
@@ -140,14 +149,28 @@ fun HomeScreen(
 
             if (ready) {
                 if (state.recent.isNotEmpty()) {
-                    item { SectionHeader(1, stringResource(R.string.home_section_recent), Modifier.reveal(3, animateIn)) }
+                    item { SectionHeader(stringResource(R.string.home_section_recent), Modifier.reveal(3, animateIn)) }
                     item { FilmStrip(state.recent, onClick = { onOpenDeck(DeckSource.All) }, Modifier.reveal(3, animateIn)) }
                 }
 
                 item { Stats(state, onOpenReview, onOpenTrash, Modifier.padding(top = 28.dp).reveal(4, animateIn)) }
 
+                if (showTipNudge && onOpenTipJar != null) {
+                    item(key = "tip-nudge") {
+                        TipNudge(
+                            cleanedBytes = state.stats.cleanedBytes,
+                            onOpen = {
+                                onDismissTipNudge()
+                                onOpenTipJar()
+                            },
+                            onDismiss = onDismissTipNudge,
+                            modifier = Modifier.padding(top = 24.dp),
+                        )
+                    }
+                }
+
                 run {
-                    item { SectionHeader(2, stringResource(R.string.home_section_quick), Modifier.reveal(5, animateIn)) }
+                    item { SectionHeader(stringResource(R.string.home_section_quick), Modifier.reveal(5, animateIn)) }
                     item {
                         LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -165,7 +188,6 @@ fun HomeScreen(
                 if (state.folders.isNotEmpty()) {
                     item {
                         SectionHeader(
-                            number = 3,
                             title = stringResource(R.string.home_section_folders),
                             action = toggleLabel(state.folders.size, COLLAPSED_FOLDERS, showAllFolders),
                             onAction = { showAllFolders = !showAllFolders },
@@ -181,7 +203,6 @@ fun HomeScreen(
                 if (state.months.isNotEmpty()) {
                     item {
                         SectionHeader(
-                            number = 4,
                             title = stringResource(R.string.home_section_months),
                             action = toggleLabel(state.months.size, COLLAPSED_MONTHS, showAllMonths),
                             onAction = { showAllMonths = !showAllMonths },
@@ -196,7 +217,7 @@ fun HomeScreen(
                     }
                 }
 
-                item { SectionHeader(5, stringResource(R.string.home_section_archive)) }
+                item { SectionHeader(stringResource(R.string.home_section_archive)) }
                 item { RecentlyCleanedRow(onOpenTrash) }
             }
 
@@ -222,7 +243,7 @@ private fun Modifier.bleed(bleed: Dp): Modifier = this.layout { measurable, cons
 // ---- Header & hero ------------------------------------------------------------------------------
 
 @Composable
-private fun TopBar(onOpenTrash: () -> Unit, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
+private fun TopBar(onOpenTrash: () -> Unit, onOpenSettings: () -> Unit, onOpenTipJar: (() -> Unit)?, modifier: Modifier = Modifier) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth().height(56.dp)) {
         Text(
             stringResource(R.string.app_name),
@@ -233,6 +254,9 @@ private fun TopBar(onOpenTrash: () -> Unit, onOpenSettings: () -> Unit, modifier
         Spacer(Modifier.width(8.dp))
         MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 14.dp, strokeWidth = 0.14f, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.weight(1f))
+        if (onOpenTipJar != null) {
+            QuietIconButton(stringResource(R.string.tips_title), onOpenTipJar) { CoffeeIcon(Sweepy.colors.ink) }
+        }
         QuietIconButton(stringResource(R.string.trash_title), onOpenTrash) {
             Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
         }
@@ -442,13 +466,12 @@ private fun Stat(
 // ---- Sections -----------------------------------------------------------------------------------
 
 @Composable
-private fun SectionHeader(number: Int, title: String, modifier: Modifier = Modifier, action: String? = null, onAction: () -> Unit = {}) {
+private fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? = null, onAction: () -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.fillMaxWidth().padding(top = 36.dp, bottom = 12.dp),
     ) {
-        Eyebrow(String.format(Locale.ROOT, "%02d", number), color = Sweepy.colors.pencil)
-        Eyebrow(" — $title", color = Sweepy.colors.ink, modifier = Modifier.weight(1f))
+        Eyebrow(title, color = Sweepy.colors.ink, modifier = Modifier.weight(1f))
         if (action != null) {
             Eyebrow(
                 action,
@@ -619,6 +642,43 @@ private fun RecentlyCleanedRow(onClick: () -> Unit) {
             Text(stringResource(R.string.home_trash_subtitle), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
         }
         Text("→", style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.inkMuted)
+    }
+}
+
+/** Shown once, after Sweepy has cleaned up a gigabyte: a friendly, skippable ask. */
+@Composable
+private fun TipNudge(cleanedBytes: Long, onOpen: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val shape = RoundedCornerShape(18.dp)
+    Column(
+        modifier
+            .fillMaxWidth()
+            .chunky(shape, fill = Sweepy.colors.surface)
+            .clip(shape)
+            .background(Sweepy.colors.surface)
+            .border(1.dp, Sweepy.colors.hairline, shape)
+            .padding(18.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TipArt(Tip.COFFEE, Modifier.size(44.dp))
+            Spacer(Modifier.width(14.dp))
+            Text(
+                stringResource(R.string.tips_nudge_title, formatSize(context, cleanedBytes)),
+                style = MaterialTheme.typography.headlineSmall,
+                color = Sweepy.colors.ink,
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            stringResource(R.string.tips_nudge_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Sweepy.colors.inkMuted,
+        )
+        Spacer(Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlineButton(stringResource(R.string.tips_nudge_later), onDismiss, Modifier.weight(1f))
+            InkButton(stringResource(R.string.tips_nudge_open), onOpen, Modifier.weight(1f))
+        }
     }
 }
 

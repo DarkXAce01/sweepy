@@ -17,8 +17,8 @@ android {
         // Android 11: first version with the system trash (MediaStore.createTrashRequest).
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0-beta.1"
+        versionCode = 2
+        versionName = "1.0.0"
     }
 
     // Release signing reads keystore.properties at the project root (never committed). Without it,
@@ -37,7 +37,7 @@ android {
     }
 
     // "play" = Google Play build, "foss" = F-Droid build (only open-source dependencies).
-    // Identical for now; play will later add ML Kit for the smart decks.
+    // play adds the tip jar (Google Play billing).
     flavorDimensions += "distribution"
     productFlavors {
         create("play") {
@@ -104,6 +104,9 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui.compose)
+
+    // Tip jar. Google Play only: the F-Droid build has no tip jar.
+    "playImplementation"(libs.billing)
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

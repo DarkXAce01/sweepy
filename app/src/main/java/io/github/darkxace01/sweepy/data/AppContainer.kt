@@ -5,6 +5,7 @@ import androidx.room.Room
 import io.github.darkxace01.sweepy.data.db.SweepyDatabase
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateScanner
 import io.github.darkxace01.sweepy.data.duplicates.MediaHasher
+import io.github.darkxace01.sweepy.data.tips.createTipJar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,4 +23,5 @@ class AppContainer(context: Context) {
     val prefs = Prefs(context)
     val duplicateDao = database.duplicates()
     val duplicates = DuplicateScanner(duplicateDao, MediaHasher(context.contentResolver))
+    val tipJar = createTipJar(context, appScope, onTipped = { prefs.addTip() })
 }
