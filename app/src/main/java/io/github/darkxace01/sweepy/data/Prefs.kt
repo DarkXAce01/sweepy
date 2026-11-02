@@ -79,8 +79,8 @@ class Prefs(context: Context) {
     /** How many tips this person has left, for a thank-you. Only counted on this phone. */
     val tipsGiven: StateFlow<Int> = _tipsGiven.asStateFlow()
 
-    fun addTip() {
-        _tipsGiven.value += 1
+    fun addTips(count: Int) {
+        _tipsGiven.value += count
         prefs.edit { putInt(KEY_TIPS_GIVEN, _tipsGiven.value) }
     }
 

@@ -283,6 +283,7 @@ fun SweepyApp() {
                         val state by viewModel.tipJarState.collectAsStateWithLifecycle()
                         val tipsGiven by viewModel.tipsGiven.collectAsStateWithLifecycle()
                         var thanked by remember { mutableStateOf<Tip?>(null) }
+                        var thankedCount by remember { mutableIntStateOf(1) }
                         var note by remember { mutableStateOf<TipNote?>(null) }
                         LaunchedEffect(Unit) {
                             viewModel.refreshTipJar()
@@ -291,6 +292,7 @@ fun SweepyApp() {
                                     is TipOutcome.Thanked -> {
                                         note = null
                                         thanked = outcome.tip
+                                        thankedCount = outcome.count
                                     }
                                     TipOutcome.Pending -> note = TipNote.PENDING
                                     TipOutcome.Failed -> note = TipNote.FAILED
@@ -301,6 +303,7 @@ fun SweepyApp() {
                             state = state,
                             tipsGiven = tipsGiven,
                             thanked = thanked,
+                            thankedCount = thankedCount,
                             note = note,
                             onBuy = { tip ->
                                 note = null

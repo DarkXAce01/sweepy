@@ -75,6 +75,7 @@ fun TipJarScreen(
     state: TipJarState,
     tipsGiven: Int,
     thanked: Tip?,
+    thankedCount: Int = 1,
     note: TipNote?,
     onBuy: (Tip) -> Unit,
     onDismissThanks: () -> Unit,
@@ -151,7 +152,7 @@ fun TipJarScreen(
         val last = remember { arrayOf(Tip.COFFEE) }
         if (thanked != null) last[0] = thanked
         AnimatedVisibility(thanked != null, enter = fadeIn(tween(220)), exit = fadeOut(tween(180))) {
-            ThankYou(last[0], onDismissThanks)
+            ThankYou(last[0], thankedCount, onDismissThanks)
         }
     }
 }
@@ -201,7 +202,7 @@ private fun TipCard(tip: Tip, state: TipJarState, onBuy: (Tip) -> Unit) {
 }
 
 @Composable
-private fun ThankYou(tip: Tip, onDismiss: () -> Unit) {
+private fun ThankYou(tip: Tip, count: Int, onDismiss: () -> Unit) {
     BackHandler(onBack = onDismiss)
     val circle = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
@@ -225,7 +226,15 @@ private fun ThankYou(tip: Tip, onDismiss: () -> Unit) {
             )
             Spacer(Modifier.height(18.dp))
             Text(
-                stringResource(R.string.tips_thanks_body, tipName(tip).lowercase()),
+                pluralStringResource(
+                    when (tip) {
+                        Tip.COFFEE -> R.plurals.tips_thanks_coffee
+                        Tip.LUNCH -> R.plurals.tips_thanks_lunch
+                        Tip.DINNER -> R.plurals.tips_thanks_dinner
+                    },
+                    count,
+                    count,
+                ),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Sweepy.colors.inkMuted,
                 textAlign = TextAlign.Center,

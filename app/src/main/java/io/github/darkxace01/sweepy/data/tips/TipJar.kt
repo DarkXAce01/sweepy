@@ -25,7 +25,8 @@ sealed interface TipJarState {
 }
 
 sealed interface TipOutcome {
-    data class Thanked(val tip: Tip) : TipOutcome
+    /** [count] is more than 1 when someone bought several at once. */
+    data class Thanked(val tip: Tip, val count: Int = 1) : TipOutcome
 
     /** Paid with a slow method (cash, some bank transfers); the thank-you comes when it clears. */
     data object Pending : TipOutcome

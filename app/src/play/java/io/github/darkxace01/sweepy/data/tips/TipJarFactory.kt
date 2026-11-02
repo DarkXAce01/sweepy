@@ -22,13 +22,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-fun createTipJar(context: Context, scope: CoroutineScope, onTipped: (Tip) -> Unit): TipJar = PlayTipJar(context, scope, onTipped)
+fun createTipJar(context: Context, scope: CoroutineScope, onTipped: (Tip, Int) -> Unit): TipJar = PlayTipJar(context, scope, onTipped)
 
 /**
  * Tips through Google Play billing. Talks to the Play Store app on the phone, so Sweepy itself
  * still needs no internet permission. Tips are consumed right away: nothing to unlock or restore.
  */
-private class PlayTipJar(context: Context, private val scope: CoroutineScope, private val onTipped: (Tip) -> Unit) : TipJar {
+private class PlayTipJar(context: Context, private val scope: CoroutineScope, private val onTipped: (Tip, Int) -> Unit) : TipJar {
     override val supported = true
 
     private val _state = MutableStateFlow<TipJarState>(TipJarState.Loading)
@@ -123,8 +123,10 @@ private class PlayTipJar(context: Context, private val scope: CoroutineScope, pr
                 val params = ConsumeParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
                 client.consumeAsync(params) { consumed, _ ->
                     if (consumed.responseCode == BillingResponseCode.OK) {
-                        onTipped(tip)
-                        scope.launch { _outcomes.send(TipOutcome.Thanked(tip)) }
+                        // With multi-quantity on in the Play Console, people can buy several at once.
+                        val count = purchase.quantity.coerceAtLeast(1)
+                        onTipped(tip, count)
+                        scope.launch { _outcomes.send(TipOutcome.Thanked(tip, count)) }
                     }
                 }
             }

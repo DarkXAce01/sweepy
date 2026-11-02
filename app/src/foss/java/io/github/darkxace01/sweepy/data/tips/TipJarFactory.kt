@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.emptyFlow
 
 /** The F-Droid build has no Google Play billing, so no tip jar. */
 @Suppress("UNUSED_PARAMETER")
-fun createTipJar(context: Context, scope: CoroutineScope, onTipped: (Tip) -> Unit): TipJar = object : TipJar {
+fun createTipJar(context: Context, scope: CoroutineScope, onTipped: (Tip, Int) -> Unit): TipJar = object : TipJar {
     override val supported = false
     override val state: StateFlow<TipJarState> = MutableStateFlow(TipJarState.Unavailable).asStateFlow()
     override val outcomes: Flow<TipOutcome> = emptyFlow()

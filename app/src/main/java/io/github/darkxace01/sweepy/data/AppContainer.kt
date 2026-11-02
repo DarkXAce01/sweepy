@@ -23,5 +23,5 @@ class AppContainer(context: Context) {
     val prefs = Prefs(context)
     val duplicateDao = database.duplicates()
     val duplicates = DuplicateScanner(duplicateDao, MediaHasher(context.contentResolver))
-    val tipJar = createTipJar(context, appScope, onTipped = { prefs.addTip() })
+    val tipJar = createTipJar(context, appScope, onTipped = { _, count -> prefs.addTips(count) })
 }

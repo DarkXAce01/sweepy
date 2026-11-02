@@ -298,9 +298,20 @@
         <item quantity="one">You\'ve left a tip. Thank you!</item>
         <item quantity="other">You\'ve left %1$d tips. Thank you!</item>
     </plurals>
-    <string name="tips_fine_print">Tips are one-time payments through Google Play. They don\'t unlock anything: everything in Sweepy is already yours.</string>
+    <string name="tips_fine_print">Want to give a different amount? Pick how many at checkout. Tips are one-time payments through Google Play. They don\'t unlock anything: everything in Sweepy is already yours.</string>
     <string name="tips_thanks_title">Thank you</string>
-    <string name="tips_thanks_body">That %1$s means a lot. Enjoy your clean gallery.</string>
+    <plurals name="tips_thanks_coffee">
+        <item quantity="one">That coffee means a lot. Enjoy your clean gallery.</item>
+        <item quantity="other">%1$d coffees! That means a lot. Enjoy your clean gallery.</item>
+    </plurals>
+    <plurals name="tips_thanks_lunch">
+        <item quantity="one">That lunch means a lot. Enjoy your clean gallery.</item>
+        <item quantity="other">%1$d lunches! That means a lot. Enjoy your clean gallery.</item>
+    </plurals>
+    <plurals name="tips_thanks_dinner">
+        <item quantity="one">That dinner means a lot. Enjoy your clean gallery.</item>
+        <item quantity="other">%1$d dinners! That means a lot. Enjoy your clean gallery.</item>
+    </plurals>
     <string name="tips_thanks_done">Back to Sweepy</string>
     <string name="tips_support_title">Enjoying Sweepy?</string>
     <string name="tips_support_body">Buy me a coffee. It keeps the app free and ad-free.</string>
