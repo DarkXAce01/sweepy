@@ -42,6 +42,8 @@ android {
     productFlavors {
         create("play") {
             dimension = "distribution"
+            // Android Studio otherwise picks "foss" (first alphabetically), which has no tip jar.
+            isDefault = true
             // The Play build doesn't advertise where the source lives.
             buildConfigField("boolean", "SHOW_SOURCE_LINK", "false")
         }
