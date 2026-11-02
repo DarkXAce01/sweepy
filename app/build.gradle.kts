@@ -42,8 +42,6 @@ android {
     productFlavors {
         create("play") {
             dimension = "distribution"
-            // Android Studio otherwise picks "foss" (first alphabetically), which has no tip jar.
-            isDefault = true
             // The Play build doesn't advertise where the source lives.
             buildConfigField("boolean", "SHOW_SOURCE_LINK", "false")
         }
@@ -86,6 +84,15 @@ android {
 
 room {
     schemaDirectory("$projectDir/schemas")
+}
+
+// F-Droid is on hold, so the foss build is off unless asked for (./gradlew -Pfoss ...). Otherwise
+// Android Studio keeps picking it: it comes first alphabetically, and it shows the source link and
+// has no tip jar.
+androidComponents {
+    beforeVariants { variant ->
+        if (variant.flavorName == "foss" && !project.hasProperty("foss")) variant.enable = false
+    }
 }
 
 dependencies {
