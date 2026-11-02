@@ -123,7 +123,6 @@ internal object ReminderCheck {
             hour = LocalTime.now().hour,
             lastOpenedAt = prefs.lastOpenedAt,
             lastReminderAt = prefs.lastReminderAt,
-            unanswered = prefs.unansweredReminders,
         )
         // Cheap checks first: most wake-ups end here without touching the gallery.
         if (!Reminders.mayCheck(timing)) return

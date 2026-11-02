@@ -13,7 +13,7 @@ class RemindersTest {
     private val now = 1_000 * DAY
 
     /** Away for 5 days, last reminder long ago, mid-afternoon: a reminder is allowed. */
-    private val idle = ReminderTiming(now = now, hour = 15, lastOpenedAt = now - 5 * DAY, lastReminderAt = 0, unanswered = 0)
+    private val idle = ReminderTiming(now = now, hour = 15, lastOpenedAt = now - 5 * DAY, lastReminderAt = 0)
 
     private val nothing = ReminderFacts(
         binCount = 0, binBytes = 0, binNewestAt = 0, newSinceOpen = 0, newScreenshotsSinceOpen = 0,
@@ -40,9 +40,11 @@ class RemindersTest {
 
     @Test fun notWhileTheAppIsInUse() = assertNull(Reminders.pick(idle.copy(lastOpenedAt = now - 2 * DAY), screenshots))
 
-    @Test fun stopsAfterTwoIgnored() {
-        assertEquals(ReminderKind.SCREENSHOTS, Reminders.pick(idle.copy(unanswered = 1), screenshots)?.kind)
-        assertNull(Reminders.pick(idle.copy(unanswered = 2), screenshots))
+    /** Away for months: still at most one a week, as long as there's something to sort. */
+    @Test fun keepsGoingWeeklyWhileAway() {
+        val away = idle.copy(lastOpenedAt = now - 90 * DAY, lastReminderAt = now - 7 * DAY)
+        assertEquals(ReminderKind.SCREENSHOTS, Reminders.pick(away, screenshots)?.kind)
+        assertNull(Reminders.pick(away.copy(lastReminderAt = now - 3 * DAY), screenshots))
     }
 
     @Test fun neverBeforeTheAppHasBeenOpened() = assertNull(Reminders.pick(idle.copy(lastOpenedAt = 0), screenshots))

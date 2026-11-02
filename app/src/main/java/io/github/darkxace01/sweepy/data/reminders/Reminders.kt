@@ -8,7 +8,6 @@ package io.github.darkxace01.sweepy.data.reminders
  *  - only between 10:00 and 21:00,
  *  - at most one a week,
  *  - never while someone is using the app anyway (opened in the last 3 days; 1 day when storage is tight),
- *  - after two reminders in a row go unanswered, nothing more until the app is opened again,
  *  - and only when there's something real to do, so a quiet gallery means no reminders at all.
  */
 enum class ReminderKind {
@@ -35,8 +34,6 @@ data class ReminderTiming(
     /** 0 if the app has never recorded an open (e.g. right after an update). */
     val lastOpenedAt: Long,
     val lastReminderAt: Long,
-    /** Reminders sent since the app was last opened. */
-    val unanswered: Int,
 )
 
 /** What's on the phone, counted from the gallery and the decisions. */
@@ -63,7 +60,6 @@ object Reminders {
     const val MIN_GAP = 7 * DAY
     const val IDLE_BEFORE_REMINDING = 3 * DAY
     const val IDLE_BEFORE_STORAGE = 1 * DAY
-    const val MAX_UNANSWERED = 2
 
     const val STORAGE_PERCENT = 90
     const val STORAGE_VIDEO_BYTES = 300L * 1024 * 1024
@@ -76,7 +72,6 @@ object Reminders {
     fun mayCheck(t: ReminderTiming): Boolean =
         t.hour in QUIET_BEFORE_HOUR until QUIET_FROM_HOUR &&
             t.lastOpenedAt > 0 &&
-            t.unanswered < MAX_UNANSWERED &&
             t.now - t.lastReminderAt >= MIN_GAP &&
             t.now - t.lastOpenedAt >= IDLE_BEFORE_STORAGE
 

@@ -110,20 +110,13 @@ class Prefs(context: Context) {
     val lastOpenedAt: Long get() = prefs.getLong(KEY_LAST_OPENED, 0)
     val lastReminderAt: Long get() = prefs.getLong(KEY_LAST_REMINDER, 0)
 
-    /** Reminders sent since the app was last opened. Two ignored in a row and they stop. */
-    val unansweredReminders: Int get() = prefs.getInt(KEY_UNANSWERED, 0)
-
     /** Which wording was used last, so the next one reads differently. */
     val lastReminderWording: Int get() = prefs.getInt(KEY_REMINDER_WORDING, -1)
 
-    fun markOpened(now: Long = System.currentTimeMillis()) = prefs.edit {
-        putLong(KEY_LAST_OPENED, now)
-        putInt(KEY_UNANSWERED, 0)
-    }
+    fun markOpened(now: Long = System.currentTimeMillis()) = prefs.edit { putLong(KEY_LAST_OPENED, now) }
 
     fun markReminderSent(wording: Int, now: Long = System.currentTimeMillis()) = prefs.edit {
         putLong(KEY_LAST_REMINDER, now)
-        putInt(KEY_UNANSWERED, unansweredReminders + 1)
         putInt(KEY_REMINDER_WORDING, wording)
     }
 
@@ -159,7 +152,6 @@ class Prefs(context: Context) {
         const val KEY_REMINDERS = "reminders"
         const val KEY_LAST_OPENED = "last_opened_at"
         const val KEY_LAST_REMINDER = "last_reminder_at"
-        const val KEY_UNANSWERED = "unanswered_reminders"
         const val KEY_REMINDER_WORDING = "last_reminder_wording"
         const val KEY_REMINDER_ASK_DONE = "reminder_ask_done"
     }
