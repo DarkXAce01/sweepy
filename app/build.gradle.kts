@@ -13,7 +13,9 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "io.github.darkxace01.sweepy"
+        // The public ID on Google Play (permanent once uploaded). Kept separate from the code's namespace
+        // so the store listing doesn't point to the GitHub account.
+        applicationId = "studio.greasepencil.sweepy"
         // Android 11: first version with the system trash (MediaStore.createTrashRequest).
         minSdk = 30
         targetSdk = 36
