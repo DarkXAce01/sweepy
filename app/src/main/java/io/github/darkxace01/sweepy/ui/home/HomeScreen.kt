@@ -90,6 +90,7 @@ import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.reveal
 import io.github.darkxace01.sweepy.ui.formatSize
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.tips.CoffeeIcon
 import io.github.darkxace01.sweepy.ui.tips.TipArt
 import java.time.Month
 import java.time.format.TextStyle as JavaTextStyle
@@ -149,7 +150,7 @@ fun HomeScreen(
                 bottom = insets.calculateBottomPadding() + 28.dp,
             ),
         ) {
-            item { TopBar(state.markedCount, onOpenReview, onOpenTrash, onOpenSettings, Modifier.reveal(0, animateIn)) }
+            item { TopBar(state.markedCount, onOpenReview, onOpenTrash, onOpenSettings, onOpenTipJar, Modifier.reveal(0, animateIn)) }
 
             if (partialAccess) {
                 item { PartialAccessBanner(onRequestFullAccess, Modifier.padding(top = 8.dp).reveal(1, animateIn)) }
@@ -253,6 +254,7 @@ private fun TopBar(
     onOpenReview: () -> Unit,
     onOpenTrash: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenTipJar: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth().height(56.dp)) {
@@ -268,6 +270,9 @@ private fun TopBar(
         if (markedCount > 0) {
             BinChip(markedCount, onOpenReview)
             Spacer(Modifier.width(4.dp))
+        }
+        if (onOpenTipJar != null) {
+            QuietIconButton(stringResource(R.string.tips_title), onOpenTipJar) { CoffeeIcon(Sweepy.colors.ink) }
         }
         QuietIconButton(stringResource(R.string.trash_title), onOpenTrash) {
             Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
