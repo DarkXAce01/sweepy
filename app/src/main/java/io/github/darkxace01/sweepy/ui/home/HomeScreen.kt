@@ -200,13 +200,19 @@ fun HomeScreen(
                 when (tab) {
                     HomeTab.FOLDERS -> {
                         val cards = buildList<@Composable (Modifier) -> Unit> {
+                            fun quick(source: DeckSource) = state.quickDecks.firstOrNull { it.source == source }?.let { deck ->
+                                add { m -> DeckCard(deck, { onOpenDeck(deck.source) }, m) }
+                            }
+                            // Duplicates, large videos, audio, maybe later, WhatsApp, then the folders.
                             add { m -> DuplicatesCard(state.duplicates, onOpenDuplicates, m) }
-                            for (deck in state.quickDecks) add { m -> DeckCard(deck, { onOpenDeck(deck.source) }, m) }
+                            quick(DeckSource.LargeVideos)
                             val audio = state.audio
                             when {
                                 !audioAllowed -> add { m -> AudioInviteCard(onAllowAudio, m) }
                                 audio != null -> add { m -> DeckCard(audio, { onOpenDeck(audio.source) }, m) }
                             }
+                            quick(DeckSource.Later)
+                            quick(DeckSource.WhatsApp)
                             for (folder in state.folders) add { m -> DeckCard(folder, { onOpenDeck(folder.source) }, m) }
                         }
                         val rows = cards.chunked(2)
