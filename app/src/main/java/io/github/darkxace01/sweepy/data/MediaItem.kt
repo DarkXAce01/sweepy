@@ -2,7 +2,7 @@ package io.github.darkxace01.sweepy.data
 
 import android.net.Uri
 
-/** One photo or video on the phone, as reported by Android's MediaStore. */
+/** One photo, video or audio file on the phone, as reported by Android's MediaStore. */
 data class MediaItem(
     val id: Long,
     val uri: Uri,
@@ -20,6 +20,10 @@ data class MediaItem(
     val width: Int,
     val height: Int,
     val durationMillis: Long,
+    /** Voice notes, recordings, music. Only the audio deck shows these; photo decks never do. */
+    val isAudio: Boolean = false,
+    /** For music: who it's by, when the file says. */
+    val artist: String? = null,
 ) {
     /** Year and month the photo was taken, as yyyyMM (e.g. 202403). */
     val yearMonth: Int get() = yearMonthOf(dateTakenMillis)

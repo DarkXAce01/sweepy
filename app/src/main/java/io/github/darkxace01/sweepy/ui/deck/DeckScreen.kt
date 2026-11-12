@@ -13,6 +13,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -67,6 +72,7 @@ import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
+import io.github.darkxace01.sweepy.ui.DecidedCard
 import io.github.darkxace01.sweepy.ui.DeckUiState
 import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
@@ -76,7 +82,8 @@ import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.OutlineButton
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.QuietIconButton
-import io.github.darkxace01.sweepy.ui.components.Ruler
+import io.github.darkxace01.sweepy.ui.components.MediaThumbnail
+import io.github.darkxace01.sweepy.ui.components.ThinProgress
 import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.deckTitle
 import io.github.darkxace01.sweepy.ui.components.formatCount
@@ -107,6 +114,10 @@ fun DeckScreen(
     onOpenReview: () -> Unit,
     onDismissHint: () -> Unit,
     onFilterChange: (DeckFilter) -> Unit = {},
+    /** A waiting card was tapped on the strip: put it on top. */
+    onJump: (MediaItem) -> Unit = {},
+    /** A swiped card was tapped on the strip: take the swipe back. */
+    onReopen: (MediaItem) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -161,11 +172,7 @@ fun DeckScreen(
                 onOpenReview = onOpenReview,
             )
             if (source != DeckSource.Later) {
-                Ruler(
-                    progress = state.progress,
-                    ticks = 50,
-                    modifier = Modifier.padding(horizontal = 22.dp),
-                )
+                ThinProgress(state.progress, modifier = Modifier.padding(horizontal = 22.dp))
             }
 
             // The pile, with a soft colored light underneath while dragging.
@@ -186,7 +193,7 @@ fun DeckScreen(
                             radius = radius,
                         )
                     }
-                    .padding(start = 22.dp, end = 22.dp, top = 22.dp, bottom = 26.dp)
+                    .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 14.dp)
                     .onSizeChanged { stackSize = it },
             ) {
                 when {
@@ -233,6 +240,14 @@ fun DeckScreen(
                 }
             }
 
+            if (current != null) {
+                DeckStrip(
+                    recent = state.recent,
+                    upcoming = state.deck.take(STRIP_AHEAD),
+                    onJump = { if (!cardState.isFlyingOut) onJump(it) },
+                    onReopen = { if (!cardState.isFlyingOut) onReopen(it) },
+                )
+            }
             if (current != null || state.loading) {
                 ActionBar(
                     enabled = current != null && !state.loading,
@@ -325,15 +340,74 @@ private fun ActionBar(
     Row(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 18.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp),
     ) {
         // Buttons sit on the same side as their swipe, so left-handed mode swaps delete and keep.
         val (start, end) = if (cardState.mirrored) SwipeDirection.RIGHT to SwipeDirection.LEFT else SwipeDirection.LEFT to SwipeDirection.RIGHT
         UndoButton(canUndo, onUndo)
-        MarkButton(start, 68.dp, enabled, cardState, onSwipe)
-        MarkButton(SwipeDirection.UP, 52.dp, enabled, cardState, onSwipe)
-        MarkButton(end, 68.dp, enabled, cardState, onSwipe)
-        MarkButton(SwipeDirection.DOWN, 52.dp, enabled, cardState, onSwipe)
+        MarkButton(start, 60.dp, enabled, cardState, onSwipe)
+        MarkButton(SwipeDirection.UP, 46.dp, enabled, cardState, onSwipe)
+        MarkButton(end, 60.dp, enabled, cardState, onSwipe)
+        MarkButton(SwipeDirection.DOWN, 46.dp, enabled, cardState, onSwipe)
+    }
+}
+
+/** How many waiting cards the strip shows after the current one. */
+private const val STRIP_AHEAD = 40
+
+/**
+ * A strip of small prints under the pile: the last few swiped (each with its mark), the one on
+ * top (outlined), and what's coming. Tap a waiting one to jump to it, or a swiped one to take
+ * that swipe back.
+ */
+@Composable
+private fun DeckStrip(
+    recent: List<DecidedCard>,
+    upcoming: List<MediaItem>,
+    onJump: (MediaItem) -> Unit,
+    onReopen: (MediaItem) -> Unit,
+) {
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (recent.size - 2).coerceAtLeast(0))
+    val currentId = upcoming.firstOrNull()?.id
+    // Keep the card on top in view, with a couple of swiped ones to its left.
+    LaunchedEffect(currentId) {
+        listState.animateScrollToItem((recent.size - 2).coerceAtLeast(0))
+    }
+    val jumpLabel = stringResource(R.string.strip_jump)
+    val reopenLabel = stringResource(R.string.strip_reopen)
+    LazyRow(
+        state = listState,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        contentPadding = PaddingValues(horizontal = 22.dp),
+        modifier = Modifier.fillMaxWidth().height(70.dp),
+    ) {
+        items(recent, key = { "done-" + it.item.id }) { card ->
+            val direction = SwipeDirection.of(card.decision)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(width = 44.dp, height = 56.dp)
+                    .pressable({ onReopen(card.item) }, pressedScale = 0.9f)
+                    .semantics { contentDescription = reopenLabel },
+            ) {
+                MediaThumbnail(card.item, Modifier.fillMaxSize().graphicsLayer { alpha = 0.45f }, cornerRadius = 6.dp, showBadge = false)
+                MarkIcon(direction.mark, direction.color, size = 26.dp, strokeWidth = 0.13f)
+            }
+        }
+        itemsIndexed(upcoming, key = { _, item -> "next-" + item.id }) { index, item ->
+            val onTop = index == 0
+            Box(
+                Modifier
+                    .size(width = if (onTop) 50.dp else 44.dp, height = if (onTop) 64.dp else 56.dp)
+                    .then(
+                        if (onTop) Modifier.border(2.dp, Sweepy.colors.ink, RoundedCornerShape(8.dp)).padding(3.dp)
+                        else Modifier.pressable({ onJump(item) }, pressedScale = 0.9f).semantics { contentDescription = jumpLabel },
+                    ),
+            ) {
+                MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = if (onTop) 5.dp else 6.dp, showBadge = false)
+            }
+        }
     }
 }
 

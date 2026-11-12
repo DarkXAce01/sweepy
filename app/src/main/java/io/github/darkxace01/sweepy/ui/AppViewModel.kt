@@ -178,7 +178,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun refresh() {
         val loaded = repository.loadAll()
-        media.value = loaded
+        // Audio rides along in the same list; only the audio deck shows it.
+        media.value = loaded + repository.loadAudio()
         scheduleDuplicateScan(loaded)
     }
 
@@ -254,8 +255,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** Per-deck "show" and "order" choices. Kept while the app is open; each visit starts where you left it. */
     private val filters = MutableStateFlow<Map<DeckSource, DeckFilter>>(emptyMap())
 
+    /** Per-deck card to start the pile from: picked on the strip, or brought back by undo. */
+    private val anchors = MutableStateFlow<Map<DeckSource, MediaItem>>(emptyMap())
+
     fun deck(source: DeckSource): StateFlow<DeckUiState> = decks.getOrPut(source) {
-        combine(media, store.state, history, filters) { media, decisions, history, filters ->
+        combine(media, store.state, history, filters, anchors) { media, decisions, history, filters, anchors ->
             if (media == null || decisions == null) return@combine DeckUiState()
             val filter = filters[source] ?: DeckFilter.defaultFor(source)
             val inSource = media.filter(source::matches)
@@ -264,7 +268,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             } else {
                 inSource.filter { decisions.decisionFor(it) == null }
             }
-            val deck = filter.sort(waiting.filter(filter::matches))
+            val deck = filter.arrange(waiting.filter(filter::matches), anchors[source])
+            val recentEntries = history.filter { it.source == source }.takeLast(RECENT_STRIP)
+            val recentIds = recentEntries.mapTo(HashSet()) { it.itemId }
+            val recentItems = inSource.filter { it.id in recentIds }.associateBy { it.id }
             val marked = media.filter { decisions.decisionFor(it) == Decision.DELETE }
             DeckUiState(
                 loading = false,
@@ -277,11 +284,26 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 defaultFilter = DeckFilter.defaultFor(source),
                 waitingPhotos = waiting.count { !it.isVideo },
                 waitingVideos = waiting.count { it.isVideo },
+                recent = recentEntries.mapNotNull { entry -> recentItems[entry.itemId]?.let { DecidedCard(it, entry.decision) } },
             )
         }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DeckUiState())
     }
 
-    fun setFilter(source: DeckSource, filter: DeckFilter) = filters.update { it + (source to filter) }
+    fun setFilter(source: DeckSource, filter: DeckFilter) {
+        anchors.update { it - source }
+        filters.update { it + (source to filter) }
+    }
+
+    /** Puts [item], picked from the strip, on top of the pile. Cards before it wait at the end. */
+    fun jumpTo(source: DeckSource, item: MediaItem) = anchors.update { it + (source to item) }
+
+    /** Takes back the swipe on [item] (one of the cards on the strip) and puts it on top again. */
+    fun reopen(source: DeckSource, item: MediaItem) {
+        val entry = history.value.lastOrNull { it.source == source && it.itemId == item.id } ?: return
+        history.update { list -> list.filterNot { it === entry } }
+        if (entry.previous != null) store.putEntities(listOf(entry.previous)) else store.remove(listOf(entry.itemId))
+        jumpTo(source, item)
+    }
 
     fun decide(source: DeckSource, item: MediaItem, decision: Decision) {
         val previous = store.state.value?.get(item.id)
@@ -295,6 +317,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val entry = history.value.lastOrNull { it.source == source } ?: return null
         history.update { list -> list.filterNot { it === entry } }
         if (entry.previous != null) store.putEntities(listOf(entry.previous)) else store.remove(listOf(entry.itemId))
+        // Back on top, even if the strip had moved the pile on past it.
+        media.value?.firstOrNull { it.id == entry.itemId }?.let { jumpTo(source, it) }
         return entry.decision
     }
 
@@ -429,6 +453,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
         const val MAX_HISTORY = 500
 
+        /** Swiped cards shown on the strip under the pile. */
+        const val RECENT_STRIP = 12
+
         /** Keep each system request a reasonable size; the user can simply tap again for the rest. */
         const val MAX_BATCH = 1000
 
@@ -458,8 +485,8 @@ private fun buildHome(media: List<MediaItem>, decisions: Map<Long, DecisionEntit
         fun summary() = DeckSummary(source, total, bytes, remaining, (waitingCovers + decidedCovers).take(COVER_COUNT))
     }
 
-    val screenshots = Acc(DeckSource.Screenshots)
     val whatsApp = Acc(DeckSource.WhatsApp)
+    val audio = Acc(DeckSource.Audio)
     val largeVideos = Acc(DeckSource.LargeVideos)
     val later = Acc(DeckSource.Later)
     val folders = LinkedHashMap<Long, Acc>()
@@ -469,21 +496,26 @@ private fun buildHome(media: List<MediaItem>, decisions: Map<Long, DecisionEntit
     var reviewed = 0
     var markedCount = 0
     var markedBytes = 0L
-    val recent = ArrayList<MediaItem>(RECENT_COUNT)
+    var count = 0
 
     for (item in media) {
         val decision = decisions.decisionFor(item)
         val undecided = decision == null
-        if (undecided && recent.size < RECENT_COUNT) recent += item
-        totalBytes += item.sizeBytes
-        if (!undecided) reviewed++
         if (decision == Decision.DELETE) {
             markedCount++
             markedBytes += item.sizeBytes
         }
         if (decision == Decision.LATER) later.add(item, undecided = true)
+        // Audio has its own deck and stays out of the photo & video numbers.
+        if (item.isAudio) {
+            audio.add(item, undecided)
+            continue
+        }
+        count++
+        totalBytes += item.sizeBytes
+        if (!undecided) reviewed++
 
-        for (quick in arrayOf(screenshots, whatsApp, largeVideos)) {
+        for (quick in arrayOf(whatsApp, largeVideos)) {
             if (quick.source.matches(item)) quick.add(item, undecided)
         }
         folders.getOrPut(item.bucketId) { Acc(DeckSource.Folder(item.bucketId, item.folder.orEmpty())) }
@@ -493,22 +525,21 @@ private fun buildHome(media: List<MediaItem>, decisions: Map<Long, DecisionEntit
 
     return HomeUiState(
         loading = false,
-        totalCount = media.size,
+        totalCount = count,
         totalBytes = totalBytes,
         reviewedCount = reviewed,
         markedCount = markedCount,
         markedBytes = markedBytes,
         laterCount = later.total,
         stats = stats,
-        recent = recent,
-        quickDecks = listOf(screenshots, whatsApp, largeVideos, later).filter { it.total > 0 }.map { it.summary() },
+        quickDecks = listOf(largeVideos, whatsApp, later).filter { it.total > 0 }.map { it.summary() },
+        audio = audio.takeIf { it.total > 0 }?.summary(),
         folders = folders.values.sortedByDescending { it.total }.map { it.summary() },
         months = months.values.sortedByDescending { (it.source as DeckSource.Month).yearMonth }.map { it.summary() },
     )
 }
 
 private const val COVER_COUNT = 4
-private const val RECENT_COUNT = 10
 
 /**
  * The scan result as the user should see it now: photos already in the review bin drop out,

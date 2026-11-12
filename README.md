@@ -24,8 +24,12 @@ photos physically cannot leave your phone. No ads, no account, no tracking, no s
 **Swipe through your photos and videos**
 - Left to delete, right to keep, up for "ask me later", star the ones you love. Every swipe can be undone.
 - Videos play right on the card, muted and looping. Pinch any photo to look closer.
-- Sort everything at once, or one deck at a time: a folder, a month, screenshots, WhatsApp, or your biggest videos first.
+- Sort everything at once, or one deck at a time: a folder, a month, WhatsApp, or your biggest videos first.
+- A strip of thumbnails under the pile shows what's coming. Tap one to jump to it, or tap a photo you already swiped to change your mind.
 - Filter to only photos or only videos; sort newest, oldest or largest.
+
+**Voice notes, recordings and music**
+- The audio deck works the same way: play each one right on the card, then swipe. Old WhatsApp voice notes add up fast.
 
 **Nothing goes until you say so**
 - Everything you swipe left waits in a review bin. Look it over, tap anything you'd rather keep, then clean up.
@@ -59,7 +63,7 @@ Check it yourself on any build:
 aapt2 dump permissions Sweepy.apk
 ```
 
-You'll see photo and video access, media management, notifications and billing. You won't see internet.
+You'll see photo, video and audio access, media management, notifications and billing. You won't see internet.
 
 ## Get Sweepy
 

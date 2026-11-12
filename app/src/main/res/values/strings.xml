@@ -7,14 +7,8 @@
     <string name="cancel">Cancel</string>
     <string name="select_all">Select all</string>
     <string name="select_none">Clear</string>
-    <string name="show_all">Show all %1$d</string>
-    <string name="show_less">Show less</string>
     <string name="left_and_size">%1$s left · %2$s</string>
     <string name="count_and_size">%1$s · %2$s</string>
-    <plurals name="items_count">
-        <item quantity="one">%1$s item</item>
-        <item quantity="other">%1$s items</item>
-    </plurals>
     <string name="privacy_note">No internet access · your photos stay on this phone</string>
 
     <!-- Permission screen -->
@@ -36,14 +30,10 @@
     <string name="home_start">Start sorting</string>
     <string name="home_continue">Continue sorting</string>
     <string name="home_empty">No photos or videos found on this phone.</string>
-    <string name="home_stat_bin">Review bin</string>
-    <string name="home_stat_cleaned">Cleaned up</string>
-    <string name="home_section_quick">Quick decks</string>
     <string name="home_section_folders">Folders</string>
-    <string name="home_section_months">By month</string>
-    <string name="home_section_recent">Newest on the roll</string>
-    <string name="home_section_archive">Archive</string>
+    <string name="home_section_months">Months</string>
     <string name="home_library_eyebrow">Your library · %1$s</string>
+    <string name="home_library_cleaned">Your library · %1$s · %2$s cleaned</string>
     <plurals name="home_left_caption">
         <item quantity="one">photo or video left to sort</item>
         <item quantity="other">photos &amp; videos left to sort</item>
@@ -53,7 +43,6 @@
     <string name="home_sorted_of">%1$s of %2$s</string>
     <string name="left_short">%1$s left</string>
     <string name="label_done">Done</string>
-    <string name="home_trash_subtitle">Restore anything from the last 30 days</string>
     <string name="partial_access">Sweepy can only see the photos you picked.</string>
     <string name="partial_access_action">Allow all</string>
 
@@ -63,6 +52,19 @@
     <string name="deck_whatsapp">WhatsApp</string>
     <string name="deck_large_videos">Large videos</string>
     <string name="deck_later">Maybe later</string>
+    <string name="deck_audio">Audio</string>
+    <string name="audio_allow">Tap to include</string>
+    <string name="audio_whatsapp_voice">WhatsApp voice note</string>
+    <string name="audio_whatsapp">WhatsApp audio</string>
+    <string name="audio_call">Call recording</string>
+    <string name="audio_recording">Recording</string>
+    <string name="audio_telegram">Telegram</string>
+    <string name="audio_download">Download</string>
+    <string name="audio_music">Music</string>
+    <string name="audio_play">Play</string>
+    <string name="audio_pause">Pause</string>
+    <string name="strip_jump">Show this one now</string>
+    <string name="strip_reopen">Take this swipe back</string>
     <string name="deck_all_done">All done ✓</string>
     <string name="folder_unnamed">Other</string>
 
@@ -291,7 +293,7 @@
     <string name="tip_lunch_line">Fuel for an afternoon of fixes</string>
     <string name="tip_dinner">Dinner</string>
     <string name="tip_dinner_line">For a really big cleanup</string>
-    <string name="tips_unavailable">Tips aren\'t available on this phone right now. They need the Google Play Store and a signed-in account.</string>
+    <string name="tips_unavailable">The tip jar isn\'t open right now. Please check back later. Everything in Sweepy works without it.</string>
     <string name="tips_pending">Your payment is still going through. The thank-you will arrive when it clears.</string>
     <string name="tips_failed">That didn\'t go through. You can try again whenever you like.</string>
     <plurals name="tips_given">

@@ -157,7 +157,13 @@ fun VideoPreview(item: MediaItem, modifier: Modifier = Modifier) {
  * the video; it keeps the gesture, so the card doesn't swipe while you scrub.
  */
 @Composable
-private fun Scrubber(progress: Float, active: Boolean, onScrub: (Float) -> Unit, onScrubEnd: () -> Unit) {
+internal fun Scrubber(
+    progress: Float,
+    active: Boolean,
+    onScrub: (Float) -> Unit,
+    onScrubEnd: () -> Unit,
+    color: Color = Color.White,
+) {
     val label = stringResource(R.string.video_seek)
     val knob by animateDpAsState(if (active) 7.dp else 4.5.dp, label = "knob")
     Canvas(
@@ -184,10 +190,10 @@ private fun Scrubber(progress: Float, active: Boolean, onScrub: (Float) -> Unit,
         val y = size.height / 2
         val stroke = 2.dp.toPx()
         val x = size.width * progress
-        drawLine(Color.White.copy(alpha = 0.35f), Offset(0f, y), Offset(size.width, y), stroke, StrokeCap.Round)
-        drawLine(Color.White, Offset(0f, y), Offset(x, y), stroke, StrokeCap.Round)
-        drawCircle(Color.White, knob.toPx(), Offset(x, y))
+        drawLine(color.copy(alpha = 0.3f), Offset(0f, y), Offset(size.width, y), stroke, StrokeCap.Round)
+        drawLine(color, Offset(0f, y), Offset(x, y), stroke, StrokeCap.Round)
+        drawCircle(color, knob.toPx(), Offset(x, y))
     }
 }
 
-private const val POSITION_POLL_MILLIS = 200L
+internal const val POSITION_POLL_MILLIS = 200L

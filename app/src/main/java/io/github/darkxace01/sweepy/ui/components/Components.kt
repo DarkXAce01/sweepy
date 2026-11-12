@@ -76,6 +76,7 @@ import coil3.compose.AsyncImage
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
+import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatDuration
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
 import io.github.darkxace01.sweepy.ui.theme.Texture
@@ -410,15 +411,19 @@ fun MediaThumbnail(item: MediaItem, modifier: Modifier = Modifier, cornerRadius:
             .clip(RoundedCornerShape(cornerRadius))
             .background(Sweepy.colors.hairline),
     ) {
-        AsyncImage(
-            model = item.uri,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-        if (showBadge && item.isVideo) {
+        if (item.isAudio) {
+            AudioArt(item, Modifier.fillMaxSize(), bars = 9)
+        } else {
+            AsyncImage(
+                model = item.uri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        if (showBadge && (item.isVideo || item.isAudio)) {
             Text(
-                "▶ " + formatDuration(item.durationMillis),
+                (if (item.isAudio) "♪ " else "▶ ") + formatDuration(item.durationMillis),
                 color = Color.White,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
@@ -527,8 +532,22 @@ fun deckTitle(source: DeckSource): String = when (source) {
     DeckSource.WhatsApp -> stringResource(R.string.deck_whatsapp)
     DeckSource.LargeVideos -> stringResource(R.string.deck_large_videos)
     DeckSource.Later -> stringResource(R.string.deck_later)
-    is DeckSource.Folder -> source.name.ifBlank { stringResource(R.string.folder_unnamed) }
+    DeckSource.Audio -> stringResource(R.string.deck_audio)
+    is DeckSource.Folder -> folderTitle(source.name) ?: stringResource(R.string.folder_unnamed)
     is DeckSource.Month -> formatYearMonth(source.yearMonth)
+}
+
+/**
+ * Some apps name folders after a timestamp ("1687607895205"). Shown as the date it stands for
+ * instead, so it reads as something. Null for a blank name.
+ */
+fun folderTitle(name: String): String? {
+    if (name.isBlank()) return null
+    if (name.length !in 10..13 || !name.all(Char::isDigit)) return name
+    val millis = if (name.length == 13) name.toLong() else name.toLong() * 1000
+    // Only dates a phone could plausibly have made (2005 onwards, not in the future).
+    if (millis !in 1_104_537_600_000L..System.currentTimeMillis()) return name
+    return formatDate(millis)
 }
 
 fun formatYearMonth(yearMonth: Int, short: Boolean = false): String {

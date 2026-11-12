@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 
-/** A photo/video sitting in Android's system trash. */
+/** A photo, video or audio file sitting in Android's system trash. */
 data class TrashedItem(val media: MediaItem, val expiresAtMillis: Long)
 
 /** Reads photos/videos from Android's MediaStore and asks the system to trash, restore or delete them. */
@@ -39,11 +39,29 @@ class MediaRepository(private val context: Context) {
         }.orEmpty()
     }
 
+    /**
+     * Voice notes, recordings and music, newest first. Ringtones, alarms and notification sounds are
+     * left out: they're part of how the phone works, not clutter. Empty without audio permission.
+     */
+    suspend fun loadAudio(): List<MediaItem> = withContext(Dispatchers.IO) {
+        val args = Bundle().apply {
+            putString(ContentResolver.QUERY_ARG_SQL_SELECTION, AUDIO_SELECTION)
+            putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, AUDIO_SELECTION_ARGS)
+            putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER, "${MediaStore.MediaColumns.DATE_ADDED} DESC")
+        }
+        runCatching {
+            resolver.query(collection, PROJECTION, args, null)?.use { cursor ->
+                val columns = Columns(cursor)
+                buildList(cursor.count) { while (cursor.moveToNext()) add(columns.read(cursor)) }
+            }
+        }.getOrNull().orEmpty()
+    }
+
     /** Items in the system trash, soonest-to-expire first. */
     suspend fun loadTrashed(): List<TrashedItem> = withContext(Dispatchers.IO) {
         val args = Bundle().apply {
-            putString(ContentResolver.QUERY_ARG_SQL_SELECTION, MEDIA_SELECTION)
-            putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, MEDIA_SELECTION_ARGS)
+            putString(ContentResolver.QUERY_ARG_SQL_SELECTION, TRASH_SELECTION)
+            putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, TRASH_SELECTION_ARGS)
             putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER, "${MediaStore.MediaColumns.DATE_EXPIRES} ASC")
             putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_ONLY)
         }
@@ -70,7 +88,7 @@ class MediaRepository(private val context: Context) {
     fun createDeleteRequest(items: Collection<MediaItem>): PendingIntent =
         MediaStore.createDeleteRequest(resolver, items.map { it.uri })
 
-    /** Emits whenever photos/videos are added, changed or removed by any app. */
+    /** Emits whenever photos, videos or audio are added, changed or removed by any app. */
     fun changes(): Flow<Unit> = callbackFlow {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
@@ -95,14 +113,17 @@ class MediaRepository(private val context: Context) {
         val width = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.WIDTH)
         val height = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.HEIGHT)
         val duration = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DURATION)
+        val artist = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.ARTIST)
 
         fun read(cursor: Cursor): MediaItem {
             val id = cursor.getLong(id)
-            val isVideo = cursor.getInt(type) == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
-            val baseUri = if (isVideo) {
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-            } else {
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            val mediaType = cursor.getInt(type)
+            val isVideo = mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
+            val isAudio = mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO
+            val baseUri = when {
+                isVideo -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                isAudio -> MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                else -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
             }
             // DATE_TAKEN is in milliseconds but often missing (e.g. WhatsApp images);
             // DATE_ADDED is in seconds and always present.
@@ -122,7 +143,9 @@ class MediaRepository(private val context: Context) {
                 dateAddedSeconds = addedSeconds,
                 width = cursor.getInt(width),
                 height = cursor.getInt(height),
-                durationMillis = if (isVideo) cursor.getLong(duration) else 0,
+                durationMillis = if (isVideo || isAudio) cursor.getLong(duration) else 0,
+                isAudio = isAudio,
+                artist = if (isAudio) cursor.getString(artist)?.takeUnless { it == MediaStore.UNKNOWN_STRING } else null,
             )
         }
     }
@@ -142,11 +165,19 @@ class MediaRepository(private val context: Context) {
             MediaStore.MediaColumns.WIDTH,
             MediaStore.MediaColumns.HEIGHT,
             MediaStore.MediaColumns.DURATION,
+            MediaStore.MediaColumns.ARTIST,
         )
         const val MEDIA_SELECTION = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?)"
         val MEDIA_SELECTION_ARGS = arrayOf(
             MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString(),
             MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString(),
         )
+        val AUDIO_SELECTION = "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ? AND " +
+            "${MediaStore.Audio.AudioColumns.IS_RINGTONE} = 0 AND " +
+            "${MediaStore.Audio.AudioColumns.IS_ALARM} = 0 AND " +
+            "${MediaStore.Audio.AudioColumns.IS_NOTIFICATION} = 0"
+        val AUDIO_SELECTION_ARGS = arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString())
+        const val TRASH_SELECTION = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?, ?)"
+        val TRASH_SELECTION_ARGS = MEDIA_SELECTION_ARGS + MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString()
     }
 }

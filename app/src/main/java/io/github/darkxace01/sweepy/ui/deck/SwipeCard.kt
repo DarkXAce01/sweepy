@@ -65,6 +65,7 @@ import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.QuietIconButton
+import io.github.darkxace01.sweepy.ui.components.audioSource
 import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.formatDate
@@ -256,7 +257,7 @@ fun SwipeCard(
             }
             .pointerInput(item.id) { detectTapGestures(onDoubleTap = { onInfo() }) },
     ) {
-        PrintCard(item = item, onInfo = onInfo, playVideo = LocalAppSettings.current.autoplayVideos, zoomable = true, modifier = Modifier.fillMaxSize()) {
+        PrintCard(item = item, onInfo = onInfo, playVideo = LocalAppSettings.current.autoplayVideos, onTop = true, zoomable = true, modifier = Modifier.fillMaxSize()) {
             PencilOverlay(state)
         }
     }
@@ -345,6 +346,8 @@ fun PrintCard(
     onInfo: (() -> Unit)?,
     modifier: Modifier = Modifier,
     playVideo: Boolean = false,
+    /** The card being swiped: audio gets its player only there. */
+    onTop: Boolean = false,
     zoomable: Boolean = false,
     overlay: @Composable () -> Unit = {},
 ) {
@@ -376,6 +379,11 @@ fun PrintCard(
                 .clip(PhotoShape)
                 .background(Color(0xFF14130F)),
         ) {
+            if (item.isAudio) {
+                AudioFace(item, interactive = onTop, modifier = Modifier.fillMaxSize())
+                overlay()
+                return@Box
+            }
             // A blurred, zoomed copy fills the space around portrait/landscape photos.
             AsyncImage(
                 model = item.uri,
@@ -404,7 +412,10 @@ fun PrintCard(
             modifier = Modifier.fillMaxWidth().height(64.dp).padding(start = 4.dp),
         ) {
             Column(Modifier.weight(1f)) {
-                Eyebrow(item.folder ?: stringResource(R.string.info_unknown), small = true)
+                Eyebrow(
+                    if (item.isAudio) audioSource(item) else item.folder ?: stringResource(R.string.info_unknown),
+                    small = true,
+                )
                 Spacer(Modifier.height(1.dp))
                 Text(
                     formatDate(item.dateTakenMillis),
@@ -417,7 +428,11 @@ fun PrintCard(
             }
             Column(horizontalAlignment = Alignment.End) {
                 Eyebrow(
-                    if (item.isVideo) "▶ " + formatDuration(item.durationMillis) else fileType(item),
+                    when {
+                        item.isVideo -> "▶ " + formatDuration(item.durationMillis)
+                        item.isAudio -> "♪ " + formatDuration(item.durationMillis)
+                        else -> fileType(item)
+                    },
                     small = true,
                     color = colors.ink,
                 )

@@ -32,6 +32,17 @@ object MediaPermissions {
         else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
 
+    /**
+     * Audio is its own permission from Android 13 ("Music and audio"), asked for only when someone
+     * opens the audio deck. Older versions include it in storage access.
+     */
+    val audioRequested: Array<String> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) arrayOf(Manifest.permission.READ_MEDIA_AUDIO)
+        else arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+
+    fun audioAllowed(context: Context): Boolean = ContextCompat.checkSelfPermission(context, audioRequested.first()) ==
+        PackageManager.PERMISSION_GRANTED
+
     fun current(context: Context): MediaAccess {
         fun granted(permission: String) =
             ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED

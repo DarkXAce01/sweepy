@@ -10,6 +10,9 @@ sealed interface DeckSource {
     data object WhatsApp : DeckSource
     data object LargeVideos : DeckSource
 
+    /** Voice notes, recordings and music: the only deck with audio in it. */
+    data object Audio : DeckSource
+
     /** The "ask me later" pile. Unlike other decks, it shows items that *have* a decision (LATER). */
     data object Later : DeckSource
     data class Folder(val bucketId: Long, val name: String) : DeckSource
@@ -18,7 +21,13 @@ sealed interface DeckSource {
     data class Month(val yearMonth: Int) : DeckSource
 
     fun matches(item: MediaItem): Boolean = when (this) {
-        All, Later -> true
+        Later -> true
+        Audio -> item.isAudio
+        else -> !item.isAudio && matchesMedia(item)
+    }
+
+    private fun matchesMedia(item: MediaItem): Boolean = when (this) {
+        All, Later, Audio -> true
         Screenshots -> item.relativePath?.contains("screenshot", ignoreCase = true) == true ||
             item.folder.equals("Screenshots", ignoreCase = true)
         WhatsApp -> item.relativePath?.contains("whatsapp", ignoreCase = true) == true

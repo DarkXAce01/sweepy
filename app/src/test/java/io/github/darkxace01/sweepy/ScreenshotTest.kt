@@ -47,6 +47,9 @@ import io.github.darkxace01.sweepy.ui.deck.DeckScreen
 import io.github.darkxace01.sweepy.ui.deck.SwipeCard
 import io.github.darkxace01.sweepy.ui.deck.SwipeCardState
 import io.github.darkxace01.sweepy.ui.home.HomeScreen
+import io.github.darkxace01.sweepy.ui.home.HomeTab
+import io.github.darkxace01.sweepy.ui.DecidedCard
+import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
 import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
@@ -93,6 +96,19 @@ class ScreenshotTest {
 
     @Config(qualifiers = "w412dp-h2000dp-xxhdpi")
     @Test fun home_full_light() = capture("home_full_light") { Home() }
+
+    @Config(qualifiers = "w412dp-h2000dp-xxhdpi")
+    @Test fun home_months() = capture("home_months") { Home(tab = HomeTab.MONTHS) }
+
+    @Config(qualifiers = "w412dp-h2000dp-xxhdpi")
+    @Test fun home_full_dark() = capture("home_full_dark", dark = true) { Home(audioAllowed = false) }
+
+    @Config(qualifiers = "w412dp-h2000dp-xxhdpi")
+    @Test fun pop_home_full() = capture("pop_home_full", theme = ThemeChoice.POP) { Home() }
+
+    @Test fun deck_audio() = capture("deck_audio") { AudioDeck() }
+
+    @Test fun deck_audio_dark() = capture("deck_audio_dark", dark = true, theme = ThemeChoice.RISO) { AudioDeck() }
 
     @Test fun home_loading() = capture("home_loading") {
         HomeScreen(HomeUiState(), partialAccess = false, onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onOpenDuplicates = {}, onRequestFullAccess = {})
@@ -270,15 +286,21 @@ class ScreenshotTest {
     // ---- Screens with fake data ------------------------------------------------------------------
 
     @Composable
-    private fun Home(nudge: Boolean = false, reminderAsk: Boolean = false, cleanedBytes: Long = 7_300_000_000) {
+    private fun Home(
+        nudge: Boolean = false,
+        reminderAsk: Boolean = false,
+        cleanedBytes: Long = 7_300_000_000,
+        tab: HomeTab = HomeTab.FOLDERS,
+        audioAllowed: Boolean = true,
+    ) {
         val folders = listOf(
             "Camera" to 4210, "WhatsApp Images" to 3122, "Screenshots" to 1840, "Download" to 611,
-            "Instagram" to 402, "Telegram" to 120,
+            "Instagram" to 402, "1687607895205" to 14, "Telegram" to 120,
         ).mapIndexed { i, (name, count) ->
-            DeckSummary(DeckSource.Folder(i.toLong(), name), count, count * 2_400_000L, (count * (0.3 + i * 0.12)).toInt(), library.drop(i).take(4))
+            DeckSummary(DeckSource.Folder(i.toLong(), name), count, count * 2_400_000L, if (i == 5) 0 else (count * (0.3 + i * 0.12)).toInt(), library.drop(i).take(4))
         }
-        val months = listOf(202610, 202609, 202608, 202607, 202606).mapIndexed { i, ym ->
-            DeckSummary(DeckSource.Month(ym), 300 - i * 40, (300 - i * 40) * 3_100_000L, if (i == 1) 0 else 200 - i * 30, library.drop(i + 6).take(4))
+        val months = listOf(202610, 202609, 202608, 202607, 202606, 202601, 202512, 202511, 202507).mapIndexed { i, ym ->
+            DeckSummary(DeckSource.Month(ym), 300 - i * 20, (300 - i * 20) * 3_100_000L, if (i == 1 || i == 6) 0 else 200 - i * 15, library.drop(i + 2).take(4))
         }
         HomeScreen(
             state = HomeUiState(
@@ -290,20 +312,20 @@ class ScreenshotTest {
                 markedBytes = 1_420_000_000,
                 laterCount = 24,
                 stats = CleanStats(cleanedCount = 2_840, cleanedBytes = cleanedBytes),
-                recent = library.take(10),
                 duplicates = DuplicatesSummary(scanning = false, groupCount = 41, reclaimableBytes = 2_300_000_000, covers = library.drop(5).take(4)),
                 quickDecks = listOf(
-                    DeckSummary(DeckSource.Screenshots, 1840, 1_900_000_000, 1210, library.drop(3).take(4)),
-                    DeckSummary(DeckSource.WhatsApp, 3122, 4_100_000_000, 2650, library.drop(1).take(4)),
                     DeckSummary(DeckSource.LargeVideos, 48, 6_700_000_000, 41, library.drop(2).take(4)),
+                    DeckSummary(DeckSource.WhatsApp, 3122, 4_100_000_000, 2650, library.drop(1).take(4)),
                     DeckSummary(DeckSource.Later, 24, 120_000_000, 24, library.drop(4).take(4)),
                 ),
+                audio = DeckSummary(DeckSource.Audio, 212, 1_300_000_000, 180, audio.take(3)),
                 folders = folders,
                 months = months,
             ),
             partialAccess = false,
             onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onOpenDuplicates = {}, onRequestFullAccess = {},
             onOpenTipJar = {}, showTipNudge = nudge, showReminderAsk = reminderAsk,
+            audioAllowed = audioAllowed, initialTab = tab,
         )
     }
 
@@ -318,9 +340,40 @@ class ScreenshotTest {
                 markedCount = 38,
                 markedBytes = 96_000_000,
                 canUndo = true,
+                recent = listOf(Decision.KEEP, Decision.DELETE, Decision.DELETE, Decision.LATER, Decision.KEEP)
+                    .mapIndexed { i, d -> DecidedCard(library[i + 10], d) },
             ),
             showHint = showHint,
             onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
+        )
+    }
+
+    @Composable
+    private fun AudioDeck() {
+        DeckScreen(
+            source = DeckSource.Audio,
+            state = DeckUiState(
+                loading = false, deck = audio, totalCount = 212, markedCount = 4, markedBytes = 9_000_000, canUndo = true,
+                recent = listOf(DecidedCard(audio[4], Decision.DELETE)),
+            ),
+            showHint = false,
+            onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
+        )
+    }
+
+    private val audio: List<MediaItem> = listOf(
+        Triple("PTT-20261104-WA0012.opus", "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Voice Notes/202645/", null),
+        Triple("Lecture notes, week 3.m4a", "Recordings/", null),
+        Triple("Tum Hi Ho.mp3", "Music/", "Arijit Singh"),
+        Triple("Call with Bank_20261021.m4a", "Recordings/Call/", null),
+        Triple("ringtone_remix.mp3", "Download/", null),
+    ).mapIndexed { i, (name, path, artist) ->
+        MediaItem(
+            id = 500L + i, uri = Uri.parse("content://media/external/audio/media/${500 + i}"), isVideo = false,
+            mimeType = "audio/mpeg", displayName = name, folder = path.trimEnd('/').substringAfterLast('/'), bucketId = 50L + i,
+            relativePath = path, sizeBytes = 240_000L + i * 1_900_000L, dateTakenMillis = 1_762_000_000_000 - i * 86_400_000L * 3,
+            dateAddedSeconds = 1_762_000_000L - i * 86_400L * 3, width = 0, height = 0, durationMillis = 14_000L + i * 61_000L,
+            isAudio = true, artist = artist,
         )
     }
 

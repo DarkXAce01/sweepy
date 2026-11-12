@@ -79,7 +79,7 @@ fun InfoSheet(item: MediaItem, onDismiss: () -> Unit) {
                     add(stringResource(R.string.info_resolution) to "${item.width} × ${item.height}")
                 }
                 add(stringResource(R.string.info_type) to (item.mimeType ?: unknown))
-                if (item.isVideo) add(stringResource(R.string.info_duration) to formatDuration(item.durationMillis))
+                if (item.isVideo || item.isAudio) add(stringResource(R.string.info_duration) to formatDuration(item.durationMillis))
                 add(stringResource(R.string.info_folder) to (item.folder ?: unknown))
                 camera?.camera?.let { add(stringResource(R.string.info_camera) to it) }
                 camera?.lens?.let { add(stringResource(R.string.info_lens) to it) }

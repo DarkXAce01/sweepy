@@ -1,19 +1,23 @@
 package io.github.darkxace01.sweepy.ui.home
 
+import android.net.Uri
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,9 +26,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
@@ -42,18 +44,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,44 +66,42 @@ import androidx.compose.ui.unit.dp
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
+import io.github.darkxace01.sweepy.data.tips.TIP_NUDGE_BIG_BYTES
+import io.github.darkxace01.sweepy.data.tips.Tip
 import io.github.darkxace01.sweepy.ui.DeckSummary
 import io.github.darkxace01.sweepy.ui.DuplicatesSummary
 import io.github.darkxace01.sweepy.ui.HomeUiState
+import io.github.darkxace01.sweepy.ui.components.AudioArt
 import io.github.darkxace01.sweepy.ui.components.CountUp
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
-import io.github.darkxace01.sweepy.ui.components.Hairline
 import io.github.darkxace01.sweepy.ui.components.InkButton
 import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.MediaThumbnail
-import io.github.darkxace01.sweepy.ui.components.Mosaic
+import io.github.darkxace01.sweepy.ui.components.OutlineButton
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.QuietIconButton
 import io.github.darkxace01.sweepy.ui.components.Ruler
-import io.github.darkxace01.sweepy.ui.components.ThinProgress
+import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.deckTitle
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pencilMark
-import io.github.darkxace01.sweepy.ui.components.OutlineButton
-import io.github.darkxace01.sweepy.ui.components.chunky
-import io.github.darkxace01.sweepy.ui.tips.CoffeeIcon
-import io.github.darkxace01.sweepy.ui.tips.TipArt
-import io.github.darkxace01.sweepy.data.tips.TIP_NUDGE_BIG_BYTES
-import io.github.darkxace01.sweepy.data.tips.Tip
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.reveal
 import io.github.darkxace01.sweepy.ui.formatSize
 import io.github.darkxace01.sweepy.ui.theme.Sweepy
-import java.time.YearMonth
+import io.github.darkxace01.sweepy.ui.tips.TipArt
+import java.time.Month
 import java.time.format.TextStyle as JavaTextStyle
-import java.util.Locale
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
-private const val COLLAPSED_FOLDERS = 5
-private const val COLLAPSED_MONTHS = 6
-private const val MONTH_COLUMNS = 3
 private val PAGE = 22.dp
+private val GRID_GAP = 16.dp
+private const val MONTH_COLUMNS = 3
+
+/** The two ways to browse the library on the home screen. */
+enum class HomeTab { FOLDERS, MONTHS }
 
 @Composable
 fun HomeScreen(
@@ -119,14 +121,17 @@ fun HomeScreen(
     showReminderAsk: Boolean = false,
     onAcceptReminders: () -> Unit = {},
     onDeclineReminders: () -> Unit = {},
+    /** Whether Sweepy may see audio files. Until then the audio card asks for it. */
+    audioAllowed: Boolean = true,
+    onAllowAudio: () -> Unit = {},
+    initialTab: HomeTab = HomeTab.FOLDERS,
 ) {
-    var showAllFolders by rememberSaveable { mutableStateOf(false) }
-    var showAllMonths by rememberSaveable { mutableStateOf(false) }
+    var tab by rememberSaveable { mutableStateOf(initialTab) }
     // The page settles in once. Coming back from a deck should look like it never left.
     var introPlayed by rememberSaveable { mutableStateOf(false) }
     var animateIn by remember { mutableStateOf(!introPlayed) }
     SideEffect { introPlayed = true }
-    // Only the opening settles in. Sections scrolled back into view later just appear.
+    // Only the opening settles in. Cards scrolled into view later just appear.
     LaunchedEffect(Unit) {
         delay(1_200)
         animateIn = false
@@ -144,22 +149,15 @@ fun HomeScreen(
                 bottom = insets.calculateBottomPadding() + 28.dp,
             ),
         ) {
-            item { TopBar(onOpenTrash, onOpenSettings, onOpenTipJar, Modifier.reveal(0, animateIn)) }
+            item { TopBar(state.markedCount, onOpenReview, onOpenTrash, onOpenSettings, Modifier.reveal(0, animateIn)) }
 
             if (partialAccess) {
                 item { PartialAccessBanner(onRequestFullAccess, Modifier.padding(top = 8.dp).reveal(1, animateIn)) }
             }
 
-            item { Hero(state, onStart = { onOpenDeck(DeckSource.All) }, Modifier.padding(top = 28.dp).reveal(1, animateIn)) }
+            item { Hero(state, onStart = { onOpenDeck(DeckSource.All) }, Modifier.padding(top = 24.dp).reveal(1, animateIn)) }
 
             if (ready) {
-                if (state.recent.isNotEmpty()) {
-                    item { SectionHeader(stringResource(R.string.home_section_recent), Modifier.reveal(3, animateIn)) }
-                    item { FilmStrip(state.recent, onClick = { onOpenDeck(DeckSource.All) }, Modifier.reveal(3, animateIn)) }
-                }
-
-                item { Stats(state, onOpenReview, onOpenTrash, Modifier.padding(top = 28.dp).reveal(4, animateIn)) }
-
                 if (showTipNudge && onOpenTipJar != null) {
                     item(key = "tip-nudge") {
                         TipNudge(
@@ -196,81 +194,67 @@ fun HomeScreen(
                     }
                 }
 
-                run {
-                    item { SectionHeader(stringResource(R.string.home_section_quick), Modifier.reveal(5, animateIn)) }
-                    item {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                            contentPadding = PaddingValues(horizontal = PAGE),
-                            modifier = Modifier.fillMaxWidth().bleed(PAGE).reveal(5, animateIn),
-                        ) {
-                            item(key = "duplicates") { DuplicatesTile(state.duplicates, onClick = onOpenDuplicates) }
-                            items(state.quickDecks, key = { it.source.toString() }) { summary ->
-                                QuickDeckTile(summary, onClick = { onOpenDeck(summary.source) })
+                item(key = "tabs") { Tabs(tab, onSelect = { tab = it }, Modifier.padding(top = 36.dp, bottom = 20.dp).reveal(3, animateIn)) }
+
+                when (tab) {
+                    HomeTab.FOLDERS -> {
+                        val cards = buildList<@Composable (Modifier) -> Unit> {
+                            add { m -> DuplicatesCard(state.duplicates, onOpenDuplicates, m) }
+                            for (deck in state.quickDecks) add { m -> DeckCard(deck, { onOpenDeck(deck.source) }, m) }
+                            val audio = state.audio
+                            when {
+                                !audioAllowed -> add { m -> AudioInviteCard(onAllowAudio, m) }
+                                audio != null -> add { m -> DeckCard(audio, { onOpenDeck(audio.source) }, m) }
+                            }
+                            for (folder in state.folders) add { m -> DeckCard(folder, { onOpenDeck(folder.source) }, m) }
+                        }
+                        val rows = cards.chunked(2)
+                        items(rows.size, key = { "folders-$it" }) { index ->
+                            GridRow(rows[index], columns = 2, Modifier.reveal(4 + index, animateIn))
+                        }
+                    }
+                    HomeTab.MONTHS -> {
+                        for ((year, months) in state.months.groupBy { (it.source as DeckSource.Month).yearMonth / 100 }) {
+                            item(key = "year-$year") { YearHeader(year, months) }
+                            val rows = months.chunked(MONTH_COLUMNS)
+                            items(rows.size, key = { "months-$year-$it" }) { index ->
+                                val cards = rows[index].map<DeckSummary, @Composable (Modifier) -> Unit> { month ->
+                                    { m -> MonthCard(month, { onOpenDeck(month.source) }, m) }
+                                }
+                                GridRow(cards, columns = MONTH_COLUMNS)
                             }
                         }
                     }
                 }
-
-                if (state.folders.isNotEmpty()) {
-                    item {
-                        SectionHeader(
-                            title = stringResource(R.string.home_section_folders),
-                            action = toggleLabel(state.folders.size, COLLAPSED_FOLDERS, showAllFolders),
-                            onAction = { showAllFolders = !showAllFolders },
-                        )
-                    }
-                    val folders = if (showAllFolders) state.folders else state.folders.take(COLLAPSED_FOLDERS)
-                    itemsIndexed(folders, key = { _, it -> "folder-" + it.source.toString() }) { index, summary ->
-                        if (index > 0) Hairline()
-                        FolderRow(summary, onClick = { onOpenDeck(summary.source) })
-                    }
-                }
-
-                if (state.months.isNotEmpty()) {
-                    item {
-                        SectionHeader(
-                            title = stringResource(R.string.home_section_months),
-                            action = toggleLabel(state.months.size, COLLAPSED_MONTHS, showAllMonths),
-                            onAction = { showAllMonths = !showAllMonths },
-                        )
-                    }
-                    val months = if (showAllMonths) state.months else state.months.take(COLLAPSED_MONTHS)
-                    items(months.chunked(MONTH_COLUMNS), key = { row -> "months-" + row.first().source.toString() }) { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
-                            for (summary in row) MonthChip(summary, onClick = { onOpenDeck(summary.source) }, Modifier.weight(1f))
-                            repeat(MONTH_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
-                        }
-                    }
-                }
-
-                item { SectionHeader(stringResource(R.string.home_section_archive)) }
-                item { RecentlyCleanedRow(onOpenTrash) }
             }
 
-            item { PrivacyNote(Modifier.padding(top = 36.dp)) }
+            item { PrivacyNote(Modifier.padding(top = 28.dp)) }
         }
     }
 }
 
+/** One row of the grid; short rows keep their cards the same width as full ones. */
 @Composable
-private fun toggleLabel(size: Int, collapsed: Int, expanded: Boolean): String? = when {
-    size <= collapsed -> null
-    expanded -> stringResource(R.string.show_less)
-    else -> stringResource(R.string.show_all, size)
-}
-
-/** Lets a horizontally scrolling row run under the page's side margins, edge to edge. */
-private fun Modifier.bleed(bleed: Dp): Modifier = this.layout { measurable, constraints ->
-    val extra = bleed.roundToPx() * 2
-    val placeable = measurable.measure(constraints.copy(maxWidth = constraints.maxWidth + extra, minWidth = constraints.minWidth + extra))
-    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
+private fun GridRow(cards: List<@Composable (Modifier) -> Unit>, columns: Int, modifier: Modifier = Modifier) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(if (columns > 2) 12.dp else GRID_GAP),
+        modifier = modifier.fillMaxWidth().padding(bottom = 26.dp),
+    ) {
+        for (card in cards) card(Modifier.weight(1f))
+        repeat(columns - cards.size) { Spacer(Modifier.weight(1f)) }
+    }
 }
 
 // ---- Header & hero ------------------------------------------------------------------------------
 
 @Composable
-private fun TopBar(onOpenTrash: () -> Unit, onOpenSettings: () -> Unit, onOpenTipJar: (() -> Unit)?, modifier: Modifier = Modifier) {
+private fun TopBar(
+    markedCount: Int,
+    onOpenReview: () -> Unit,
+    onOpenTrash: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth().height(56.dp)) {
         Text(
             stringResource(R.string.app_name),
@@ -281,8 +265,9 @@ private fun TopBar(onOpenTrash: () -> Unit, onOpenSettings: () -> Unit, onOpenTi
         Spacer(Modifier.width(8.dp))
         MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 14.dp, strokeWidth = 0.14f, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.weight(1f))
-        if (onOpenTipJar != null) {
-            QuietIconButton(stringResource(R.string.tips_title), onOpenTipJar) { CoffeeIcon(Sweepy.colors.ink) }
+        if (markedCount > 0) {
+            BinChip(markedCount, onOpenReview)
+            Spacer(Modifier.width(4.dp))
         }
         QuietIconButton(stringResource(R.string.trash_title), onOpenTrash) {
             Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
@@ -290,6 +275,28 @@ private fun TopBar(onOpenTrash: () -> Unit, onOpenSettings: () -> Unit, onOpenTi
         QuietIconButton(stringResource(R.string.settings_title), onOpenSettings) {
             Icon(Icons.Outlined.Settings, contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
         }
+    }
+}
+
+/** The review bin, waiting: a small red tag with its count. Only there when something's in it. */
+@Composable
+private fun BinChip(count: Int, onClick: () -> Unit) {
+    val label = stringResource(R.string.review_title)
+    val shape = RoundedCornerShape(50)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(36.dp)
+            .chunky(shape, fill = Sweepy.colors.surface, offset = 3.dp)
+            .clip(shape)
+            .border(1.dp, Sweepy.colors.pencil.copy(alpha = 0.45f), shape)
+            .pressable(onClick, pressedScale = 0.92f)
+            .padding(horizontal = 12.dp)
+            .semantics { contentDescription = label },
+    ) {
+        MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 12.dp, strokeWidth = 0.16f)
+        Spacer(Modifier.width(7.dp))
+        Eyebrow(formatCount(count), color = Sweepy.colors.ink)
     }
 }
 
@@ -325,8 +332,15 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
     val remaining = state.totalCount - state.reviewedCount
     Column(modifier.fillMaxWidth()) {
         Eyebrow(
-            if (state.loading) stringResource(R.string.home_scanning)
-            else stringResource(R.string.home_library_eyebrow, formatSize(context, state.totalBytes)),
+            when {
+                state.loading -> stringResource(R.string.home_scanning)
+                state.stats.cleanedBytes > 0 -> stringResource(
+                    R.string.home_library_cleaned,
+                    formatSize(context, state.totalBytes),
+                    formatSize(context, state.stats.cleanedBytes),
+                )
+                else -> stringResource(R.string.home_library_eyebrow, formatSize(context, state.totalBytes))
+            },
         )
         Spacer(Modifier.height(4.dp))
         when {
@@ -350,7 +364,7 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
                     fontStyle = FontStyle.Italic,
                     color = Sweepy.colors.inkMuted,
                 )
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(20.dp))
                 Ruler(state.progress)
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth()) {
@@ -361,7 +375,7 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
                         small = true,
                     )
                 }
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(22.dp))
                 InkButton(
                     text = stringResource(if (state.reviewedCount == 0) R.string.home_start else R.string.home_continue),
                     trailing = "→",
@@ -373,141 +387,69 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
     }
 }
 
-// ---- Film strip ---------------------------------------------------------------------------------
+// ---- Folders / Months ---------------------------------------------------------------------------
 
-private val FRAME = 74.dp
-private val FRAME_GAP = 8.dp
-
-/** The newest photos still waiting, shown as a strip of negative film with sprocket holes. */
+/** Two words; the chosen one gets the grease-pencil loop drawn round it. */
 @Composable
-private fun FilmStrip(items: List<MediaItem>, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    LazyRow(
-        modifier = modifier
-            .fillMaxWidth()
-            .bleed(PAGE)
-            .background(Sweepy.colors.film)
-            .then(if (Sweepy.colors.film.alpha == 0f) Modifier.printedEdges(Sweepy.colors.filmHoles) else Modifier)
-            .pressable(onClick, pressedScale = 0.99f),
-    ) {
-        item { FilmFrame(null, null, leader = true) }
-        itemsIndexed(items, key = { _, it -> it.id }) { index, item -> FilmFrame(item, index + 1) }
-        item { FilmFrame(null, null, leader = true) }
+private fun Tabs(selected: HomeTab, onSelect: (HomeTab) -> Unit, modifier: Modifier = Modifier) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()) {
+        for (tab in HomeTab.entries) {
+            Tab(
+                text = stringResource(if (tab == HomeTab.FOLDERS) R.string.home_section_folders else R.string.home_section_months),
+                selected = tab == selected,
+                onClick = { onSelect(tab) },
+            )
+            Spacer(Modifier.width(20.dp))
+        }
     }
 }
 
-/** A strip printed onto the page rather than a band of real film: just its two edges, in ink. */
-private fun Modifier.printedEdges(ink: Color): Modifier = drawBehind {
-    val stroke = 1.5.dp.toPx()
-    drawLine(ink, Offset(0f, stroke / 2), Offset(size.width, stroke / 2), stroke)
-    drawLine(ink, Offset(0f, size.height - stroke / 2), Offset(size.width, size.height - stroke / 2), stroke)
-}
-
 @Composable
-private fun FilmFrame(item: MediaItem?, number: Int?, leader: Boolean = false) {
-    val width = if (leader) PAGE else FRAME + FRAME_GAP
-    val holes = Sweepy.colors.filmHoles
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+private fun Tab(text: String, selected: Boolean, onClick: () -> Unit) {
+    val inspection = LocalInspectionMode.current
+    val loop = remember { Animatable(if (selected) 1f else 0f) }
+    LaunchedEffect(selected) {
+        if (!selected) loop.snapTo(0f)
+        else if (inspection) loop.snapTo(1f)
+        else loop.animateTo(1f, tween(durationMillis = 520, easing = FastOutSlowInEasing))
+    }
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
-            .width(width)
-            .drawBehind {
-                // Sprocket holes along both edges.
-                val hole = Size(5.dp.toPx(), 3.5.dp.toPx())
-                val step = 11.dp.toPx()
-                val color = holes
-                var x = step / 2 - hole.width / 2
-                while (x < size.width) {
-                    drawRoundRect(color, Offset(x, 5.dp.toPx()), hole, CornerRadius(1.dp.toPx()))
-                    drawRoundRect(color, Offset(x, size.height - 5.dp.toPx() - hole.height), hole, CornerRadius(1.dp.toPx()))
-                    x += step
-                }
-            }
-            .padding(top = 16.dp, bottom = 6.dp),
+            .pressable(onClick, pressedScale = 0.95f, role = Role.Tab)
+            .semantics { this.selected = selected }
+            .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
-        Box(Modifier.size(FRAME)) {
-            if (item != null) MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = 3.dp, showBadge = false)
-        }
+        Box(
+            Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    scaleX = 1.32f
+                    scaleY = 1.6f
+                }
+                .pencilMark(Mark.CIRCLE, Sweepy.colors.pencil, { loop.value }, strokeWidth = 0.05f),
+        )
         Text(
-            if (number != null) "$number ▸" else " ",
-            style = MaterialTheme.typography.labelSmall,
-            color = Sweepy.colors.filmText,
-            modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
+            text,
+            style = MaterialTheme.typography.headlineSmall,
+            fontStyle = if (selected) FontStyle.Italic else FontStyle.Normal,
+            color = if (selected) Sweepy.colors.ink else Sweepy.colors.inkMuted,
         )
     }
 }
 
-// ---- Stats --------------------------------------------------------------------------------------
-
 @Composable
-private fun Stats(state: HomeUiState, onOpenReview: () -> Unit, onOpenTrash: () -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    Column(modifier.fillMaxWidth()) {
-        Hairline()
-        Row(Modifier.height(IntrinsicSize.Min)) {
-            Stat(
-                mark = Mark.CROSS,
-                markColor = Sweepy.colors.pencil,
-                label = stringResource(R.string.home_stat_bin),
-                value = formatCount(state.markedCount),
-                detail = formatSize(context, state.markedBytes),
-                onClick = onOpenReview,
-                modifier = Modifier.weight(1f),
-            )
-            Box(Modifier.width(1.dp).fillMaxHeight().background(Sweepy.colors.hairline))
-            Stat(
-                mark = Mark.CIRCLE,
-                markColor = Sweepy.colors.keep,
-                label = stringResource(R.string.home_stat_cleaned),
-                value = formatSize(context, state.stats.cleanedBytes),
-                detail = pluralStringResource(R.plurals.items_count, state.stats.cleanedCount.toInt(), formatCount(state.stats.cleanedCount)),
-                onClick = onOpenTrash,
-                modifier = Modifier.weight(1f).padding(start = 18.dp),
-            )
-        }
-        Hairline()
-    }
-}
-
-@Composable
-private fun Stat(
-    mark: Mark,
-    markColor: Color,
-    label: String,
-    value: String,
-    detail: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier.pressable(onClick, pressedScale = 0.98f).padding(vertical = 16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            MarkIcon(mark, markColor, size = 13.dp, strokeWidth = 0.14f)
-            Spacer(Modifier.width(7.dp))
-            Eyebrow(label, small = true)
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(value, style = MaterialTheme.typography.headlineLarge, color = Sweepy.colors.ink, maxLines = 1)
-        Eyebrow(detail, small = true)
-    }
-}
-
-// ---- Sections -----------------------------------------------------------------------------------
-
-@Composable
-private fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? = null, onAction: () -> Unit = {}) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth().padding(top = 36.dp, bottom = 12.dp),
-    ) {
-        Eyebrow(title, color = Sweepy.colors.ink, modifier = Modifier.weight(1f))
-        if (action != null) {
-            Eyebrow(
-                action,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .pressable(onAction)
-                    .padding(horizontal = 6.dp, vertical = 6.dp),
-            )
-        }
+private fun YearHeader(year: Int, months: List<DeckSummary>) {
+    val left = months.sumOf { it.remainingCount }
+    Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 14.dp)) {
+        Text(year.toString(), style = MaterialTheme.typography.headlineMedium, color = Sweepy.colors.ink)
+        Spacer(Modifier.weight(1f))
+        Eyebrow(
+            if (left == 0) stringResource(R.string.label_done) else stringResource(R.string.left_short, formatCount(left)),
+            small = true,
+            color = if (left == 0) Sweepy.colors.keep else Sweepy.colors.inkMuted,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
     }
 }
 
@@ -517,159 +459,178 @@ private fun leftLabel(summary: DeckSummary): String =
     else stringResource(R.string.left_short, formatCount(summary.remainingCount))
 
 @Composable
-private fun QuickDeckTile(summary: DeckSummary, onClick: () -> Unit) {
+private fun DeckCard(summary: DeckSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val done = summary.remainingCount == 0
-    Column(Modifier.width(150.dp).pressable(onClick)) {
-        Box {
-            Mosaic(summary.covers, Modifier.fillMaxWidth())
-            if (done) {
-                MarkIcon(
-                    Mark.CIRCLE,
-                    Sweepy.colors.keep,
-                    size = 150.dp,
-                    strokeWidth = 0.03f,
-                    modifier = Modifier.align(Alignment.Center),
-                )
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-        Text(deckTitle(summary.source), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Spacer(Modifier.height(2.dp))
-        Eyebrow(leftLabel(summary) + " · " + formatSize(context, summary.totalBytes), small = true, color = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted)
-        Spacer(Modifier.height(8.dp))
-        ThinProgress(summary.progress, color = if (done) Sweepy.colors.keep else Sweepy.colors.ink)
-    }
+    StackCard(
+        covers = summary.covers,
+        title = deckTitle(summary.source),
+        detail = leftLabel(summary) + " · " + formatSize(context, summary.totalBytes),
+        detailColor = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted,
+        done = done,
+        onClick = onClick,
+        modifier = modifier,
+    )
 }
 
-/** Tile for the duplicates screen: shows scan progress first, then how much space it could free. */
 @Composable
-private fun DuplicatesTile(summary: DuplicatesSummary, onClick: () -> Unit) {
+private fun MonthCard(summary: DeckSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val yearMonth = (summary.source as DeckSource.Month).yearMonth
+    val locale = LocalLocale.current.platformLocale
+    val done = summary.remainingCount == 0
+    StackCard(
+        covers = summary.covers,
+        title = Month.of(yearMonth % 100).getDisplayName(JavaTextStyle.SHORT, locale),
+        detail = leftLabel(summary),
+        detailColor = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted,
+        done = done,
+        compact = true,
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+/** Our strength, so it leads the grid: how much the copies and look-alikes add up to. */
+@Composable
+private fun DuplicatesCard(summary: DuplicatesSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val none = !summary.scanning && summary.groupCount == 0
-    Column(Modifier.width(150.dp).pressable(onClick)) {
-        Box {
-            Mosaic(summary.covers, Modifier.fillMaxWidth())
-            if (summary.covers.isEmpty()) {
-                MarkIcon(
-                    if (none) Mark.CIRCLE else Mark.QUESTION,
-                    if (none) Sweepy.colors.keep else Sweepy.colors.inkMuted.copy(alpha = 0.5f),
-                    size = 64.dp,
-                    strokeWidth = 0.06f,
-                    modifier = Modifier.align(Alignment.Center),
+    StackCard(
+        covers = summary.covers,
+        title = stringResource(R.string.deck_duplicates),
+        detail = when {
+            summary.groupCount > 0 -> pluralStringResource(R.plurals.dup_tile_groups, summary.groupCount, formatCount(summary.groupCount)) +
+                " · " + formatSize(context, summary.reclaimableBytes)
+            summary.scanning -> summary.progress?.let { stringResource(R.string.dup_scanning_pct, (it * 100).roundToInt()) }
+                ?: stringResource(R.string.dup_scanning)
+            else -> stringResource(R.string.dup_none)
+        },
+        detailColor = when {
+            none -> Sweepy.colors.keep
+            summary.groupCount > 0 -> Sweepy.colors.pencil
+            else -> Sweepy.colors.inkMuted
+        },
+        done = none,
+        onClick = onClick,
+        modifier = modifier,
+        empty = {
+            MarkIcon(
+                if (none) Mark.CIRCLE else Mark.QUESTION,
+                if (none) Sweepy.colors.keep else Sweepy.colors.inkMuted.copy(alpha = 0.5f),
+                size = 44.dp,
+                strokeWidth = 0.07f,
+            )
+        },
+    )
+}
+
+/** Audio needs its own permission on Android 13+. This card asks for it, once tapped. */
+@Composable
+private fun AudioInviteCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    StackCard(
+        covers = emptyList(),
+        title = stringResource(R.string.deck_audio),
+        detail = stringResource(R.string.audio_allow),
+        detailColor = Sweepy.colors.ink,
+        done = false,
+        onClick = onClick,
+        modifier = modifier,
+        empty = { AudioArt(SampleAudio, Modifier.fillMaxSize(), bars = 9) },
+    )
+}
+
+/** Gives the invitation card a waveform to show before there are real files. */
+private val SampleAudio = MediaItem(
+    id = 6, uri = Uri.EMPTY, isVideo = false, mimeType = null, displayName = null, folder = null, bucketId = 0,
+    relativePath = null, sizeBytes = 0, dateTakenMillis = 0, dateAddedSeconds = 0, width = 0, height = 0,
+    durationMillis = 0, isAudio = true,
+)
+
+/** How the prints underneath lean, front to back: like a handful dropped on a table. */
+private val PILE = listOf(Triple(0f, 0f, 0f), Triple(-7f, -0.07f, 0.01f), Triple(6f, 0.07f, 0.02f))
+
+/**
+ * A deck shown as a small pile of its photos (up to three, the first on top), with its name and
+ * how much is left underneath. A finished deck gets circled in green.
+ */
+@Composable
+private fun StackCard(
+    covers: List<MediaItem>,
+    title: String,
+    detail: String,
+    detailColor: Color,
+    done: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+    empty: @Composable BoxScope.() -> Unit = {},
+) {
+    val shown = covers.take(PILE.size)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.pressable(onClick, pressedScale = 0.96f),
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
+            if (shown.isEmpty()) {
+                Print(compact, Modifier.fillMaxSize(0.8f)) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().background(Sweepy.colors.hairline.copy(alpha = 0.5f)), content = empty)
+                }
+            }
+            shown.withIndex().reversed().forEach { (depth, item) ->
+                val (angle, dx, dy) = PILE[depth]
+                Print(
+                    compact,
+                    Modifier
+                        .fillMaxSize(0.8f)
+                        .graphicsLayer {
+                            rotationZ = angle
+                            translationX = size.width * dx
+                            translationY = size.height * dy
+                        },
+                ) {
+                    MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = 0.dp, showBadge = false)
+                }
+            }
+            if (done) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .pencilMark(Mark.CIRCLE, Sweepy.colors.keep.copy(alpha = 0.85f), { 1f }, strokeWidth = 0.035f),
                 )
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Text(stringResource(R.string.deck_duplicates), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink, maxLines = 1)
-        Spacer(Modifier.height(2.dp))
-        Eyebrow(
-            when {
-                summary.groupCount > 0 -> pluralStringResource(R.plurals.dup_tile_groups, summary.groupCount, formatCount(summary.groupCount)) +
-                    " · " + formatSize(context, summary.reclaimableBytes)
-                summary.scanning -> summary.progress?.let { stringResource(R.string.dup_scanning_pct, (it * 100).roundToInt()) }
-                    ?: stringResource(R.string.dup_scanning)
-                else -> stringResource(R.string.dup_none)
-            },
-            small = true,
-            color = if (none) Sweepy.colors.keep else Sweepy.colors.inkMuted,
-        )
-        Spacer(Modifier.height(8.dp))
-        ThinProgress(
-            progress = when {
-                summary.scanning -> summary.progress ?: 0f
-                else -> 1f
-            },
-            color = if (none) Sweepy.colors.keep else Sweepy.colors.ink,
-        )
-    }
-}
-
-@Composable
-private fun FolderRow(summary: DeckSummary, onClick: () -> Unit) {
-    val context = LocalContext.current
-    val done = summary.remainingCount == 0
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().pressable(onClick, pressedScale = 0.985f).padding(vertical = 12.dp),
-    ) {
-        Box(Modifier.size(52.dp)) {
-            val cover = summary.cover
-            if (cover != null) MediaThumbnail(cover, Modifier.fillMaxSize(), cornerRadius = 6.dp, showBadge = false)
-        }
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(deckTitle(summary.source), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(3.dp))
-            Eyebrow(leftLabel(summary) + " · " + formatSize(context, summary.totalBytes), small = true, color = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted)
-        }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.height(if (compact) 6.dp else 8.dp))
         Text(
-            "${(summary.progress * 100).roundToInt()}%",
-            style = MaterialTheme.typography.headlineSmall,
-            color = if (done) Sweepy.colors.keep else Sweepy.colors.ink,
+            title,
+            style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+            color = Sweepy.colors.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
         )
+        Spacer(Modifier.height(2.dp))
+        Eyebrow(detail, small = true, color = detailColor)
     }
 }
 
+/** One photo printed with a thin border, the way the swipe cards look. */
 @Composable
-private fun MonthChip(summary: DeckSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val ym = (summary.source as DeckSource.Month).yearMonth
-    val month = YearMonth.of(ym / 100, ym % 100)
-    val done = summary.remainingCount == 0
-    val locale = LocalLocale.current.platformLocale
+private fun Print(compact: Boolean, modifier: Modifier, content: @Composable BoxScope.() -> Unit) {
+    val corner: Dp = if (compact) 7.dp else 10.dp
+    val border: Dp = if (compact) 3.dp else 4.dp
+    val shape = RoundedCornerShape(corner)
     Box(
         modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Sweepy.colors.hairline, RoundedCornerShape(12.dp))
-            .pressable(onClick),
-    ) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    month.month.getDisplayName(JavaTextStyle.SHORT, locale),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Sweepy.colors.ink,
-                    maxLines = 1,
-                )
-                Spacer(Modifier.width(4.dp))
-                Eyebrow("’" + (month.year % 100).toString().padStart(2, '0'), small = true, modifier = Modifier.padding(bottom = 5.dp))
-            }
-            Spacer(Modifier.height(6.dp))
-            Eyebrow(leftLabel(summary), small = true, color = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted)
-        }
-        if (done) {
-            // Finished months get circled, like a keeper on a contact sheet.
-            Box(
-                Modifier
-                    .matchParentSize()
-                    .padding(3.dp)
-                    .pencilMark(Mark.CIRCLE, Sweepy.colors.keep.copy(alpha = 0.75f), { 1f }, strokeWidth = 0.04f),
+            .then(
+                if (Sweepy.look.chunky) Modifier.chunky(shape, offset = 3.dp)
+                else Modifier.shadow(if (compact) 4.dp else 7.dp, shape, ambientColor = Color.Black.copy(alpha = 0.2f), spotColor = Color.Black.copy(alpha = 0.3f)),
             )
-        }
-    }
-}
-
-@Composable
-private fun RecentlyCleanedRow(onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Sweepy.colors.surface)
-            .border(1.dp, Sweepy.colors.hairline, RoundedCornerShape(14.dp))
-            .pressable(onClick, pressedScale = 0.985f)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-    ) {
-        Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.trash_title), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
-            Text(stringResource(R.string.home_trash_subtitle), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
-        }
-        Text("→", style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.inkMuted)
-    }
+            .clip(shape)
+            .background(Sweepy.colors.print)
+            .padding(border)
+            .clip(RoundedCornerShape(corner - border / 2)),
+        content = content,
+    )
 }
 
 /** Shown once, after Sweepy has cleaned up a gigabyte: a friendly, skippable ask. */

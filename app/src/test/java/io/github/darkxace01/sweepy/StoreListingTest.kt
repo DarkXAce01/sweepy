@@ -58,6 +58,7 @@ import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
 import com.github.takahirom.roborazzi.captureRoboImage
 import io.github.darkxace01.sweepy.data.CleanStats
+import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.ThemeChoice
@@ -65,6 +66,7 @@ import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateKind
 import io.github.darkxace01.sweepy.data.duplicates.KeepReason
 import io.github.darkxace01.sweepy.data.duplicates.MediaSignature
+import io.github.darkxace01.sweepy.ui.DecidedCard
 import io.github.darkxace01.sweepy.ui.DeckSummary
 import io.github.darkxace01.sweepy.ui.DeckUiState
 import io.github.darkxace01.sweepy.ui.DuplicateGroupUi
@@ -440,10 +442,8 @@ class StoreListingTest {
                 markedBytes = 1_420_000_000,
                 laterCount = 24,
                 stats = CleanStats(cleanedCount = 2_840, cleanedBytes = 7_300_000_000),
-                recent = library.take(12),
                 duplicates = DuplicatesSummary(scanning = false, groupCount = 41, reclaimableBytes = 2_300_000_000, covers = library.drop(8).take(4)),
                 quickDecks = listOf(
-                    DeckSummary(DeckSource.Screenshots, 1840, 1_900_000_000, 1210, library.drop(12).take(4)),
                     DeckSummary(DeckSource.LargeVideos, 48, 6_700_000_000, 41, library.drop(16).take(4)),
                     DeckSummary(DeckSource.Later, 24, 120_000_000, 24, library.drop(20).take(4)),
                 ),
@@ -458,7 +458,10 @@ class StoreListingTest {
     @Composable
     private fun Deck() = DeckScreen(
         source = DeckSource.Folder(1, "Travel"),
-        state = DeckUiState(loading = false, deck = library.drop(5), totalCount = 402, markedCount = 12, markedBytes = 41_000_000, canUndo = true),
+        state = DeckUiState(
+            loading = false, deck = library.drop(5), totalCount = 402, markedCount = 12, markedBytes = 41_000_000, canUndo = true,
+            recent = listOf(Decision.KEEP, Decision.DELETE, Decision.KEEP, Decision.FAVORITE).mapIndexed { i, d -> DecidedCard(library[i], d) },
+        ),
         showHint = false, onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
     )
 

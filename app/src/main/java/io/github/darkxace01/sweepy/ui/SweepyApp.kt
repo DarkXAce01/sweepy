@@ -104,11 +104,30 @@ fun SweepyApp(
     var permissionDenied by rememberSaveable { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
 
+    var audioAllowed by remember { mutableStateOf(MediaPermissions.audioAllowed(context)) }
+
     // The user can change permissions in Settings while the app is in the background.
     LifecycleResumeEffect(Unit) {
         access = MediaPermissions.current(context)
+        val audioNow = MediaPermissions.audioAllowed(context)
+        if (audioNow != audioAllowed) {
+            audioAllowed = audioNow
+            reloadKey++
+        }
         onPauseOrDispose { }
     }
+
+    // Audio is asked for on its own, from the audio card. Turned down twice, Android stops asking,
+    // so after that the card opens Sweepy's page in Settings instead.
+    var audioAsks by rememberSaveable { mutableIntStateOf(0) }
+    val audioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        audioAsks++
+        audioAllowed = MediaPermissions.audioAllowed(context)
+        if (audioAllowed) reloadKey++
+    }
+    fun openAppSettings() = context.startActivity(
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+    )
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -136,11 +155,7 @@ fun SweepyApp(
         PermissionScreen(
             denied = permissionDenied,
             onGrant = { permissionLauncher.launch(MediaPermissions.requested) },
-            onOpenSettings = {
-                context.startActivity(
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
-                )
-            },
+            onOpenSettings = ::openAppSettings,
         )
         return
     }
@@ -254,6 +269,10 @@ fun SweepyApp(
                             showReminderAsk = reminderAskWanted && !showTipNudge && !notifications.allowed,
                             onAcceptReminders = notifications::request,
                             onDeclineReminders = viewModel::declineReminders,
+                            audioAllowed = audioAllowed,
+                            onAllowAudio = {
+                                if (audioAsks < 2) audioLauncher.launch(MediaPermissions.audioRequested) else openAppSettings()
+                            },
                         )
                     }
                     is Screen.Deck -> {
@@ -269,6 +288,8 @@ fun SweepyApp(
                             onOpenReview = { navigate(Screen.Review) },
                             onDismissHint = viewModel::dismissSwipeHint,
                             onFilterChange = { viewModel.setFilter(screen.source, it) },
+                            onJump = { viewModel.jumpTo(screen.source, it) },
+                            onReopen = { viewModel.reopen(screen.source, it) },
                         )
                     }
                     Screen.Review -> {

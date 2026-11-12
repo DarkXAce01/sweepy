@@ -22,7 +22,7 @@ data class CameraInfo(
 
 /** Reads EXIF from [item]. Returns null for videos, unreadable files, or photos without camera data. */
 suspend fun readCameraInfo(context: Context, item: MediaItem): CameraInfo? {
-    if (item.isVideo) return null
+    if (item.isVideo || item.isAudio) return null
     return withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openInputStream(item.uri)?.use { stream ->

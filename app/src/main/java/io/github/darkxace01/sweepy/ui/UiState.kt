@@ -1,6 +1,7 @@
 package io.github.darkxace01.sweepy.ui
 
 import io.github.darkxace01.sweepy.data.CleanStats
+import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
@@ -32,9 +33,10 @@ data class HomeUiState(
     val markedBytes: Long = 0,
     val laterCount: Int = 0,
     val stats: CleanStats = CleanStats(),
-    /** Newest items still waiting, for the strip on the home screen. */
-    val recent: List<MediaItem> = emptyList(),
+    /** Decks that cut across folders: WhatsApp, large videos, maybe later. */
     val quickDecks: List<DeckSummary> = emptyList(),
+    /** Voice notes, recordings and music; null when there are none (or no permission to see them). */
+    val audio: DeckSummary? = null,
     val folders: List<DeckSummary> = emptyList(),
     val months: List<DeckSummary> = emptyList(),
     val duplicates: DuplicatesSummary = DuplicatesSummary(),
@@ -57,6 +59,8 @@ data class DeckUiState(
     /** Undecided photos and videos in this deck, before [filter] narrows them. */
     val waitingPhotos: Int = 0,
     val waitingVideos: Int = 0,
+    /** The last few cards decided in this deck, oldest first, for the strip under the pile. */
+    val recent: List<DecidedCard> = emptyList(),
 ) {
     val current: MediaItem? get() = deck.firstOrNull()
     val isFiltered: Boolean get() = filter != defaultFilter
@@ -69,6 +73,9 @@ data class DeckUiState(
     val remainingBytes: Long get() = deck.sumOf { it.sizeBytes }
     val progress: Float get() = if (totalCount == 0) 1f else (totalCount - deck.size) / totalCount.toFloat()
 }
+
+/** A card already swiped, and which way. */
+data class DecidedCard(val item: MediaItem, val decision: Decision)
 
 data class ReviewGroup(val folder: String?, val items: List<MediaItem>) {
     val bytes: Long get() = items.sumOf { it.sizeBytes }
