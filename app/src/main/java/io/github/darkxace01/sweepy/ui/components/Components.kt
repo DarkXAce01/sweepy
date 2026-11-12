@@ -78,7 +78,7 @@ import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatDuration
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import io.github.darkxace01.sweepy.ui.theme.Texture
 import java.text.NumberFormat
 import java.time.YearMonth
@@ -143,7 +143,7 @@ private fun Modifier.pattern(pattern: ImageBitmap, color: Color, alpha: Float): 
 /** The page every screen sits on, with the active theme's texture: film grain, halftone or a dot grid. */
 @Composable
 fun Paper(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    val look = Sweepy.look
+    val look = Pixnix.look
     val texture = when (look.texture) {
         Texture.GRAIN -> Modifier.grain()
         Texture.HALFTONE -> Modifier.grain(0.3f).pattern(halftoneBitmap, look.colors.ink, if (look.colors.isDark) 0.07f else 0.05f)
@@ -160,14 +160,14 @@ fun Paper(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Uni
 
 @Composable
 fun Hairline(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(1.dp).background(Sweepy.colors.hairline))
+    Box(modifier.fillMaxWidth().height(1.dp).background(Pixnix.colors.hairline))
 }
 
 // ---- Text ---------------------------------------------------------------------------------------
 
 /** Small uppercase monospace caption, like the edge print on film. */
 @Composable
-fun Eyebrow(text: String, modifier: Modifier = Modifier, color: Color = Sweepy.colors.inkMuted, small: Boolean = false) {
+fun Eyebrow(text: String, modifier: Modifier = Modifier, color: Color = Pixnix.colors.inkMuted, small: Boolean = false) {
     Text(
         text.uppercase(),
         style = if (small) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium,
@@ -191,7 +191,7 @@ fun CountUp(
     value: Long,
     style: TextStyle,
     modifier: Modifier = Modifier,
-    color: Color = Sweepy.colors.ink,
+    color: Color = Pixnix.colors.ink,
     memoryKey: String? = null,
     format: (Long) -> String = ::formatCount,
 ) {
@@ -234,7 +234,7 @@ fun Modifier.reveal(index: Int, enabled: Boolean = true): Modifier {
  */
 @Composable
 fun Modifier.chunky(shape: Shape, fill: Color? = null, offset: Dp = 4.dp, shadow: Color? = null): Modifier {
-    val look = Sweepy.look
+    val look = Pixnix.look
     if (!look.chunky) return this
     val shadowColor = shadow ?: look.shadow
     return drawBehind {
@@ -252,8 +252,8 @@ fun Modifier.chunky(shape: Shape, fill: Color? = null, offset: Dp = 4.dp, shadow
 fun Ruler(
     progress: Float,
     modifier: Modifier = Modifier,
-    color: Color = Sweepy.colors.ink,
-    tickColor: Color = Sweepy.colors.inkMuted.copy(alpha = 0.45f),
+    color: Color = Pixnix.colors.ink,
+    tickColor: Color = Pixnix.colors.inkMuted.copy(alpha = 0.45f),
     ticks: Int = 40,
 ) {
     val animated by animateFloatAsState(progress.coerceIn(0f, 1f), spring(stiffness = Spring.StiffnessVeryLow), label = "ruler")
@@ -278,9 +278,9 @@ fun Ruler(
 
 /** A thin, simple progress line for small places. */
 @Composable
-fun ThinProgress(progress: Float, modifier: Modifier = Modifier, color: Color = Sweepy.colors.ink) {
+fun ThinProgress(progress: Float, modifier: Modifier = Modifier, color: Color = Pixnix.colors.ink) {
     val animated by animateFloatAsState(progress.coerceIn(0f, 1f), spring(stiffness = Spring.StiffnessLow), label = "thin")
-    val track = Sweepy.colors.hairline
+    val track = Pixnix.colors.hairline
     Canvas(modifier.fillMaxWidth().height(2.dp)) {
         drawLine(track, Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height)
         if (animated > 0f) drawLine(color, Offset(0f, size.height / 2), Offset(size.width * animated, size.height / 2), size.height)
@@ -318,8 +318,8 @@ fun InkButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    color: Color = Sweepy.colors.ink,
-    contentColor: Color = Sweepy.colors.paper,
+    color: Color = Pixnix.colors.ink,
+    contentColor: Color = Pixnix.colors.paper,
     enabled: Boolean = true,
     trailing: String? = null,
 ) {
@@ -330,7 +330,7 @@ fun InkButton(
             .height(56.dp)
             .graphicsLayer { alpha = if (enabled) 1f else 0.4f }
             // An ink button's own shadow would blend into it, so it sits on a yellow slab instead.
-            .chunky(RoundedCornerShape(14.dp), shadow = if (color == Sweepy.colors.ink) Sweepy.colors.later else null)
+            .chunky(RoundedCornerShape(14.dp), shadow = if (color == Pixnix.colors.ink) Pixnix.colors.later else null)
             .clip(RoundedCornerShape(14.dp))
             .background(color)
             .pressable(onClick, enabled = enabled)
@@ -346,14 +346,14 @@ fun InkButton(
 
 /** Secondary button: hairline outline, ink text. */
 @Composable
-fun OutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, contentColor: Color = Sweepy.colors.ink) {
+fun OutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, contentColor: Color = Pixnix.colors.ink) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .height(56.dp)
-            .chunky(RoundedCornerShape(14.dp), fill = Sweepy.colors.surface)
+            .chunky(RoundedCornerShape(14.dp), fill = Pixnix.colors.surface)
             .clip(RoundedCornerShape(14.dp))
-            .border(1.dp, Sweepy.colors.hairline, RoundedCornerShape(14.dp))
+            .border(1.dp, Pixnix.colors.hairline, RoundedCornerShape(14.dp))
             .pressable(onClick)
             .padding(horizontal = 20.dp),
     ) {
@@ -370,16 +370,16 @@ fun Segment(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modi
         contentAlignment = Alignment.Center,
         modifier = modifier
             .height(48.dp)
-            .chunky(shape, fill = Sweepy.colors.surface, offset = if (selected) 4.dp else 2.dp)
+            .chunky(shape, fill = Pixnix.colors.surface, offset = if (selected) 4.dp else 2.dp)
             .clip(shape)
-            .background(if (selected) Sweepy.colors.ink else Color.Transparent)
-            .border(1.dp, if (selected) Sweepy.colors.ink else Sweepy.colors.hairline, shape)
+            .background(if (selected) Pixnix.colors.ink else Color.Transparent)
+            .border(1.dp, if (selected) Pixnix.colors.ink else Pixnix.colors.hairline, shape)
             .pressable(onClick, role = Role.RadioButton),
     ) {
         Text(
             text,
             style = MaterialTheme.typography.labelLarge,
-            color = if (selected) Sweepy.colors.paper else Sweepy.colors.ink,
+            color = if (selected) Pixnix.colors.paper else Pixnix.colors.ink,
         )
     }
 }
@@ -409,7 +409,7 @@ fun MediaThumbnail(item: MediaItem, modifier: Modifier = Modifier, cornerRadius:
     Box(
         modifier
             .clip(RoundedCornerShape(cornerRadius))
-            .background(Sweepy.colors.hairline),
+            .background(Pixnix.colors.hairline),
     ) {
         if (item.isAudio) {
             AudioArt(item, Modifier.fillMaxSize(), bars = 9)
@@ -446,7 +446,7 @@ fun Mosaic(items: List<MediaItem>, modifier: Modifier = Modifier, gap: Dp = 2.dp
             .aspectRatio(1f)
             .chunky(RoundedCornerShape(cornerRadius))
             .clip(RoundedCornerShape(cornerRadius))
-            .background(Sweepy.colors.hairline),
+            .background(Pixnix.colors.hairline),
     ) {
         for (row in 0 until 2) {
             Row(horizontalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.weight(1f)) {
@@ -476,14 +476,14 @@ fun ScreenTopBar(
         modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
     ) {
         QuietIconButton(stringResource(R.string.back), onBack) {
-            Icon(rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowBack), contentDescription = null, tint = Sweepy.colors.ink)
+            Icon(rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowBack), contentDescription = null, tint = Pixnix.colors.ink)
         }
         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
             if (eyebrow != null) Eyebrow(eyebrow, small = true)
             Text(
                 title,
                 style = MaterialTheme.typography.headlineSmall,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -495,7 +495,7 @@ fun ScreenTopBar(
 /** Area pinned to the bottom of a screen that fades into the content above it. */
 @Composable
 fun BottomActionArea(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    val paper = Sweepy.colors.paper
+    val paper = Pixnix.colors.paper
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -515,11 +515,11 @@ fun EmptyState(mark: Mark, title: String, body: String, modifier: Modifier = Mod
         verticalArrangement = Arrangement.Center,
         modifier = modifier.fillMaxSize().padding(40.dp),
     ) {
-        MarkIcon(mark, Sweepy.colors.inkMuted.copy(alpha = 0.6f), size = 88.dp, strokeWidth = 0.05f)
+        MarkIcon(mark, Pixnix.colors.inkMuted.copy(alpha = 0.6f), size = 88.dp, strokeWidth = 0.05f)
         Spacer(Modifier.height(24.dp))
-        Text(title, style = MaterialTheme.typography.headlineMedium, color = Sweepy.colors.ink, textAlign = TextAlign.Center)
+        Text(title, style = MaterialTheme.typography.headlineMedium, color = Pixnix.colors.ink, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
-        Text(body, style = MaterialTheme.typography.bodyMedium, color = Sweepy.colors.inkMuted, textAlign = TextAlign.Center)
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = Pixnix.colors.inkMuted, textAlign = TextAlign.Center)
     }
 }
 

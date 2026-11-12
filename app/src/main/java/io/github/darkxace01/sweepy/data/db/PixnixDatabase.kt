@@ -80,7 +80,7 @@ interface DuplicateDao {
     entities = [DecisionEntity::class, MediaHashEntity::class, DuplicateReviewEntity::class],
     version = 2,
 )
-abstract class SweepyDatabase : RoomDatabase() {
+abstract class PixnixDatabase : RoomDatabase() {
     abstract fun decisions(): DecisionDao
     abstract fun duplicates(): DuplicateDao
 

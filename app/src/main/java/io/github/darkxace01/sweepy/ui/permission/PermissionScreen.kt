@@ -47,7 +47,7 @@ import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.reveal
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import kotlinx.coroutines.delay
 
 @Composable
@@ -68,25 +68,25 @@ fun PermissionScreen(
                 stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontStyle = FontStyle.Italic,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 modifier = Modifier.reveal(0),
             )
             Spacer(Modifier.height(20.dp))
             PrintPile(Modifier.align(Alignment.CenterHorizontally).reveal(1))
             Spacer(Modifier.height(36.dp))
-            Eyebrow(stringResource(R.string.permission_eyebrow), color = Sweepy.colors.pencil, modifier = Modifier.reveal(2))
+            Eyebrow(stringResource(R.string.permission_eyebrow), color = Pixnix.colors.pencil, modifier = Modifier.reveal(2))
             Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.permission_title),
                 style = MaterialTheme.typography.displaySmall,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 modifier = Modifier.reveal(2),
             )
             Spacer(Modifier.height(12.dp))
             Text(
                 stringResource(R.string.permission_body),
                 style = MaterialTheme.typography.bodyLarge,
-                color = Sweepy.colors.inkMuted,
+                color = Pixnix.colors.inkMuted,
                 modifier = Modifier.reveal(3),
             )
             Spacer(Modifier.height(28.dp))
@@ -106,7 +106,7 @@ fun PermissionScreen(
                 Text(
                     stringResource(R.string.permission_denied),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Sweepy.colors.pencil,
+                    color = Pixnix.colors.pencil,
                     modifier = Modifier.padding(bottom = 14.dp),
                 )
                 InkButton(stringResource(R.string.permission_open_settings), onOpenSettings, Modifier.fillMaxWidth(), trailing = "→")
@@ -120,11 +120,11 @@ fun PermissionScreen(
 @Composable
 private fun Promise(number: Int, title: Int, body: Int) {
     Row(Modifier.padding(vertical = 14.dp)) {
-        Eyebrow("0$number", color = Sweepy.colors.pencil, modifier = Modifier.width(36.dp).padding(top = 2.dp))
+        Eyebrow("0$number", color = Pixnix.colors.pencil, modifier = Modifier.width(36.dp).padding(top = 2.dp))
         Column {
-            Text(stringResource(title), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
+            Text(stringResource(title), style = MaterialTheme.typography.titleMedium, color = Pixnix.colors.ink)
             Spacer(Modifier.height(2.dp))
-            Text(stringResource(body), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+            Text(stringResource(body), style = MaterialTheme.typography.bodySmall, color = Pixnix.colors.inkMuted)
         }
     }
 }
@@ -151,7 +151,7 @@ fun PrintPile(modifier: Modifier = Modifier, replayKey: Any = Unit) {
         MiniPrint(
             scene = Scene.Dusk,
             mark = Mark.CROSS,
-            markColor = Sweepy.colors.pencil,
+            markColor = Pixnix.colors.pencil,
             progress = { marks[0].value },
             angle = -9f,
             modifier = Modifier.align(Alignment.CenterStart).offset(x = 0.dp, y = 14.dp),
@@ -159,7 +159,7 @@ fun PrintPile(modifier: Modifier = Modifier, replayKey: Any = Unit) {
         MiniPrint(
             scene = Scene.Sea,
             mark = Mark.STAR,
-            markColor = Sweepy.colors.favorite,
+            markColor = Pixnix.colors.favorite,
             progress = { marks[2].value },
             angle = 8f,
             modifier = Modifier.align(Alignment.CenterEnd).offset(x = 0.dp, y = 18.dp),
@@ -167,7 +167,7 @@ fun PrintPile(modifier: Modifier = Modifier, replayKey: Any = Unit) {
         MiniPrint(
             scene = Scene.Hills,
             mark = Mark.CIRCLE,
-            markColor = Sweepy.colors.keep,
+            markColor = Pixnix.colors.keep,
             progress = { marks[1].value },
             angle = -1.5f,
             size = 140.dp,
@@ -194,7 +194,7 @@ private fun MiniPrint(
             .width(size)
             .shadow(10.dp, RoundedCornerShape(8.dp), ambientColor = Color.Black.copy(alpha = 0.2f), spotColor = Color.Black.copy(alpha = 0.3f))
             .clip(RoundedCornerShape(8.dp))
-            .background(Sweepy.colors.print)
+            .background(Pixnix.colors.print)
             .padding(start = 7.dp, end = 7.dp, top = 7.dp, bottom = 22.dp),
     ) {
         Box(Modifier.fillMaxWidth().height(size * 0.82f).clip(RoundedCornerShape(3.dp))) {

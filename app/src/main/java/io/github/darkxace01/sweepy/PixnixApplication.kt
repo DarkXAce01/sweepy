@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class SweepyApplication : Application(), SingletonImageLoader.Factory {
+class PixnixApplication : Application(), SingletonImageLoader.Factory {
 
     val container by lazy { AppContainer(this) }
 
@@ -21,7 +21,7 @@ class SweepyApplication : Application(), SingletonImageLoader.Factory {
         // Keep the background reminder check in step with the switch in Settings.
         MainScope().launch {
             container.prefs.settings.map { it.reminders }.distinctUntilChanged().collect { on ->
-                ReminderSchedule.sync(this@SweepyApplication, on)
+                ReminderSchedule.sync(this@PixnixApplication, on)
             }
         }
     }

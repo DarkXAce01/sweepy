@@ -79,7 +79,7 @@ import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.deck.pinchToPeek
 import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -115,13 +115,13 @@ fun DuplicatesScreen(
                 actions = {
                     if (state.canUndo) {
                         QuietIconButton(stringResource(R.string.action_undo), onUndo) {
-                            Icon(painterResource(R.drawable.ic_undo), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+                            Icon(painterResource(R.drawable.ic_undo), contentDescription = null, tint = Pixnix.colors.ink, modifier = Modifier.size(22.dp))
                         }
                     }
                     if (current != null && state.groups.size > 1) {
                         Eyebrow(
                             stringResource(R.string.dup_skip),
-                            color = Sweepy.colors.ink,
+                            color = Pixnix.colors.ink,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .pointerInput(current.key) {
@@ -177,7 +177,7 @@ private fun Scanning(progress: Float?, modifier: Modifier = Modifier) {
             stringResource(R.string.dup_scanning_title),
             style = MaterialTheme.typography.headlineMedium,
             fontStyle = FontStyle.Italic,
-            color = Sweepy.colors.ink,
+            color = Pixnix.colors.ink,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(20.dp))
@@ -188,7 +188,7 @@ private fun Scanning(progress: Float?, modifier: Modifier = Modifier) {
         Text(
             stringResource(R.string.dup_scanning_body),
             style = MaterialTheme.typography.bodySmall,
-            color = Sweepy.colors.inkMuted,
+            color = Pixnix.colors.inkMuted,
             textAlign = TextAlign.Center,
         )
     }
@@ -207,7 +207,7 @@ private fun GroupView(group: DuplicateGroupUi, onResolve: (Set<Long>) -> Unit, o
             Text(
                 stringResource(if (exact) R.string.dup_exact_title else R.string.dup_similar_title),
                 style = MaterialTheme.typography.headlineLarge,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
             )
             Text(
                 when {
@@ -218,7 +218,7 @@ private fun GroupView(group: DuplicateGroupUi, onResolve: (Set<Long>) -> Unit, o
                 },
                 style = MaterialTheme.typography.headlineSmall,
                 fontStyle = FontStyle.Italic,
-                color = Sweepy.colors.inkMuted,
+                color = Pixnix.colors.inkMuted,
             )
             Spacer(Modifier.height(10.dp))
             Eyebrow(stringResource(R.string.dup_instructions), small = true)
@@ -253,8 +253,8 @@ private fun GroupView(group: DuplicateGroupUi, onResolve: (Set<Long>) -> Unit, o
                 InkButton(
                     text = stringResource(R.string.dup_bin, formatCount(bins.size)),
                     trailing = formatSize(context, bins.sumOf { it.sizeBytes }),
-                    color = Sweepy.colors.pencil,
-                    contentColor = Sweepy.colors.onPencil,
+                    color = Pixnix.colors.pencil,
+                    contentColor = Pixnix.colors.onPencil,
                     onClick = { onResolve(keep) },
                     modifier = Modifier.weight(1.4f),
                 )
@@ -291,24 +291,24 @@ private fun Tile(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .pencilMark(Mark.CIRCLE, Sweepy.colors.keep, { circle }, strokeWidth = 0.04f),
+                .pencilMark(Mark.CIRCLE, Pixnix.colors.keep, { circle }, strokeWidth = 0.04f),
         ) {
             Box(
                 Modifier
                     .fillMaxSize()
                     .padding(8.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .background(Sweepy.colors.print)
+                    .background(Pixnix.colors.print)
                     .padding(3.dp),
             ) {
                 MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = 3.dp)
                 // Binned photos fade back and get crossed out.
-                Box(Modifier.fillMaxSize().graphicsLayer { alpha = cross * 0.45f }.background(Sweepy.colors.paper))
+                Box(Modifier.fillMaxSize().graphicsLayer { alpha = cross * 0.45f }.background(Pixnix.colors.paper))
                 Box(
                     Modifier
                         .fillMaxSize()
                         .padding(12.dp)
-                        .pencilMark(Mark.CROSS, Sweepy.colors.pencil, { cross }, strokeWidth = 0.06f),
+                        .pencilMark(Mark.CROSS, Pixnix.colors.pencil, { cross }, strokeWidth = 0.06f),
                 )
             }
         }
@@ -318,15 +318,15 @@ private fun Tile(
                 Eyebrow(
                     reasonLabel(suggestion),
                     small = true,
-                    color = Sweepy.colors.paper,
+                    color = Pixnix.colors.paper,
                     modifier = Modifier
                         .padding(bottom = 3.dp)
                         .clip(RoundedCornerShape(3.dp))
-                        .background(if (suggestion == KeepReason.FAVORITE) Sweepy.colors.favorite else Sweepy.colors.keep)
+                        .background(if (suggestion == KeepReason.FAVORITE) Pixnix.colors.favorite else Pixnix.colors.keep)
                         .padding(horizontal = 5.dp, vertical = 2.dp),
                 )
             }
-            Eyebrow(formatSize(context, item.sizeBytes) + " · " + megapixels(item), small = true, color = Sweepy.colors.ink)
+            Eyebrow(formatSize(context, item.sizeBytes) + " · " + megapixels(item), small = true, color = Pixnix.colors.ink)
             Eyebrow(caption, small = true)
         }
     }

@@ -89,7 +89,7 @@ import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.reveal
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import io.github.darkxace01.sweepy.ui.tips.CoffeeIcon
 import io.github.darkxace01.sweepy.ui.tips.TipArt
 import java.time.Month
@@ -122,7 +122,7 @@ fun HomeScreen(
     showReminderAsk: Boolean = false,
     onAcceptReminders: () -> Unit = {},
     onDeclineReminders: () -> Unit = {},
-    /** Whether Sweepy may see audio files. Until then the audio card asks for it. */
+    /** Whether Pixnix may see audio files. Until then the audio card asks for it. */
     audioAllowed: Boolean = true,
     onAllowAudio: () -> Unit = {},
     initialTab: HomeTab = HomeTab.FOLDERS,
@@ -180,7 +180,7 @@ fun HomeScreen(
                                 Icon(
                                     painterResource(R.drawable.ic_notification),
                                     contentDescription = null,
-                                    tint = Sweepy.colors.pencil,
+                                    tint = Pixnix.colors.pencil,
                                     modifier = Modifier.size(40.dp),
                                 )
                             },
@@ -268,23 +268,23 @@ private fun TopBar(
             stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineMedium,
             fontStyle = FontStyle.Italic,
-            color = Sweepy.colors.ink,
+            color = Pixnix.colors.ink,
         )
         Spacer(Modifier.width(8.dp))
-        MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 14.dp, strokeWidth = 0.14f, modifier = Modifier.padding(top = 4.dp))
+        MarkIcon(Mark.CROSS, Pixnix.colors.pencil, size = 14.dp, strokeWidth = 0.14f, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.weight(1f))
         if (markedCount > 0) {
             BinChip(markedCount, onOpenReview)
             Spacer(Modifier.width(4.dp))
         }
         if (onOpenTipJar != null) {
-            QuietIconButton(stringResource(R.string.tips_title), onOpenTipJar) { CoffeeIcon(Sweepy.colors.ink) }
+            QuietIconButton(stringResource(R.string.tips_title), onOpenTipJar) { CoffeeIcon(Pixnix.colors.ink) }
         }
         QuietIconButton(stringResource(R.string.trash_title), onOpenTrash) {
-            Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+            Icon(painterResource(R.drawable.ic_restore), contentDescription = null, tint = Pixnix.colors.ink, modifier = Modifier.size(22.dp))
         }
         QuietIconButton(stringResource(R.string.settings_title), onOpenSettings) {
-            Icon(Icons.Outlined.Settings, contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+            Icon(Icons.Outlined.Settings, contentDescription = null, tint = Pixnix.colors.ink, modifier = Modifier.size(22.dp))
         }
     }
 }
@@ -298,16 +298,16 @@ private fun BinChip(count: Int, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .height(36.dp)
-            .chunky(shape, fill = Sweepy.colors.surface, offset = 3.dp)
+            .chunky(shape, fill = Pixnix.colors.surface, offset = 3.dp)
             .clip(shape)
-            .border(1.dp, Sweepy.colors.pencil.copy(alpha = 0.45f), shape)
+            .border(1.dp, Pixnix.colors.pencil.copy(alpha = 0.45f), shape)
             .pressable(onClick, pressedScale = 0.92f)
             .padding(horizontal = 12.dp)
             .semantics { contentDescription = label },
     ) {
-        MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 12.dp, strokeWidth = 0.16f)
+        MarkIcon(Mark.CROSS, Pixnix.colors.pencil, size = 12.dp, strokeWidth = 0.16f)
         Spacer(Modifier.width(7.dp))
-        Eyebrow(formatCount(count), color = Sweepy.colors.ink)
+        Eyebrow(formatCount(count), color = Pixnix.colors.ink)
     }
 }
 
@@ -317,18 +317,18 @@ private fun PartialAccessBanner(onRequestFullAccess: () -> Unit, modifier: Modif
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, Sweepy.colors.later.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .border(1.dp, Pixnix.colors.later.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
             .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
     ) {
         Text(
             stringResource(R.string.partial_access),
             style = MaterialTheme.typography.bodySmall,
-            color = Sweepy.colors.ink,
+            color = Pixnix.colors.ink,
             modifier = Modifier.weight(1f),
         )
         Eyebrow(
             stringResource(R.string.partial_access_action),
-            color = Sweepy.colors.ink,
+            color = Pixnix.colors.ink,
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .pressable(onRequestFullAccess)
@@ -356,13 +356,13 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
         Spacer(Modifier.height(4.dp))
         when {
             state.loading -> {
-                Text("—", style = MaterialTheme.typography.displayLarge, color = Sweepy.colors.inkMuted)
+                Text("—", style = MaterialTheme.typography.displayLarge, color = Pixnix.colors.inkMuted)
             }
             state.totalCount == 0 -> {
                 Text(
                     stringResource(R.string.home_empty),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Sweepy.colors.ink,
+                    color = Pixnix.colors.ink,
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
@@ -373,13 +373,13 @@ private fun Hero(state: HomeUiState, onStart: () -> Unit, modifier: Modifier = M
                     else pluralStringResource(R.plurals.home_left_caption, remaining),
                     style = MaterialTheme.typography.headlineSmall,
                     fontStyle = FontStyle.Italic,
-                    color = Sweepy.colors.inkMuted,
+                    color = Pixnix.colors.inkMuted,
                 )
                 Spacer(Modifier.height(20.dp))
                 Ruler(state.progress)
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth()) {
-                    Eyebrow(stringResource(R.string.home_sorted_pct, (state.progress * 100).roundToInt()), small = true, color = Sweepy.colors.ink)
+                    Eyebrow(stringResource(R.string.home_sorted_pct, (state.progress * 100).roundToInt()), small = true, color = Pixnix.colors.ink)
                     Spacer(Modifier.weight(1f))
                     Eyebrow(
                         stringResource(R.string.home_sorted_of, formatCount(state.reviewedCount), formatCount(state.totalCount)),
@@ -438,13 +438,13 @@ private fun Tab(text: String, selected: Boolean, onClick: () -> Unit) {
                     scaleX = 1.32f
                     scaleY = 1.6f
                 }
-                .pencilMark(Mark.CIRCLE, Sweepy.colors.pencil, { loop.value }, strokeWidth = 0.05f),
+                .pencilMark(Mark.CIRCLE, Pixnix.colors.pencil, { loop.value }, strokeWidth = 0.05f),
         )
         Text(
             text,
             style = MaterialTheme.typography.headlineSmall,
             fontStyle = if (selected) FontStyle.Italic else FontStyle.Normal,
-            color = if (selected) Sweepy.colors.ink else Sweepy.colors.inkMuted,
+            color = if (selected) Pixnix.colors.ink else Pixnix.colors.inkMuted,
         )
     }
 }
@@ -453,12 +453,12 @@ private fun Tab(text: String, selected: Boolean, onClick: () -> Unit) {
 private fun YearHeader(year: Int, months: List<DeckSummary>) {
     val left = months.sumOf { it.remainingCount }
     Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 14.dp)) {
-        Text(year.toString(), style = MaterialTheme.typography.headlineMedium, color = Sweepy.colors.ink)
+        Text(year.toString(), style = MaterialTheme.typography.headlineMedium, color = Pixnix.colors.ink)
         Spacer(Modifier.weight(1f))
         Eyebrow(
             if (left == 0) stringResource(R.string.label_done) else stringResource(R.string.left_short, formatCount(left)),
             small = true,
-            color = if (left == 0) Sweepy.colors.keep else Sweepy.colors.inkMuted,
+            color = if (left == 0) Pixnix.colors.keep else Pixnix.colors.inkMuted,
             modifier = Modifier.padding(bottom = 6.dp),
         )
     }
@@ -477,7 +477,7 @@ private fun DeckCard(summary: DeckSummary, onClick: () -> Unit, modifier: Modifi
         covers = summary.covers,
         title = deckTitle(summary.source),
         detail = leftLabel(summary) + " · " + formatSize(context, summary.totalBytes),
-        detailColor = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted,
+        detailColor = if (done) Pixnix.colors.keep else Pixnix.colors.inkMuted,
         done = done,
         onClick = onClick,
         modifier = modifier,
@@ -493,7 +493,7 @@ private fun MonthCard(summary: DeckSummary, onClick: () -> Unit, modifier: Modif
         covers = summary.covers,
         title = Month.of(yearMonth % 100).getDisplayName(JavaTextStyle.SHORT, locale),
         detail = leftLabel(summary),
-        detailColor = if (done) Sweepy.colors.keep else Sweepy.colors.inkMuted,
+        detailColor = if (done) Pixnix.colors.keep else Pixnix.colors.inkMuted,
         done = done,
         compact = true,
         onClick = onClick,
@@ -517,9 +517,9 @@ private fun DuplicatesCard(summary: DuplicatesSummary, onClick: () -> Unit, modi
             else -> stringResource(R.string.dup_none)
         },
         detailColor = when {
-            none -> Sweepy.colors.keep
-            summary.groupCount > 0 -> Sweepy.colors.pencil
-            else -> Sweepy.colors.inkMuted
+            none -> Pixnix.colors.keep
+            summary.groupCount > 0 -> Pixnix.colors.pencil
+            else -> Pixnix.colors.inkMuted
         },
         done = none,
         onClick = onClick,
@@ -527,7 +527,7 @@ private fun DuplicatesCard(summary: DuplicatesSummary, onClick: () -> Unit, modi
         empty = {
             MarkIcon(
                 if (none) Mark.CIRCLE else Mark.QUESTION,
-                if (none) Sweepy.colors.keep else Sweepy.colors.inkMuted.copy(alpha = 0.5f),
+                if (none) Pixnix.colors.keep else Pixnix.colors.inkMuted.copy(alpha = 0.5f),
                 size = 44.dp,
                 strokeWidth = 0.07f,
             )
@@ -542,7 +542,7 @@ private fun AudioInviteCard(onClick: () -> Unit, modifier: Modifier = Modifier) 
         covers = emptyList(),
         title = stringResource(R.string.deck_audio),
         detail = stringResource(R.string.audio_allow),
-        detailColor = Sweepy.colors.ink,
+        detailColor = Pixnix.colors.ink,
         done = false,
         onClick = onClick,
         modifier = modifier,
@@ -584,7 +584,7 @@ private fun StackCard(
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
             if (shown.isEmpty()) {
                 Print(compact, Modifier.fillMaxSize(0.8f)) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().background(Sweepy.colors.hairline.copy(alpha = 0.5f)), content = empty)
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().background(Pixnix.colors.hairline.copy(alpha = 0.5f)), content = empty)
                 }
             }
             shown.withIndex().reversed().forEach { (depth, item) ->
@@ -606,7 +606,7 @@ private fun StackCard(
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .pencilMark(Mark.CIRCLE, Sweepy.colors.keep.copy(alpha = 0.85f), { 1f }, strokeWidth = 0.035f),
+                        .pencilMark(Mark.CIRCLE, Pixnix.colors.keep.copy(alpha = 0.85f), { 1f }, strokeWidth = 0.035f),
                 )
             }
         }
@@ -614,7 +614,7 @@ private fun StackCard(
         Text(
             title,
             style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
-            color = Sweepy.colors.ink,
+            color = Pixnix.colors.ink,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
@@ -633,18 +633,18 @@ private fun Print(compact: Boolean, modifier: Modifier, content: @Composable Box
     Box(
         modifier
             .then(
-                if (Sweepy.look.chunky) Modifier.chunky(shape, offset = 3.dp)
+                if (Pixnix.look.chunky) Modifier.chunky(shape, offset = 3.dp)
                 else Modifier.shadow(if (compact) 4.dp else 7.dp, shape, ambientColor = Color.Black.copy(alpha = 0.2f), spotColor = Color.Black.copy(alpha = 0.3f)),
             )
             .clip(shape)
-            .background(Sweepy.colors.print)
+            .background(Pixnix.colors.print)
             .padding(border)
             .clip(RoundedCornerShape(corner - border / 2)),
         content = content,
     )
 }
 
-/** Shown once, after Sweepy has cleaned up a gigabyte: a friendly, skippable ask. */
+/** Shown once, after Pixnix has cleaned up a gigabyte: a friendly, skippable ask. */
 @Composable
 private fun TipNudge(cleanedBytes: Long, onOpen: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     NoteCard(
@@ -676,10 +676,10 @@ private fun NoteCard(
     Column(
         modifier
             .fillMaxWidth()
-            .chunky(shape, fill = Sweepy.colors.surface)
+            .chunky(shape, fill = Pixnix.colors.surface)
             .clip(shape)
-            .background(Sweepy.colors.surface)
-            .border(1.dp, Sweepy.colors.hairline, shape)
+            .background(Pixnix.colors.surface)
+            .border(1.dp, Pixnix.colors.hairline, shape)
             .padding(18.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -688,14 +688,14 @@ private fun NoteCard(
             Text(
                 title,
                 style = MaterialTheme.typography.headlineSmall,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
             )
         }
         Spacer(Modifier.height(10.dp))
         Text(
             body,
             style = MaterialTheme.typography.bodyMedium,
-            color = Sweepy.colors.inkMuted,
+            color = Pixnix.colors.inkMuted,
         )
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -708,12 +708,12 @@ private fun NoteCard(
 @Composable
 private fun PrivacyNote(modifier: Modifier = Modifier) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxWidth()) {
-        MarkIcon(Mark.CIRCLE, Sweepy.colors.inkMuted.copy(alpha = 0.5f), size = 18.dp, strokeWidth = 0.1f)
+        MarkIcon(Mark.CIRCLE, Pixnix.colors.inkMuted.copy(alpha = 0.5f), size = 18.dp, strokeWidth = 0.1f)
         Spacer(Modifier.height(8.dp))
         Text(
             stringResource(R.string.privacy_note).uppercase(),
             style = MaterialTheme.typography.labelSmall,
-            color = Sweepy.colors.inkMuted,
+            color = Pixnix.colors.inkMuted,
             textAlign = TextAlign.Center,
         )
     }

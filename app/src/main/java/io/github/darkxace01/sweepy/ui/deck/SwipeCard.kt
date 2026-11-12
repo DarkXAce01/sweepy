@@ -71,7 +71,7 @@ import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatDuration
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import kotlin.math.abs
 import kotlin.math.min
 import kotlinx.coroutines.launch
@@ -91,10 +91,10 @@ enum class SwipeDirection(val decision: Decision, val mark: Mark) {
 /** The grease-pencil color for each decision. */
 val SwipeDirection.color: Color
     @Composable @ReadOnlyComposable get() = when (this) {
-        SwipeDirection.LEFT -> Sweepy.colors.pencil
-        SwipeDirection.RIGHT -> Sweepy.colors.keep
-        SwipeDirection.UP -> Sweepy.colors.later
-        SwipeDirection.DOWN -> Sweepy.colors.favorite
+        SwipeDirection.LEFT -> Pixnix.colors.pencil
+        SwipeDirection.RIGHT -> Pixnix.colors.keep
+        SwipeDirection.UP -> Pixnix.colors.later
+        SwipeDirection.DOWN -> Pixnix.colors.favorite
     }
 
 @Composable
@@ -323,7 +323,7 @@ private fun PencilOverlay(state: SwipeCardState, existing: SwipeDirection?) {
             Text(
                 direction.label(),
                 style = MaterialTheme.typography.labelLarge.copy(fontSize = 15.sp, letterSpacing = 1.5.sp),
-                color = Sweepy.colors.print,
+                color = Pixnix.colors.print,
                 modifier = Modifier
                     .align(alignment)
                     .padding(20.dp)
@@ -359,12 +359,12 @@ fun PrintCard(
     overlay: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
-    val colors = Sweepy.colors
+    val colors = Pixnix.colors
     Column(
         modifier = modifier
             .then(
                 // Pop swaps the soft drop shadow for a hard sticker shadow.
-                if (Sweepy.look.chunky) {
+                if (Pixnix.look.chunky) {
                     Modifier.chunky(CardShape, offset = 6.dp)
                 } else {
                     Modifier.shadow(

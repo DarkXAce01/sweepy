@@ -5,7 +5,7 @@ import android.app.PendingIntent
 import android.app.Activity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.darkxace01.sweepy.SweepyApplication
+import io.github.darkxace01.sweepy.PixnixApplication
 import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.CleanStats
 import io.github.darkxace01.sweepy.data.Decision
@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
  */
 class AppViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val container = (app as SweepyApplication).container
+    private val container = (app as PixnixApplication).container
     private val repository = container.media
     private val store = container.decisions
     private val prefs = container.prefs

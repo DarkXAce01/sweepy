@@ -15,11 +15,11 @@ import io.github.darkxace01.sweepy.data.Appearance
 import io.github.darkxace01.sweepy.data.reminders.ReminderKind
 import io.github.darkxace01.sweepy.reminders.ReminderLink
 import io.github.darkxace01.sweepy.ui.LocalAppSettings
-import io.github.darkxace01.sweepy.ui.SweepyApp
-import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
+import io.github.darkxace01.sweepy.ui.PixnixApp
+import io.github.darkxace01.sweepy.ui.theme.PixnixTheme
 
 class MainActivity : ComponentActivity() {
-    private val prefs by lazy { (application as SweepyApplication).container.prefs }
+    private val prefs by lazy { (application as PixnixApplication).container.prefs }
 
     /** Set when a reminder was tapped: the screen it should open. */
     private var openRequest by mutableStateOf<ReminderKind?>(null)
@@ -37,8 +37,8 @@ class MainActivity : ComponentActivity() {
                 Appearance.DARK -> true
             }
             CompositionLocalProvider(LocalAppSettings provides settings) {
-                SweepyTheme(darkTheme = dark, theme = settings.theme) {
-                    SweepyApp(openRequest = openRequest, onOpenRequestHandled = { openRequest = null })
+                PixnixTheme(darkTheme = dark, theme = settings.theme) {
+                    PixnixApp(openRequest = openRequest, onOpenRequestHandled = { openRequest = null })
                 }
             }
         }

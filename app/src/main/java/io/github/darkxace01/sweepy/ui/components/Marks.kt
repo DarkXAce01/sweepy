@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.darkxace01.sweepy.ui.theme.MarkStyle
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -115,7 +115,7 @@ fun Modifier.pencilMark(
     progress: () -> Float,
     strokeWidth: Float = 0.055f,
 ): Modifier {
-    val look = Sweepy.look
+    val look = Pixnix.look
     val style = look.markStyle
     val secondInk = look.secondInk
     val sticker = look.outline to look.shadow

@@ -41,7 +41,7 @@ import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.reveal
 import io.github.darkxace01.sweepy.ui.permission.PrintPile
 import io.github.darkxace01.sweepy.ui.settings.themeName
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 
 /**
  * The very first screen after installing: pick a look. Tapping a theme switches the whole screen
@@ -62,25 +62,25 @@ fun WelcomeScreen(selected: ThemeChoice, onSelect: (ThemeChoice) -> Unit, onCont
                 stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontStyle = FontStyle.Italic,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 modifier = Modifier.reveal(0),
             )
             Spacer(Modifier.height(12.dp))
             PrintPile(Modifier.align(Alignment.CenterHorizontally).reveal(1), replayKey = selected)
             Spacer(Modifier.height(24.dp))
-            Eyebrow(stringResource(R.string.welcome_eyebrow), color = Sweepy.colors.pencil, modifier = Modifier.reveal(2))
+            Eyebrow(stringResource(R.string.welcome_eyebrow), color = Pixnix.colors.pencil, modifier = Modifier.reveal(2))
             Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.welcome_title),
                 style = MaterialTheme.typography.displaySmall,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 modifier = Modifier.reveal(2),
             )
             Spacer(Modifier.height(10.dp))
             Text(
                 stringResource(R.string.welcome_body),
                 style = MaterialTheme.typography.bodyLarge,
-                color = Sweepy.colors.inkMuted,
+                color = Pixnix.colors.inkMuted,
                 modifier = Modifier.reveal(3),
             )
             Spacer(Modifier.height(22.dp))
@@ -101,7 +101,7 @@ fun WelcomeScreen(selected: ThemeChoice, onSelect: (ThemeChoice) -> Unit, onCont
             Text(
                 stringResource(R.string.welcome_later),
                 style = MaterialTheme.typography.bodySmall,
-                color = Sweepy.colors.inkMuted,
+                color = Pixnix.colors.inkMuted,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
         }
@@ -111,12 +111,12 @@ fun WelcomeScreen(selected: ThemeChoice, onSelect: (ThemeChoice) -> Unit, onCont
 @Composable
 private fun ThemeOption(theme: ThemeChoice, dark: Boolean, selected: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(16.dp)
-    val border by animateColorAsState(if (selected) Sweepy.colors.ink else Sweepy.colors.hairline, label = "border")
+    val border by animateColorAsState(if (selected) Pixnix.colors.ink else Pixnix.colors.hairline, label = "border")
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .chunky(shape, fill = Sweepy.colors.surface, offset = if (selected) 4.dp else 2.dp)
+            .chunky(shape, fill = Pixnix.colors.surface, offset = if (selected) 4.dp else 2.dp)
             .clip(shape)
             .border(if (selected) 1.5.dp else 1.dp, border, shape)
             .pressable(onClick, pressedScale = 0.98f, role = Role.RadioButton)
@@ -131,7 +131,7 @@ private fun ThemeOption(theme: ThemeChoice, dark: Boolean, selected: Boolean, on
             padding = 6.dp,
         )
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(themeName(theme), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
+            Text(themeName(theme), style = MaterialTheme.typography.titleMedium, color = Pixnix.colors.ink)
             Spacer(Modifier.height(2.dp))
             Text(
                 stringResource(
@@ -142,10 +142,10 @@ private fun ThemeOption(theme: ThemeChoice, dark: Boolean, selected: Boolean, on
                     },
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = Sweepy.colors.inkMuted,
+                color = Pixnix.colors.inkMuted,
             )
         }
-        if (selected) MarkIcon(Mark.CIRCLE, Sweepy.colors.keep, size = 26.dp, strokeWidth = 0.1f)
+        if (selected) MarkIcon(Mark.CIRCLE, Pixnix.colors.keep, size = 26.dp, strokeWidth = 0.1f)
         else Spacer(Modifier.size(26.dp))
     }
 }

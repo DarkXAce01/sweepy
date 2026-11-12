@@ -21,7 +21,7 @@ import io.github.darkxace01.sweepy.data.ThemeChoice
  * which one is active: photos supply the color, the interface stays quiet.
  */
 @Immutable
-data class SweepyColors(
+data class PixnixColors(
     /** Page background. */
     val paper: Color,
     /** Slightly raised surfaces: tiles, sheets. */
@@ -51,7 +51,7 @@ data class SweepyColors(
     val isDark: Boolean,
 )
 
-private val Paper = SweepyColors(
+private val Paper = PixnixColors(
     paper = Color(0xFFF2EFE8),
     surface = Color(0xFFF8F6F1),
     print = Color(0xFFFDFCF9),
@@ -69,7 +69,7 @@ private val Paper = SweepyColors(
     isDark = false,
 )
 
-private val Darkroom = SweepyColors(
+private val Darkroom = PixnixColors(
     paper = Color(0xFF12110F),
     surface = Color(0xFF1A1916),
     print = Color(0xFF201E1B),
@@ -88,7 +88,7 @@ private val Darkroom = SweepyColors(
 )
 
 // Riso: a zine printed on a risograph. Cream newsprint, deep blue ink, fluorescent pink.
-private val RisoCream = SweepyColors(
+private val RisoCream = PixnixColors(
     paper = Color(0xFFF3EDDD),
     surface = Color(0xFFF9F4E7),
     print = Color(0xFFFFFCF4),
@@ -106,7 +106,7 @@ private val RisoCream = SweepyColors(
     isDark = false,
 )
 
-private val RisoMidnight = SweepyColors(
+private val RisoMidnight = PixnixColors(
     paper = Color(0xFF161A38),
     surface = Color(0xFF1E2247),
     print = Color(0xFF262B55),
@@ -125,7 +125,7 @@ private val RisoMidnight = SweepyColors(
 )
 
 // Pop: neo-brutalist sticker sheet. Flat loud color, thick outlines, hard offset shadows.
-private val PopDay = SweepyColors(
+private val PopDay = PixnixColors(
     paper = Color(0xFFFFF4E0),
     surface = Color(0xFFFFFCF5),
     print = Color(0xFFFFFFFF),
@@ -143,7 +143,7 @@ private val PopDay = SweepyColors(
     isDark = false,
 )
 
-private val PopNight = SweepyColors(
+private val PopNight = PixnixColors(
     paper = Color(0xFF1B1726),
     surface = Color(0xFF241F33),
     print = Color(0xFF2C263D),
@@ -178,8 +178,8 @@ enum class MarkStyle {
 
 /** Everything a theme decides. */
 @Immutable
-data class SweepyLook(
-    val colors: SweepyColors,
+data class PixnixLook(
+    val colors: PixnixColors,
     val texture: Texture,
     val markStyle: MarkStyle,
     /** Riso's second ink, printed under marks and headlines a little out of register. */
@@ -190,28 +190,28 @@ data class SweepyLook(
     val shadow: Color = Color.Transparent,
 )
 
-val LocalSweepyLook = staticCompositionLocalOf { SweepyLook(Paper, Texture.GRAIN, MarkStyle.PENCIL) }
+val LocalPixnixLook = staticCompositionLocalOf { PixnixLook(Paper, Texture.GRAIN, MarkStyle.PENCIL) }
 
-/** Shorthand: `Sweepy.colors.ink`. */
-object Sweepy {
-    val colors: SweepyColors
-        @Composable @ReadOnlyComposable get() = LocalSweepyLook.current.colors
+/** Shorthand: `Pixnix.colors.ink`. */
+object Pixnix {
+    val colors: PixnixColors
+        @Composable @ReadOnlyComposable get() = LocalPixnixLook.current.colors
 
-    val look: SweepyLook
-        @Composable @ReadOnlyComposable get() = LocalSweepyLook.current
+    val look: PixnixLook
+        @Composable @ReadOnlyComposable get() = LocalPixnixLook.current
 }
 
 /** The look for [theme], light or dark. */
-fun lookFor(theme: ThemeChoice, dark: Boolean): SweepyLook = when (theme) {
-    ThemeChoice.CONTACT_SHEET -> SweepyLook(if (dark) Darkroom else Paper, Texture.GRAIN, MarkStyle.PENCIL)
+fun lookFor(theme: ThemeChoice, dark: Boolean): PixnixLook = when (theme) {
+    ThemeChoice.CONTACT_SHEET -> PixnixLook(if (dark) Darkroom else Paper, Texture.GRAIN, MarkStyle.PENCIL)
     ThemeChoice.RISO -> {
         val colors = if (dark) RisoMidnight else RisoCream
-        SweepyLook(colors, Texture.HALFTONE, MarkStyle.RISO, secondInk = if (dark) Color(0xFF3D7BFF) else Color(0xFF3F8FE0))
+        PixnixLook(colors, Texture.HALFTONE, MarkStyle.RISO, secondInk = if (dark) Color(0xFF3D7BFF) else Color(0xFF3F8FE0))
     }
     ThemeChoice.POP -> {
         val colors = if (dark) PopNight else PopDay
         // In the dark a black shadow would vanish, so it turns violet.
-        SweepyLook(
+        PixnixLook(
             colors, Texture.DOT_GRID, MarkStyle.STICKER,
             chunky = true,
             outline = colors.ink,
@@ -220,7 +220,7 @@ fun lookFor(theme: ThemeChoice, dark: Boolean): SweepyLook = when (theme) {
     }
 }
 
-private fun materialColors(c: SweepyColors) = if (c.isDark) {
+private fun materialColors(c: PixnixColors) = if (c.isDark) {
     darkColorScheme(
         primary = c.ink, onPrimary = c.paper,
         primaryContainer = c.surface, onPrimaryContainer = c.ink,
@@ -250,7 +250,7 @@ private fun materialColors(c: SweepyColors) = if (c.isDark) {
     )
 }
 
-private val SweepyShapes = Shapes(
+private val PixnixShapes = Shapes(
     extraSmall = RoundedCornerShape(6.dp),
     small = RoundedCornerShape(10.dp),
     medium = RoundedCornerShape(14.dp),
@@ -260,18 +260,18 @@ private val SweepyShapes = Shapes(
 
 /** Follows the system light/dark setting unless told otherwise. */
 @Composable
-fun SweepyTheme(
+fun PixnixTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     theme: ThemeChoice = ThemeChoice.CONTACT_SHEET,
     content: @Composable () -> Unit,
 ) {
     val look = lookFor(theme, darkTheme)
     val colors = look.colors
-    CompositionLocalProvider(LocalSweepyLook provides look) {
+    CompositionLocalProvider(LocalPixnixLook provides look) {
         MaterialTheme(
             colorScheme = materialColors(colors),
             typography = remember(look) { typographyFor(theme, look) },
-            shapes = SweepyShapes,
+            shapes = PixnixShapes,
             content = content,
         )
     }

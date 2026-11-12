@@ -43,7 +43,7 @@ class Prefs(context: Context) {
         AppSettings(
             theme = prefs.getString(KEY_THEME, null)
                 ?.let { name -> ThemeChoice.entries.firstOrNull { it.name == name } } ?: ThemeChoice.CONTACT_SHEET,
-            // People who used Sweepy before themes existed have already swiped; don't stop them.
+            // People who used Pixnix before themes existed have already swiped; don't stop them.
             themePicked = prefs.getBoolean(KEY_THEME_PICKED, prefs.getBoolean(KEY_HINT_SEEN, false)),
             appearance = prefs.getString(KEY_APPEARANCE, null)
                 ?.let { name -> Appearance.entries.firstOrNull { it.name == name } } ?: Appearance.SYSTEM,
@@ -93,7 +93,7 @@ class Prefs(context: Context) {
     )
 
     /**
-     * The biggest "Sweepy has cleared X for you" milestone (in bytes) whose card has been seen and closed.
+     * The biggest "Pixnix has cleared X for you" milestone (in bytes) whose card has been seen and closed.
      * 0 if none. (Before there were two milestones this was a yes/no for the first one, at 1 GB.)
      */
     val tipNudgeSeenAt: StateFlow<Long> = _tipNudgeSeenAt.asStateFlow()

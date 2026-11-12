@@ -68,7 +68,7 @@ import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.tips.TipArt
 import io.github.darkxace01.sweepy.data.tips.Tip
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 
 private const val SOURCE_URL = "https://github.com/DarkXAce01/sweepy"
 
@@ -84,7 +84,7 @@ fun SettingsScreen(
     onForgetEverything: () -> Unit,
     /** Null hides the tip jar (builds without Google Play billing). */
     onOpenTipJar: (() -> Unit)? = null,
-    /** On, and Android allows Sweepy to show notifications. */
+    /** On, and Android allows Pixnix to show notifications. */
     remindersOn: Boolean = false,
     onRemindersChange: (Boolean) -> Unit = {},
 ) {
@@ -207,7 +207,7 @@ fun SettingsScreen(
                 ActionRow(
                     title = stringResource(R.string.setting_forget_all),
                     body = stringResource(R.string.setting_forget_all_body),
-                    color = Sweepy.colors.pencil,
+                    color = Pixnix.colors.pencil,
                     onClick = { confirm = Confirm.FORGET_ALL },
                 )
 
@@ -235,7 +235,7 @@ fun SettingsScreen(
                 // Plain facts to end on: which version this is, and what it never does.
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     // The studio's own mark: the same in every app and every theme.
-                    StudioLockup(ink = Sweepy.colors.ink, height = 34.dp, muted = Sweepy.colors.inkMuted)
+                    StudioLockup(ink = Pixnix.colors.ink, height = 34.dp, muted = Pixnix.colors.inkMuted)
                     Spacer(Modifier.height(14.dp))
                     Eyebrow(stringResource(R.string.settings_footer, version), small = true)
                 }
@@ -246,30 +246,30 @@ fun SettingsScreen(
     confirm?.let { which ->
         AlertDialog(
             onDismissRequest = { confirm = null },
-            containerColor = Sweepy.colors.surface,
+            containerColor = Pixnix.colors.surface,
             shape = RoundedCornerShape(18.dp),
             title = {
                 Text(
                     stringResource(if (which == Confirm.FORGET_KEPT) R.string.setting_forget_kept else R.string.setting_forget_all),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Sweepy.colors.ink,
+                    color = Pixnix.colors.ink,
                 )
             },
             text = {
                 Text(
                     stringResource(if (which == Confirm.FORGET_KEPT) R.string.confirm_forget_kept else R.string.confirm_forget_all),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Sweepy.colors.inkMuted,
+                    color = Pixnix.colors.inkMuted,
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = null
                     if (which == Confirm.FORGET_KEPT) onForgetKept() else onForgetEverything()
-                }) { Text(stringResource(R.string.confirm_forget), color = Sweepy.colors.pencil) }
+                }) { Text(stringResource(R.string.confirm_forget), color = Pixnix.colors.pencil) }
             },
             dismissButton = {
-                TextButton(onClick = { confirm = null }) { Text(stringResource(R.string.cancel), color = Sweepy.colors.ink) }
+                TextButton(onClick = { confirm = null }) { Text(stringResource(R.string.cancel), color = Pixnix.colors.ink) }
             },
         )
     }
@@ -283,29 +283,29 @@ private fun SupportCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .chunky(shape, fill = Sweepy.colors.surface)
+            .chunky(shape, fill = Pixnix.colors.surface)
             .clip(shape)
-            .background(Sweepy.colors.surface)
-            .border(1.dp, Sweepy.colors.hairline, shape)
+            .background(Pixnix.colors.surface)
+            .border(1.dp, Pixnix.colors.hairline, shape)
             .pressable(onClick, pressedScale = 0.98f)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         TipArt(Tip.COFFEE, Modifier.size(46.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.tips_support_title), style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
+            Text(stringResource(R.string.tips_support_title), style = MaterialTheme.typography.titleMedium, color = Pixnix.colors.ink)
             Spacer(Modifier.height(2.dp))
-            Text(stringResource(R.string.tips_support_body), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+            Text(stringResource(R.string.tips_support_body), style = MaterialTheme.typography.bodySmall, color = Pixnix.colors.inkMuted)
         }
         Spacer(Modifier.width(8.dp))
-        Text("→", style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.pencil)
+        Text("→", style = MaterialTheme.typography.titleMedium, color = Pixnix.colors.pencil)
     }
 }
 
 @Composable
 private fun Section(title: String) {
     Row(Modifier.padding(top = 30.dp, bottom = 10.dp)) {
-        Eyebrow(title, color = Sweepy.colors.ink)
+        Eyebrow(title, color = Pixnix.colors.ink)
     }
 }
 
@@ -356,14 +356,14 @@ private fun ThemeCard(theme: ThemeChoice, dark: Boolean, selected: Boolean, onCl
                 .fillMaxWidth()
                 .aspectRatio(0.82f)
                 .clip(shape)
-                .border(if (selected) 2.dp else 1.dp, if (selected) Sweepy.colors.ink else Sweepy.colors.hairline, shape),
+                .border(if (selected) 2.dp else 1.dp, if (selected) Pixnix.colors.ink else Pixnix.colors.hairline, shape),
         ) {
             ThemeSample(theme, dark, Modifier.fillMaxSize())
         }
         Text(
             name,
             style = MaterialTheme.typography.labelLarge,
-            color = if (selected) Sweepy.colors.ink else Sweepy.colors.inkMuted,
+            color = if (selected) Pixnix.colors.ink else Pixnix.colors.inkMuted,
             maxLines = 1,
             modifier = Modifier.padding(top = 8.dp, start = 2.dp),
         )
@@ -380,21 +380,21 @@ private fun Toggle(title: String, body: String, checked: Boolean, onChange: (Boo
             .padding(vertical = 14.dp),
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
+            Text(title, style = MaterialTheme.typography.titleMedium, color = Pixnix.colors.ink)
             Spacer(Modifier.height(2.dp))
-            Text(body, style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = Pixnix.colors.inkMuted)
         }
         Spacer(Modifier.width(16.dp))
         Switch(
             checked = checked,
             onCheckedChange = null,
             colors = SwitchDefaults.colors(
-                checkedTrackColor = Sweepy.colors.ink,
-                checkedThumbColor = Sweepy.colors.paper,
-                checkedBorderColor = Sweepy.colors.ink,
-                uncheckedTrackColor = Sweepy.colors.paper,
-                uncheckedThumbColor = Sweepy.colors.inkMuted,
-                uncheckedBorderColor = Sweepy.colors.hairline,
+                checkedTrackColor = Pixnix.colors.ink,
+                checkedThumbColor = Pixnix.colors.paper,
+                checkedBorderColor = Pixnix.colors.ink,
+                uncheckedTrackColor = Pixnix.colors.paper,
+                uncheckedThumbColor = Pixnix.colors.inkMuted,
+                uncheckedBorderColor = Pixnix.colors.hairline,
             ),
         )
     }
@@ -405,7 +405,7 @@ private fun ActionRow(
     title: String,
     body: String,
     onClick: () -> Unit,
-    color: Color = Sweepy.colors.ink,
+    color: Color = Pixnix.colors.ink,
     enabled: Boolean = true,
     trailing: String = "→",
 ) {
@@ -417,23 +417,23 @@ private fun ActionRow(
             .padding(vertical = 14.dp),
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = if (enabled) color else Sweepy.colors.inkMuted)
+            Text(title, style = MaterialTheme.typography.titleMedium, color = if (enabled) color else Pixnix.colors.inkMuted)
             Spacer(Modifier.height(2.dp))
-            Text(body, style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = Pixnix.colors.inkMuted)
         }
-        if (enabled) Text(trailing, style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.inkMuted)
+        if (enabled) Text(trailing, style = MaterialTheme.typography.titleMedium, color = Pixnix.colors.inkMuted)
     }
 }
 
 @Composable
 private fun InfoRow(title: String, body: String) {
     Column(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium, color = Sweepy.colors.ink)
+        Text(title, style = MaterialTheme.typography.titleMedium, color = Pixnix.colors.ink)
         Spacer(Modifier.height(2.dp))
-        Text(body, style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+        Text(body, style = MaterialTheme.typography.bodySmall, color = Pixnix.colors.inkMuted)
     }
 }
 
-/** True when the user has given Sweepy "Media management" access, so trashing needs no confirmation. */
+/** True when the user has given Pixnix "Media management" access, so trashing needs no confirmation. */
 private fun canManageMedia(context: Context): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && runCatching { MediaStore.canManageMedia(context) }.getOrDefault(false)

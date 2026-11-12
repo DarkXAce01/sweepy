@@ -47,7 +47,7 @@ import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.audioTitle
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.formatDuration
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import kotlinx.coroutines.delay
 
 /**
@@ -98,12 +98,12 @@ fun AudioFace(item: MediaItem, interactive: Boolean, modifier: Modifier = Modifi
             Text(
                 audioTitle(item),
                 style = MaterialTheme.typography.headlineSmall,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             item.artist?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = Sweepy.colors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = Pixnix.colors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Spacer(Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -123,14 +123,14 @@ fun AudioFace(item: MediaItem, interactive: Boolean, modifier: Modifier = Modifi
                     } else {
                         formatDuration(duration)
                     },
-                    color = Sweepy.colors.ink,
+                    color = Pixnix.colors.ink,
                 )
             }
             if (player != null && duration > 0) {
                 Scrubber(
                     progress = progress,
                     active = scrub != null,
-                    color = Sweepy.colors.ink,
+                    color = Pixnix.colors.ink,
                     onScrub = { fraction ->
                         scrub = fraction
                         player.seekTo((fraction * duration).toLong())
@@ -165,8 +165,8 @@ private fun rememberAudioPlayer(item: MediaItem): ExoPlayer {
 @Composable
 private fun PlayButton(playing: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val label = stringResource(if (playing) R.string.audio_pause else R.string.audio_play)
-    val ink = Sweepy.colors.ink
-    val paper = Sweepy.colors.print
+    val ink = Pixnix.colors.ink
+    val paper = Pixnix.colors.print
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier

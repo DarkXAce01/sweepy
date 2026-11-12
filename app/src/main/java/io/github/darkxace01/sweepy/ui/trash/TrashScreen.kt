@@ -61,10 +61,10 @@ import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import java.util.concurrent.TimeUnit
 
-/** Android's own trash: what Sweepy (or anything else) recently deleted, restorable until it expires. */
+/** Android's own trash: what Pixnix (or anything else) recently deleted, restorable until it expires. */
 @Composable
 fun TrashScreen(
     state: TrashUiState,
@@ -92,7 +92,7 @@ fun TrashScreen(
                         if (state.items.isNotEmpty()) {
                             Eyebrow(
                                 stringResource(if (allSelected) R.string.select_none else R.string.select_all),
-                                color = Sweepy.colors.ink,
+                                color = Pixnix.colors.ink,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
                                     .pressable({
@@ -106,7 +106,7 @@ fun TrashScreen(
 
                 when {
                     state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Sweepy.colors.ink, strokeWidth = 1.5.dp)
+                        CircularProgressIndicator(color = Pixnix.colors.ink, strokeWidth = 1.5.dp)
                     }
                     state.items.isEmpty() -> EmptyState(
                         mark = Mark.CIRCLE,
@@ -146,7 +146,7 @@ fun TrashScreen(
                         OutlineButton(
                             text = stringResource(R.string.trash_delete_forever),
                             onClick = { confirmDelete = true },
-                            contentColor = Sweepy.colors.pencil,
+                            contentColor = Pixnix.colors.pencil,
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -158,13 +158,13 @@ fun TrashScreen(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            containerColor = Sweepy.colors.surface,
+            containerColor = Pixnix.colors.surface,
             shape = RoundedCornerShape(18.dp),
             title = {
                 Text(
                     stringResource(R.string.trash_confirm_title),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Sweepy.colors.ink,
+                    color = Pixnix.colors.ink,
                 )
             },
             text = {
@@ -176,17 +176,17 @@ fun TrashScreen(
                         formatSize(context, selected.sumOf { it.media.sizeBytes }),
                     ),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Sweepy.colors.inkMuted,
+                    color = Pixnix.colors.inkMuted,
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
                     onDeleteForever(selected)
-                }) { Text(stringResource(R.string.trash_delete_forever), color = Sweepy.colors.pencil) }
+                }) { Text(stringResource(R.string.trash_delete_forever), color = Pixnix.colors.pencil) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel), color = Sweepy.colors.ink) }
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel), color = Pixnix.colors.ink) }
             },
         )
     }
@@ -195,15 +195,15 @@ fun TrashScreen(
 @Composable
 private fun Summary(size: String, count: Int) {
     Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 18.dp)) {
-        Text(size, style = MaterialTheme.typography.displayMedium, color = Sweepy.colors.ink)
+        Text(size, style = MaterialTheme.typography.displayMedium, color = Pixnix.colors.ink)
         Text(
             pluralStringResource(R.plurals.trash_summary, count, formatCount(count)),
             style = MaterialTheme.typography.headlineSmall,
             fontStyle = FontStyle.Italic,
-            color = Sweepy.colors.inkMuted,
+            color = Pixnix.colors.inkMuted,
         )
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.trash_explainer), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+        Text(stringResource(R.string.trash_explainer), style = MaterialTheme.typography.bodySmall, color = Pixnix.colors.inkMuted)
     }
 }
 
@@ -229,7 +229,7 @@ private fun TrashThumbnail(
             .aspectRatio(1f)
             .semantics { this.selected = selected }
             .pressable(onToggle, pressedScale = 0.94f, role = Role.Checkbox)
-            .pencilMark(Mark.CIRCLE, Sweepy.colors.keep, { circle }, strokeWidth = 0.045f),
+            .pencilMark(Mark.CIRCLE, Pixnix.colors.keep, { circle }, strokeWidth = 0.045f),
     ) {
         Box(
             Modifier
@@ -241,7 +241,7 @@ private fun TrashThumbnail(
                     scaleY = s
                 }
                 .clip(RoundedCornerShape(6.dp))
-                .background(Sweepy.colors.print)
+                .background(Pixnix.colors.print)
                 .padding(3.dp),
         ) {
             MediaThumbnail(item.media, Modifier.fillMaxSize(), cornerRadius = 3.dp, showBadge = false)
@@ -253,7 +253,7 @@ private fun TrashThumbnail(
                     .align(Alignment.BottomStart)
                     .padding(5.dp)
                     .clip(RoundedCornerShape(3.dp))
-                    .background(if (urgent) Sweepy.colors.pencil else Color.Black.copy(alpha = 0.55f))
+                    .background(if (urgent) Pixnix.colors.pencil else Color.Black.copy(alpha = 0.55f))
                     .padding(horizontal = 5.dp, vertical = 2.dp),
             )
         }

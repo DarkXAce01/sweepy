@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Sweepy</string>
+    <string name="app_name">Pixnix</string>
 
     <!-- General -->
     <string name="back">Back</string>
@@ -14,9 +14,9 @@
     <!-- Permission screen -->
     <string name="permission_eyebrow">A quiet tidy-up</string>
     <string name="permission_title">Sort your photos like a contact sheet.</string>
-    <string name="permission_body">Swipe through your gallery and mark what goes, what stays, and what you\'ll decide later. Sweepy needs access to your photos and videos to show them.</string>
+    <string name="permission_body">Swipe through your gallery and mark what goes, what stays, and what you\'ll decide later. Pixnix needs access to your photos and videos to show them.</string>
     <string name="permission_grant">Allow photo access</string>
-    <string name="permission_denied">Sweepy can\'t work without access to your photos. You can turn it on in Settings → Permissions.</string>
+    <string name="permission_denied">Pixnix can\'t work without access to your photos. You can turn it on in Settings → Permissions.</string>
     <string name="permission_open_settings">Open settings</string>
     <string name="promise_private_title">Private by design</string>
     <string name="promise_private_body">No internet permission. Nothing ever leaves your phone.</string>
@@ -43,7 +43,7 @@
     <string name="home_sorted_of">%1$s of %2$s</string>
     <string name="left_short">%1$s left</string>
     <string name="label_done">Done</string>
-    <string name="partial_access">Sweepy can only see the photos you picked.</string>
+    <string name="partial_access">Pixnix can only see the photos you picked.</string>
     <string name="partial_access_action">Allow all</string>
 
     <!-- Deck names -->
@@ -239,10 +239,10 @@
     <string name="confirm_forget">Forget</string>
     <string name="setting_source">Source code</string>
     <string name="setting_privacy">Privacy</string>
-    <string name="setting_privacy_body">Sweepy has no internet permission. It can\'t send anything anywhere: no analytics, no ads, no accounts. Your choices are stored only on this phone.</string>
+    <string name="setting_privacy_body">Pixnix has no internet permission. It can\'t send anything anywhere: no analytics, no ads, no accounts. Your choices are stored only on this phone.</string>
     <string name="setting_licenses">Licenses</string>
-    <string name="setting_licenses_body">Sweepy is free software under the GNU GPL v3. Fonts: Instrument Serif, Geist, Geist Mono, Bricolage Grotesque and Archivo, under the SIL Open Font License 1.1.</string>
-    <string name="settings_footer">Sweepy %1$s · No internet · No ads · No account</string>
+    <string name="setting_licenses_body">Pixnix is free software under the GNU GPL v3. Fonts: Instrument Serif, Geist, Geist Mono, Bricolage Grotesque and Archivo, under the SIL Open Font License 1.1.</string>
+    <string name="settings_footer">Pixnix %1$s · No internet · No ads · No account</string>
     <!-- Duplicates -->
     <string name="deck_duplicates">Duplicates</string>
     <string name="dup_position">Group %1$s of %2$s</string>
@@ -283,23 +283,23 @@
 
     <!-- Tip jar -->
     <string name="tips_title">Tip jar</string>
-    <string name="tips_eyebrow">Support Sweepy</string>
+    <string name="tips_eyebrow">Support Pixnix</string>
     <string name="tips_headline">Help keep it free.\nNo ads, ever.</string>
-    <string name="tips_body">Sweepy is free and always will be. If it saved you some space, or some time, a tip helps keep it going.</string>
+    <string name="tips_body">Pixnix is free and always will be. If it saved you some space, or some time, a tip helps keep it going.</string>
     <string name="tip_coffee">Coffee</string>
     <string name="tip_coffee_line">A small thank-you</string>
     <string name="tip_lunch">Lunch</string>
     <string name="tip_lunch_line">Fuel for an afternoon of fixes</string>
     <string name="tip_dinner">Dinner</string>
     <string name="tip_dinner_line">For a really big cleanup</string>
-    <string name="tips_unavailable">The tip jar isn\'t open right now. Please check back later. Everything in Sweepy works without it.</string>
+    <string name="tips_unavailable">The tip jar isn\'t open right now. Please check back later. Everything in Pixnix works without it.</string>
     <string name="tips_pending">Your payment is still going through. The thank-you will arrive when it clears.</string>
     <string name="tips_failed">That didn\'t go through. You can try again whenever you like.</string>
     <plurals name="tips_given">
         <item quantity="one">You\'ve left a tip. Thank you!</item>
         <item quantity="other">You\'ve left %1$d tips. Thank you!</item>
     </plurals>
-    <string name="tips_fine_print">Want to give a different amount? Pick how many at checkout. Tips are one-time payments through Google Play. They don\'t unlock anything: everything in Sweepy is already yours.</string>
+    <string name="tips_fine_print">Want to give a different amount? Pick how many at checkout. Tips are one-time payments through Google Play. They don\'t unlock anything: everything in Pixnix is already yours.</string>
     <string name="tips_thanks_title">Thank you</string>
     <plurals name="tips_thanks_coffee">
         <item quantity="one">That coffee means a lot. Enjoy your clean gallery.</item>
@@ -313,13 +313,13 @@
         <item quantity="one">That dinner means a lot. Enjoy your clean gallery.</item>
         <item quantity="other">%1$d dinners! That means a lot. Enjoy your clean gallery.</item>
     </plurals>
-    <string name="tips_thanks_done">Back to Sweepy</string>
-    <string name="tips_support_title">Enjoying Sweepy?</string>
+    <string name="tips_thanks_done">Back to Pixnix</string>
+    <string name="tips_support_title">Enjoying Pixnix?</string>
     <string name="tips_support_body">Buy me a coffee. It keeps the app free and ad-free.</string>
-    <string name="tips_nudge_title">Sweepy has cleared %1$s for you.</string>
+    <string name="tips_nudge_title">Pixnix has cleared %1$s for you.</string>
     <string name="tips_nudge_body">It\'s free, with no ads. If it helped, a coffee helps keep it that way.</string>
     <!-- The second thank-you card, after 10 GB. Shown once, only to people who haven't tipped. -->
-    <string name="tips_nudge_body_big">That\'s a whole lot of photos you\'ll never scroll past again. Sweepy is still free, with no ads. If it\'s earned a coffee, the tip jar helps keep it free.</string>
+    <string name="tips_nudge_body_big">That\'s a whole lot of photos you\'ll never scroll past again. Pixnix is still free, with no ads. If it\'s earned a coffee, the tip jar helps keep it free.</string>
     <string name="tips_nudge_open">Tip jar</string>
     <string name="tips_nudge_later">Not now</string>
     <!-- Reminders: the occasional notification when there's something worth sorting. Never more than once a week. -->
@@ -417,7 +417,7 @@
     <string name="setting_reminders">Sorting reminders</string>
     <string name="setting_reminders_body">A nudge when screenshots pile up, the review bin is full or space runs low. At most once a week, worked out on your phone.</string>
     <string name="reminder_ask_title">Want a heads-up when it piles up again?</string>
-    <string name="reminder_ask_body">Sweepy can let you know when there\'s something worth sorting. At most once a week, never at night, and you can turn it off in Settings.</string>
+    <string name="reminder_ask_body">Pixnix can let you know when there\'s something worth sorting. At most once a week, never at night, and you can turn it off in Settings.</string>
     <string name="reminder_ask_yes">Sure</string>
     <string name="reminder_ask_no">No thanks</string>
 </resources>

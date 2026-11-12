@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * One-time tips. They unlock nothing: everything in Sweepy is free. [productId] must match an
+ * One-time tips. They unlock nothing: everything in Pixnix is free. [productId] must match an
  * in-app product (consumable, so people can tip more than once) in the Play Console.
  */
 enum class Tip(val productId: String) {
@@ -46,5 +46,5 @@ interface TipJar {
     fun buy(activity: Activity, tip: Tip)
 }
 
-/** The second, bigger "Sweepy has cleared X for you" milestone (10 GB). */
+/** The second, bigger "Pixnix has cleared X for you" milestone (10 GB). */
 const val TIP_NUDGE_BIG_BYTES = 10_000_000_000L

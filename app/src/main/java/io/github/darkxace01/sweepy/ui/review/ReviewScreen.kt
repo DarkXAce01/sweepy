@@ -63,7 +63,7 @@ import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 
 /**
  * Everything swiped left. Nothing is deleted until the user taps the button at the bottom.
@@ -95,7 +95,7 @@ fun ReviewScreen(
                         if (state.count > 0) {
                             Eyebrow(
                                 stringResource(R.string.review_keep_all),
-                                color = Sweepy.colors.ink,
+                                color = Pixnix.colors.ink,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
                                     .pressable({ confirmKeepAll = true })
@@ -129,7 +129,7 @@ fun ReviewScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 10.dp)) {
                                     Eyebrow(
                                         group.folder ?: stringResource(R.string.folder_unnamed),
-                                        color = Sweepy.colors.ink,
+                                        color = Pixnix.colors.ink,
                                         modifier = Modifier.weight(1f),
                                     )
                                     Eyebrow(
@@ -162,8 +162,8 @@ fun ReviewScreen(
                                     onKeep(circledItems)
                                     circled = emptySet()
                                 },
-                                color = Sweepy.colors.keep,
-                                contentColor = Sweepy.colors.onPencil,
+                                color = Pixnix.colors.keep,
+                                contentColor = Pixnix.colors.onPencil,
                                 modifier = Modifier.weight(1.6f),
                             )
                         }
@@ -171,7 +171,7 @@ fun ReviewScreen(
                         Text(
                             stringResource(R.string.review_keep_note),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Sweepy.colors.inkMuted,
+                            color = Pixnix.colors.inkMuted,
                             textAlign = TextAlign.Center,
                         )
                         return@BottomActionArea
@@ -180,15 +180,15 @@ fun ReviewScreen(
                         text = pluralStringResource(R.plurals.review_commit, state.count, formatCount(state.count)),
                         trailing = formatSize(context, state.bytes),
                         onClick = onCommit,
-                        color = Sweepy.colors.pencil,
-                        contentColor = Sweepy.colors.onPencil,
+                        color = Pixnix.colors.pencil,
+                        contentColor = Pixnix.colors.onPencil,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
                         stringResource(R.string.review_restore_note),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Sweepy.colors.inkMuted,
+                        color = Pixnix.colors.inkMuted,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -199,26 +199,26 @@ fun ReviewScreen(
     if (confirmKeepAll) {
         AlertDialog(
             onDismissRequest = { confirmKeepAll = false },
-            containerColor = Sweepy.colors.surface,
+            containerColor = Pixnix.colors.surface,
             shape = RoundedCornerShape(18.dp),
             title = {
                 Text(
                     pluralStringResource(R.plurals.confirm_keep_all_title, state.count, formatCount(state.count)),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Sweepy.colors.ink,
+                    color = Pixnix.colors.ink,
                 )
             },
             text = {
-                Text(stringResource(R.string.confirm_keep_all_body), style = MaterialTheme.typography.bodyMedium, color = Sweepy.colors.inkMuted)
+                Text(stringResource(R.string.confirm_keep_all_body), style = MaterialTheme.typography.bodyMedium, color = Pixnix.colors.inkMuted)
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirmKeepAll = false
                     onUnmarkAll()
-                }) { Text(stringResource(R.string.review_keep_all), color = Sweepy.colors.ink) }
+                }) { Text(stringResource(R.string.review_keep_all), color = Pixnix.colors.ink) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmKeepAll = false }) { Text(stringResource(R.string.cancel), color = Sweepy.colors.ink) }
+                TextButton(onClick = { confirmKeepAll = false }) { Text(stringResource(R.string.cancel), color = Pixnix.colors.ink) }
             },
         )
     }
@@ -227,12 +227,12 @@ fun ReviewScreen(
 @Composable
 private fun Summary(count: Int, size: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)) {
-        Text(size, style = MaterialTheme.typography.displayMedium, color = Sweepy.colors.ink)
+        Text(size, style = MaterialTheme.typography.displayMedium, color = Pixnix.colors.ink)
         Text(
             pluralStringResource(R.plurals.review_summary, count, formatCount(count)),
             style = MaterialTheme.typography.headlineSmall,
             fontStyle = FontStyle.Italic,
-            color = Sweepy.colors.inkMuted,
+            color = Pixnix.colors.inkMuted,
         )
     }
 }
@@ -250,7 +250,7 @@ private fun ReviewThumbnail(item: MediaItem, circled: Boolean, onClick: () -> Un
             .padding(4.dp)
             .aspectRatio(1f)
             .clip(RoundedCornerShape(6.dp))
-            .background(Sweepy.colors.print)
+            .background(Pixnix.colors.print)
             .pressable(onClick, pressedScale = 0.92f, role = Role.Checkbox)
             .padding(3.dp)
             .semantics {
@@ -264,13 +264,13 @@ private fun ReviewThumbnail(item: MediaItem, circled: Boolean, onClick: () -> Un
                 .fillMaxSize()
                 .padding(10.dp)
                 .graphicsLayer { alpha = 1f - keep }
-                .pencilMark(Mark.CROSS, Sweepy.colors.pencil.copy(alpha = 0.9f), { 1f }, strokeWidth = 0.07f),
+                .pencilMark(Mark.CROSS, Pixnix.colors.pencil.copy(alpha = 0.9f), { 1f }, strokeWidth = 0.07f),
         )
         Box(
             Modifier
                 .fillMaxSize()
                 .padding(6.dp)
-                .pencilMark(Mark.CIRCLE, Sweepy.colors.keep, { keep }, strokeWidth = 0.07f),
+                .pencilMark(Mark.CIRCLE, Pixnix.colors.keep, { keep }, strokeWidth = 0.07f),
         )
     }
 }

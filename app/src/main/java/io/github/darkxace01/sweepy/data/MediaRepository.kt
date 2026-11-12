@@ -231,7 +231,7 @@ class MediaRepository(private val context: Context) {
             MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString(),
         )
         val AUDIO_COLLECTION = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-        const val TAG = "Sweepy"
+        const val TAG = "Pixnix"
         const val TRASH_SELECTION = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?, ?)"
         val TRASH_SELECTION_ARGS = MEDIA_SELECTION_ARGS + MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString()
     }

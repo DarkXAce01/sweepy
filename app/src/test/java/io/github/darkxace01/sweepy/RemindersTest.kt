@@ -66,7 +66,7 @@ class RemindersTest {
         assertEquals(ReminderKind.STORAGE, Reminders.pick(idle, full)?.kind)
         // Opened yesterday: too soon for anything else, but a nearly full phone is worth a word.
         assertEquals(ReminderKind.STORAGE, Reminders.pick(idle.copy(lastOpenedAt = now - DAY), full)?.kind)
-        // Full, but not because of videos Sweepy could help with.
+        // Full, but not because of videos Pixnix could help with.
         assertEquals(ReminderKind.SCREENSHOTS, Reminders.pick(idle, full.copy(bigVideoBytes = 0))?.kind)
     }
 }

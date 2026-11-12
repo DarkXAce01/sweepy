@@ -39,21 +39,21 @@ import io.github.darkxace01.sweepy.ui.components.Segment
 import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pressable
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 
 /** Square button in the deck's top bar: two sliders, with a pencil dot when the deck is narrowed or re-sorted. */
 @Composable
 fun FilterButton(active: Boolean, onClick: () -> Unit) {
     val label = stringResource(R.string.filter_title)
-    val color = if (active) Sweepy.colors.pencil else Sweepy.colors.ink
-    val paper = Sweepy.colors.paper
+    val color = if (active) Pixnix.colors.pencil else Pixnix.colors.ink
+    val paper = Pixnix.colors.paper
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(40.dp)
-            .chunky(RoundedCornerShape(10.dp), fill = Sweepy.colors.surface, offset = 3.dp)
+            .chunky(RoundedCornerShape(10.dp), fill = Pixnix.colors.surface, offset = 3.dp)
             .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, if (active) color.copy(alpha = 0.45f) else Sweepy.colors.hairline, RoundedCornerShape(10.dp))
+            .border(1.dp, if (active) color.copy(alpha = 0.45f) else Pixnix.colors.hairline, RoundedCornerShape(10.dp))
             .pressable(onClick, pressedScale = 0.92f)
             .semantics { contentDescription = label },
     ) {
@@ -73,7 +73,7 @@ fun FilterButton(active: Boolean, onClick: () -> Unit) {
                     .align(Alignment.TopEnd)
                     .padding(5.dp)
                     .size(5.dp)
-                    .background(Sweepy.colors.pencil, CircleShape),
+                    .background(Pixnix.colors.pencil, CircleShape),
             )
         }
     }
@@ -86,8 +86,8 @@ fun FilterSheet(state: DeckUiState, onChange: (DeckFilter) -> Unit, onDismiss: (
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Sweepy.colors.surface,
-        dragHandle = { Box(Modifier.padding(top = 12.dp, bottom = 8.dp).size(width = 36.dp, height = 3.dp).background(Sweepy.colors.hairline)) },
+        containerColor = Pixnix.colors.surface,
+        dragHandle = { Box(Modifier.padding(top = 12.dp, bottom = 8.dp).size(width = 36.dp, height = 3.dp).background(Pixnix.colors.hairline)) },
     ) {
         FilterSheetContent(state, onChange, onDismiss)
     }
@@ -99,7 +99,7 @@ internal fun FilterSheetContent(state: DeckUiState, onChange: (DeckFilter) -> Un
     Column(Modifier.padding(start = 24.dp, end = 24.dp, bottom = 28.dp)) {
         Eyebrow(stringResource(R.string.filter_eyebrow), small = true)
         Spacer(Modifier.height(2.dp))
-        Text(stringResource(R.string.filter_title), style = MaterialTheme.typography.headlineSmall, color = Sweepy.colors.ink)
+        Text(stringResource(R.string.filter_title), style = MaterialTheme.typography.headlineSmall, color = Pixnix.colors.ink)
 
         if (state.canFilterKind) {
             Label(stringResource(R.string.filter_show))
@@ -149,5 +149,5 @@ internal fun FilterSheetContent(state: DeckUiState, onChange: (DeckFilter) -> Un
 
 @Composable
 private fun Label(text: String) {
-    Eyebrow(text, color = Sweepy.colors.ink, modifier = Modifier.padding(top = 24.dp, bottom = 10.dp))
+    Eyebrow(text, color = Pixnix.colors.ink, modifier = Modifier.padding(top = 24.dp, bottom = 10.dp))
 }

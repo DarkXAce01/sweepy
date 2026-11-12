@@ -22,7 +22,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import io.github.darkxace01.sweepy.MainActivity
 import io.github.darkxace01.sweepy.R
-import io.github.darkxace01.sweepy.SweepyApplication
+import io.github.darkxace01.sweepy.PixnixApplication
 import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaAccess
@@ -112,7 +112,7 @@ internal object ReminderCheck {
     private const val NOTIFICATION_ID = 1
 
     suspend fun run(context: Context) {
-        val container = (context.applicationContext as SweepyApplication).container
+        val container = (context.applicationContext as PixnixApplication).container
         val prefs = container.prefs
         if (!prefs.settings.value.reminders || !canNotify(context)) return
         if (MediaPermissions.current(context) == MediaAccess.NONE) return

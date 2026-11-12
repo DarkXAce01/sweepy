@@ -65,7 +65,7 @@ import io.github.darkxace01.sweepy.ui.components.ScreenTopBar
 import io.github.darkxace01.sweepy.ui.components.chunky
 import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 
 /** What to say under the tips after a purchase that didn't end in a thank-you. */
 enum class TipNote { PENDING, FAILED }
@@ -97,13 +97,13 @@ fun TipJarScreen(
                 Text(
                     stringResource(R.string.tips_headline),
                     style = MaterialTheme.typography.displaySmall,
-                    color = Sweepy.colors.ink,
+                    color = Pixnix.colors.ink,
                 )
                 Spacer(Modifier.height(14.dp))
                 Text(
                     stringResource(R.string.tips_body),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Sweepy.colors.inkMuted,
+                    color = Pixnix.colors.inkMuted,
                 )
                 Spacer(Modifier.height(28.dp))
 
@@ -122,19 +122,19 @@ fun TipJarScreen(
                         message,
                         style = MaterialTheme.typography.bodyMedium,
                         fontStyle = FontStyle.Italic,
-                        color = if (note == TipNote.PENDING) Sweepy.colors.keep else Sweepy.colors.pencil,
+                        color = if (note == TipNote.PENDING) Pixnix.colors.keep else Pixnix.colors.pencil,
                         modifier = Modifier.padding(top = 18.dp),
                     )
                 }
 
                 if (tipsGiven > 0) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 26.dp)) {
-                        MarkIcon(Mark.STAR, Sweepy.colors.favorite, size = 22.dp)
+                        MarkIcon(Mark.STAR, Pixnix.colors.favorite, size = 22.dp)
                         Spacer(Modifier.width(10.dp))
                         Text(
                             pluralStringResource(R.plurals.tips_given, tipsGiven, tipsGiven),
                             style = MaterialTheme.typography.titleMedium,
-                            color = Sweepy.colors.ink,
+                            color = Pixnix.colors.ink,
                         )
                     }
                 }
@@ -143,7 +143,7 @@ fun TipJarScreen(
                 Text(
                     stringResource(R.string.tips_fine_print),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Sweepy.colors.inkMuted,
+                    color = Pixnix.colors.inkMuted,
                 )
             }
         }
@@ -167,34 +167,34 @@ private fun TipCard(tip: Tip, state: TipJarState, onBuy: (Tip) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .alpha(if (state == TipJarState.Unavailable) 0.55f else 1f)
-            .chunky(shape, fill = Sweepy.colors.surface, offset = 4.dp)
+            .chunky(shape, fill = Pixnix.colors.surface, offset = 4.dp)
             .clip(shape)
-            .background(Sweepy.colors.surface)
-            .border(1.dp, Sweepy.colors.hairline, shape)
+            .background(Pixnix.colors.surface)
+            .border(1.dp, Pixnix.colors.hairline, shape)
             .pressable({ onBuy(tip) }, enabled = enabled, pressedScale = 0.97f, role = Role.Button)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(64.dp).clip(CircleShape).background(Sweepy.colors.paper),
+            modifier = Modifier.size(64.dp).clip(CircleShape).background(Pixnix.colors.paper),
         ) {
             TipArt(tip, Modifier.size(48.dp))
         }
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(tipName(tip), style = MaterialTheme.typography.headlineSmall, color = Sweepy.colors.ink)
+            Text(tipName(tip), style = MaterialTheme.typography.headlineSmall, color = Pixnix.colors.ink)
             Spacer(Modifier.height(2.dp))
-            Text(tipLine(tip), style = MaterialTheme.typography.bodySmall, color = Sweepy.colors.inkMuted)
+            Text(tipLine(tip), style = MaterialTheme.typography.bodySmall, color = Pixnix.colors.inkMuted)
         }
         Spacer(Modifier.width(12.dp))
         Text(
             price ?: if (state == TipJarState.Loading) "···" else "–",
             style = MaterialTheme.typography.labelLarge,
-            color = Sweepy.colors.paper,
+            color = Pixnix.colors.paper,
             modifier = Modifier
                 .widthIn(min = 64.dp)
                 .clip(CircleShape)
-                .background(if (enabled) Sweepy.colors.ink else Sweepy.colors.inkMuted)
+                .background(if (enabled) Pixnix.colors.ink else Pixnix.colors.inkMuted)
                 .padding(horizontal = 14.dp, vertical = 9.dp),
             textAlign = TextAlign.Center,
         )
@@ -219,9 +219,9 @@ private fun ThankYou(tip: Tip, count: Int, onDismiss: () -> Unit) {
                 stringResource(R.string.tips_thanks_title),
                 style = MaterialTheme.typography.displayMedium,
                 fontStyle = FontStyle.Italic,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 modifier = Modifier
-                    .pencilMark(Mark.CIRCLE, Sweepy.colors.pencil, { circle.value }, strokeWidth = 0.06f)
+                    .pencilMark(Mark.CIRCLE, Pixnix.colors.pencil, { circle.value }, strokeWidth = 0.06f)
                     .padding(horizontal = 26.dp, vertical = 14.dp),
             )
             Spacer(Modifier.height(18.dp))
@@ -236,7 +236,7 @@ private fun ThankYou(tip: Tip, count: Int, onDismiss: () -> Unit) {
                     count,
                 ),
                 style = MaterialTheme.typography.bodyLarge,
-                color = Sweepy.colors.inkMuted,
+                color = Pixnix.colors.inkMuted,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(32.dp))
@@ -268,11 +268,11 @@ private fun tipLine(tip: Tip): String = stringResource(
 /** A small hand-drawn picture of each tip, in the theme's inks. */
 @Composable
 fun TipArt(tip: Tip, modifier: Modifier = Modifier) {
-    val ink = Sweepy.colors.ink
-    val fill = Sweepy.colors.print
-    val accent = Sweepy.colors.pencil
-    val green = Sweepy.colors.keep
-    val yellow = Sweepy.colors.later
+    val ink = Pixnix.colors.ink
+    val fill = Pixnix.colors.print
+    val accent = Pixnix.colors.pencil
+    val green = Pixnix.colors.keep
+    val yellow = Pixnix.colors.later
     Canvas(modifier) {
         val line = Stroke(size.minDimension * 0.045f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         when (tip) {

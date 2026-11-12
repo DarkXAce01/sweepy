@@ -94,7 +94,7 @@ val ContactSheetTypography = Typography(
 )
 
 /** Riso: zine headlines with a fluorescent ink printed a hair out of register underneath. */
-private fun risoTypography(look: SweepyLook): Typography {
+private fun risoTypography(look: PixnixLook): Typography {
     val offset = Shadow(color = look.colors.pencil.copy(alpha = 0.55f), offset = Offset(3.5f, 3f), blurRadius = 0f)
     fun headline(size: Double, line: Double, tracking: Double) = style(Zine, size, line, FontWeight.ExtraBold, tracking).copy(shadow = offset)
     return ContactSheetTypography.copy(
@@ -122,7 +122,7 @@ private fun popTypography(): Typography {
     )
 }
 
-fun typographyFor(theme: ThemeChoice, look: SweepyLook): Typography = when (theme) {
+fun typographyFor(theme: ThemeChoice, look: PixnixLook): Typography = when (theme) {
     ThemeChoice.CONTACT_SHEET -> ContactSheetTypography
     ThemeChoice.RISO -> risoTypography(look)
     ThemeChoice.POP -> popTypography()

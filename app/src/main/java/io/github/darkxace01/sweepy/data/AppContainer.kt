@@ -2,7 +2,7 @@ package io.github.darkxace01.sweepy.data
 
 import android.content.Context
 import androidx.room.Room
-import io.github.darkxace01.sweepy.data.db.SweepyDatabase
+import io.github.darkxace01.sweepy.data.db.PixnixDatabase
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateScanner
 import io.github.darkxace01.sweepy.data.duplicates.MediaHasher
 import io.github.darkxace01.sweepy.data.tips.createTipJar
@@ -14,8 +14,8 @@ import kotlinx.coroutines.SupervisorJob
 class AppContainer(context: Context) {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val database = Room.databaseBuilder(context, SweepyDatabase::class.java, "sweepy.db")
-        .addMigrations(SweepyDatabase.MIGRATION_1_2)
+    private val database = Room.databaseBuilder(context, PixnixDatabase::class.java, "sweepy.db")
+        .addMigrations(PixnixDatabase.MIGRATION_1_2)
         .build()
 
     val media = MediaRepository(context)

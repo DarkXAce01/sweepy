@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.darkxace01.sweepy.data.Decision
-import io.github.darkxace01.sweepy.data.db.SweepyDatabase
+import io.github.darkxace01.sweepy.data.db.PixnixDatabase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -34,8 +34,8 @@ class MigrationTest {
         }
 
         // Room checks the upgraded schema against the current entities when it opens.
-        val database = Room.databaseBuilder(context, SweepyDatabase::class.java, name)
-            .addMigrations(SweepyDatabase.MIGRATION_1_2)
+        val database = Room.databaseBuilder(context, PixnixDatabase::class.java, name)
+            .addMigrations(PixnixDatabase.MIGRATION_1_2)
             .allowMainThreadQueries()
             .build()
         runBlocking {

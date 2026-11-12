@@ -37,7 +37,7 @@ import io.github.darkxace01.sweepy.ui.components.Eyebrow
 import io.github.darkxace01.sweepy.ui.components.Hairline
 import io.github.darkxace01.sweepy.ui.components.MediaThumbnail
 import io.github.darkxace01.sweepy.ui.components.OutlineButton
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import io.github.darkxace01.sweepy.ui.formatDate
 import io.github.darkxace01.sweepy.ui.formatDuration
 import io.github.darkxace01.sweepy.ui.formatSize
@@ -52,8 +52,8 @@ fun InfoSheet(item: MediaItem, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Sweepy.colors.surface,
-        dragHandle = { Box(Modifier.padding(top = 12.dp, bottom = 8.dp).size(width = 36.dp, height = 3.dp).background(Sweepy.colors.hairline)) },
+        containerColor = Pixnix.colors.surface,
+        dragHandle = { Box(Modifier.padding(top = 12.dp, bottom = 8.dp).size(width = 36.dp, height = 3.dp).background(Pixnix.colors.hairline)) },
     ) {
         Column(Modifier.padding(start = 24.dp, end = 24.dp, bottom = 28.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -64,7 +64,7 @@ fun InfoSheet(item: MediaItem, onDismiss: () -> Unit) {
                     Text(
                         item.displayName ?: unknown,
                         style = MaterialTheme.typography.headlineSmall,
-                        color = Sweepy.colors.ink,
+                        color = Pixnix.colors.ink,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -90,14 +90,14 @@ fun InfoSheet(item: MediaItem, onDismiss: () -> Unit) {
                 Text(
                     exposure.joinToString("   "),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Sweepy.colors.paper,
+                    color = Pixnix.colors.paper,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Sweepy.colors.ink)
+                        .background(Pixnix.colors.ink)
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                 )
             }
@@ -109,7 +109,7 @@ fun InfoSheet(item: MediaItem, onDismiss: () -> Unit) {
                     Text(
                         value,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Sweepy.colors.ink,
+                        color = Pixnix.colors.ink,
                         textAlign = TextAlign.End,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

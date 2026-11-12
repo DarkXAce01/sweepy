@@ -86,8 +86,8 @@ import io.github.darkxace01.sweepy.ui.deck.SwipeCardState
 import io.github.darkxace01.sweepy.ui.duplicates.DuplicatesScreen
 import io.github.darkxace01.sweepy.ui.home.HomeScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
-import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
+import io.github.darkxace01.sweepy.ui.theme.PixnixTheme
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
@@ -124,7 +124,13 @@ class StoreListingTest {
             }) {
                 DeckScreen(
                     source = DeckSource.Folder(0, "Camera"),
-                    state = DeckUiState(loading = false, deck = library.drop(1), totalCount = 4210, markedCount = 38, markedBytes = 96_000_000, canUndo = true),
+                    state = DeckUiState(
+                        loading = false, deck = library.drop(1), totalCount = 4210, markedCount = 38, markedBytes = 96_000_000, canUndo = true,
+                        // The strip under the pile: a few already swiped on the left, the rest still to come.
+                        reel = listOf(Decision.KEEP, Decision.DELETE, Decision.KEEP).mapIndexed { i, d -> ReelCard(library[10 + i], d) } +
+                            library.drop(1).take(8).map { ReelCard(it, null) },
+                        position = 3,
+                    ),
                     showHint = false, onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
                 )
             }
@@ -136,16 +142,16 @@ class StoreListingTest {
             Column(Modifier.align(Alignment.TopStart).padding(start = 30.dp, end = 24.dp, top = 26.dp)) {
                 for (line in listOf("Internet access", "Ads", "Accounts or sign-ups", "Tracking or analytics")) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
-                        MarkIcon(Mark.CROSS, Sweepy.colors.pencil, size = 28.dp)
+                        MarkIcon(Mark.CROSS, Pixnix.colors.pencil, size = 28.dp)
                         Spacer(Modifier.width(16.dp))
-                        Text(line, style = MaterialTheme.typography.headlineLarge.copy(fontSize = 29.sp), color = Sweepy.colors.ink)
+                        Text(line, style = MaterialTheme.typography.headlineLarge.copy(fontSize = 29.sp), color = Pixnix.colors.ink)
                     }
                 }
                 Spacer(Modifier.height(14.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
-                    MarkIcon(Mark.CIRCLE, Sweepy.colors.keep, size = 28.dp)
+                    MarkIcon(Mark.CIRCLE, Pixnix.colors.keep, size = 28.dp)
                     Spacer(Modifier.width(16.dp))
-                    Text("Works fully offline", style = MaterialTheme.typography.headlineLarge.copy(fontSize = 29.sp, fontStyle = FontStyle.Italic), color = Sweepy.colors.ink)
+                    Text("Works fully offline", style = MaterialTheme.typography.headlineLarge.copy(fontSize = 29.sp, fontStyle = FontStyle.Italic), color = Pixnix.colors.ink)
                 }
             }
             Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(150.dp)) {
@@ -192,6 +198,22 @@ class StoreListingTest {
         }
     }
 
+    @Test fun shot7_audio() = render("phone_7_audio") {
+        Slide(listOf("Voice notes and", "music {too}."), "Play it, then keep it or bin it.") {
+            Phone {
+                DeckScreen(
+                    source = DeckSource.Audio,
+                    state = DeckUiState(
+                        loading = false, deck = audio, totalCount = 212, markedCount = 4, markedBytes = 9_000_000, canUndo = true,
+                        reel = listOf(ReelCard(audio[4], Decision.DELETE), ReelCard(audio[0], Decision.KEEP)) + audio.drop(1).take(3).map { ReelCard(it, null) },
+                        position = 2,
+                    ),
+                    showHint = false, onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
+                )
+            }
+        }
+    }
+
     @Test fun shot6_themes() = render("phone_6_themes") {
         Slide(listOf("Pick a look", "you'll {love}."), "Three themes, each in light and dark.") {
             // The same screen in every theme: light on top, dark underneath, so the look is the only thing that changes.
@@ -218,8 +240,8 @@ class StoreListingTest {
     @Test fun feature_graphic() = render("feature_graphic") {
         Paper {
             Column(Modifier.align(Alignment.CenterStart).padding(start = 40.dp)) {
-                Eyebrow("Photo & video cleaner", color = Sweepy.colors.pencil)
-                Text("Sweepy", style = MaterialTheme.typography.displayLarge.copy(fontSize = 76.sp, lineHeight = 76.sp), color = Sweepy.colors.ink)
+                Eyebrow("Photo, video & audio cleaner", color = Pixnix.colors.pencil)
+                Text("Pixnix", style = MaterialTheme.typography.displayLarge.copy(fontSize = 76.sp, lineHeight = 76.sp), color = Pixnix.colors.ink)
                 Spacer(Modifier.height(2.dp))
                 Headline("Swipe your gallery {clean}.", size = 24)
             }
@@ -257,7 +279,7 @@ class StoreListingTest {
                     }
                     Column(verticalArrangement = Arrangement.spacedBy((-4).dp)) { headline.forEach { Headline(it, size = 40) } }
                     Spacer(Modifier.height(4.dp))
-                    Text(sub, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 20.sp), color = Sweepy.colors.inkMuted)
+                    Text(sub, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 20.sp), color = Pixnix.colors.inkMuted)
                 }
                 // Everything below the words; phones are placed from the top of this area.
                 BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
@@ -273,12 +295,12 @@ class StoreListingTest {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .border(1.dp, Sweepy.colors.ink.copy(alpha = 0.7f), CircleShape)
+                .border(1.dp, Pixnix.colors.ink.copy(alpha = 0.7f), CircleShape)
                 .padding(start = 8.dp, end = 11.dp, top = 5.dp, bottom = 5.dp),
         ) {
-            MarkIcon(Mark.CIRCLE, Sweepy.colors.keep, size = 11.dp, strokeWidth = 0.16f)
+            MarkIcon(Mark.CIRCLE, Pixnix.colors.keep, size = 11.dp, strokeWidth = 0.16f)
             Spacer(Modifier.width(5.dp))
-            Text(text, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 14.sp), color = Sweepy.colors.ink, maxLines = 1)
+            Text(text, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 14.sp), color = Pixnix.colors.ink, maxLines = 1)
         }
     }
 
@@ -290,7 +312,7 @@ class StoreListingTest {
         val circled = line.substringAfter('{', "").substringBefore('}')
         val after = line.substringAfter('}', "")
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(before, style = style, color = Sweepy.colors.ink)
+            Text(before, style = style, color = Pixnix.colors.ink)
             if (circled.isNotEmpty()) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = (size * 0.2).dp)) {
                     // Behind the word and larger than it: the loop goes round the letters, never through them.
@@ -301,12 +323,12 @@ class StoreListingTest {
                                 scaleX = 1.2f
                                 scaleY = 1.28f
                             }
-                            .pencilMark(Mark.CIRCLE, Sweepy.colors.pencil, { 1f }, strokeWidth = 0.06f),
+                            .pencilMark(Mark.CIRCLE, Pixnix.colors.pencil, { 1f }, strokeWidth = 0.06f),
                     )
-                    Text(circled, style = style.copy(fontStyle = FontStyle.Italic), color = Sweepy.colors.ink)
+                    Text(circled, style = style.copy(fontStyle = FontStyle.Italic), color = Pixnix.colors.ink)
                 }
             }
-            Text(after, style = style, color = Sweepy.colors.ink, modifier = Modifier.offset(x = -(size * 0.12).dp))
+            Text(after, style = style, color = Pixnix.colors.ink, modifier = Modifier.offset(x = -(size * 0.12).dp))
         }
     }
 
@@ -350,8 +372,8 @@ class StoreListingTest {
                     .clip(RoundedCornerShape(corner - bezel)),
             ) {
                 Scaled(real, scale) {
-                    SweepyTheme(darkTheme = dark, theme = theme) {
-                        Column(Modifier.fillMaxSize().background(Sweepy.colors.paper)) {
+                    PixnixTheme(darkTheme = dark, theme = theme) {
+                        Column(Modifier.fillMaxSize().background(Pixnix.colors.paper)) {
                             StatusBar()
                             Box(Modifier.fillMaxWidth().weight(1f)) { screen() }
                         }
@@ -362,7 +384,7 @@ class StoreListingTest {
             }
             if (overlay != null) {
                 Box(Modifier.padding(bezel)) {
-                    Scaled(real, scale) { SweepyTheme(darkTheme = dark, theme = theme) { Box(Modifier.fillMaxSize(), content = overlay) } }
+                    Scaled(real, scale) { PixnixTheme(darkTheme = dark, theme = theme) { Box(Modifier.fillMaxSize(), content = overlay) } }
                 }
             }
         }
@@ -370,7 +392,7 @@ class StoreListingTest {
 
     @Composable
     private fun BoxScope.ThemeLabel(text: String, x: Dp, top: Dp) {
-        Eyebrow(text, color = Sweepy.colors.pencil, small = true, modifier = Modifier.align(Alignment.TopCenter).offset(x, top))
+        Eyebrow(text, color = Pixnix.colors.pencil, small = true, modifier = Modifier.align(Alignment.TopCenter).offset(x, top))
     }
 
     @Composable
@@ -389,7 +411,7 @@ class StoreListingTest {
 
     @Composable
     private fun StatusBar() {
-        val ink = Sweepy.colors.ink
+        val ink = Pixnix.colors.ink
         Row(
             Modifier.fillMaxWidth().height(36.dp).padding(horizontal = 26.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -409,12 +431,12 @@ class StoreListingTest {
     /** A loose print for the feature graphic, optionally marked in pencil. */
     @Composable
     private fun Print(item: MediaItem, modifier: Modifier, rotation: Float, mark: Mark? = null, small: Boolean = false) {
-        val color = if (mark == Mark.CIRCLE) Sweepy.colors.keep else Sweepy.colors.pencil
+        val color = if (mark == Mark.CIRCLE) Pixnix.colors.keep else Pixnix.colors.pencil
         Box(
             modifier
                 .rotate(rotation)
                 .shadow(10.dp, RoundedCornerShape(3.dp))
-                .background(Sweepy.colors.print, RoundedCornerShape(3.dp))
+                .background(Pixnix.colors.print, RoundedCornerShape(3.dp))
                 .padding(start = 7.dp, end = 7.dp, top = 7.dp, bottom = 22.dp),
         ) {
             Box(Modifier.size(if (small) 112.dp else 100.dp, if (small) 140.dp else 132.dp).then(if (mark != null) Modifier.pencilMark(mark, color, { 1f }, strokeWidth = 0.07f) else Modifier)) {
@@ -446,12 +468,32 @@ class StoreListingTest {
                 quickDecks = listOf(
                     DeckSummary(DeckSource.LargeVideos, 48, 6_700_000_000, 41, library.drop(16).take(4)),
                     DeckSummary(DeckSource.Later, 24, 120_000_000, 24, library.drop(20).take(4)),
+                    DeckSummary(DeckSource.WhatsApp, 2_650, 4_100_000_000, 2_650, library.drop(24).take(4)),
                 ),
+                audio = DeckSummary(DeckSource.Audio, 212, 1_300_000_000, 180, audio.take(3)),
                 folders = folders,
                 months = months,
             ),
             partialAccess = false,
             onOpenDeck = {}, onOpenReview = {}, onOpenTrash = {}, onOpenSettings = {}, onOpenDuplicates = {}, onRequestFullAccess = {},
+            onOpenTipJar = {},
+        )
+    }
+
+    /** A few audio files of the kind a phone collects: a voice note, a lecture, a song, a call, a download. */
+    private val audio: List<MediaItem> = listOf(
+        Triple("PTT-20261104-WA0012.opus", "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Voice Notes/202645/", null),
+        Triple("Lecture notes, week 3.m4a", "Recordings/", null),
+        Triple("Road trip mix.mp3", "Music/", null),
+        Triple("Call with Bank_20261021.m4a", "Recordings/Call/", null),
+        Triple("ringtone_remix.mp3", "Download/", null),
+    ).mapIndexed { i, (name, path, artist) ->
+        MediaItem(
+            id = 500L + i, uri = Uri.parse("content://media/external/audio/media/${500 + i}"), isVideo = false,
+            mimeType = "audio/mpeg", displayName = name, folder = path.trimEnd('/').substringAfterLast('/'), bucketId = 50L + i,
+            relativePath = path, sizeBytes = 240_000L + i * 1_900_000L, dateTakenMillis = 1_762_000_000_000 - i * 86_400_000L * 3,
+            dateAddedSeconds = 1_762_000_000L - i * 86_400L * 3, width = 0, height = 0, durationMillis = 14_000L + i * 61_000L,
+            isAudio = true, artist = artist,
         )
     }
 
@@ -526,7 +568,7 @@ class StoreListingTest {
                     if (id == null || !withPhotos) ColorImage(0xFF444444.toInt()) else photo(id).asImage()
                 },
             ) {
-                SweepyTheme(darkTheme = false, theme = ThemeChoice.CONTACT_SHEET, content = content)
+                PixnixTheme(darkTheme = false, theme = ThemeChoice.CONTACT_SHEET, content = content)
             }
         }
     }

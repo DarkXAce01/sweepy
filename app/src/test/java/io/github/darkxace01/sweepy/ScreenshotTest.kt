@@ -34,7 +34,7 @@ import io.github.darkxace01.sweepy.data.DeckOrder
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaKind
 import io.github.darkxace01.sweepy.ui.deck.FilterSheetContent
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.TrashedItem
 import io.github.darkxace01.sweepy.ui.DeckSummary
@@ -56,7 +56,7 @@ import io.github.darkxace01.sweepy.ui.settings.SettingsScreen
 import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.data.AppSettings
 import io.github.darkxace01.sweepy.data.ThemeChoice
-import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
+import io.github.darkxace01.sweepy.ui.theme.PixnixTheme
 import io.github.darkxace01.sweepy.ui.trash.TrashScreen
 import io.github.darkxace01.sweepy.ui.tips.TipJarScreen
 import io.github.darkxace01.sweepy.data.tips.Tip
@@ -252,8 +252,8 @@ class ScreenshotTest {
     }
 
     @Test fun filter_sheet() = capture("filter_sheet") {
-        Box(Modifier.fillMaxSize().background(Sweepy.colors.paper), contentAlignment = Alignment.BottomCenter) {
-            Box(Modifier.fillMaxWidth().background(Sweepy.colors.surface).padding(top = 24.dp)) {
+        Box(Modifier.fillMaxSize().background(Pixnix.colors.paper), contentAlignment = Alignment.BottomCenter) {
+            Box(Modifier.fillMaxWidth().background(Pixnix.colors.surface).padding(top = 24.dp)) {
                 FilterSheetContent(
                     DeckUiState(loading = false, deck = library, filter = DeckFilter(MediaKind.PHOTOS, DeckOrder.OLDEST), waitingPhotos = 2_318, waitingVideos = 412),
                     onChange = {}, onDone = {},
@@ -423,7 +423,7 @@ class ScreenshotTest {
                     if (id == null) ColorImage(0xFF444444.toInt()) else fakePhoto(id).asImage()
                 },
             ) {
-                SweepyTheme(darkTheme = dark, theme = theme, content = content)
+                PixnixTheme(darkTheme = dark, theme = theme, content = content)
             }
         }
     }

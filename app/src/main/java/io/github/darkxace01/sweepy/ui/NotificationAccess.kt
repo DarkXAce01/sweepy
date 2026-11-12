@@ -22,7 +22,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.darkxace01.sweepy.reminders.ReminderCheck
 
-/** Whether Sweepy may post notifications, and a way to ask. */
+/** Whether Pixnix may post notifications, and a way to ask. */
 @Stable
 class NotificationAccess internal constructor(
     allowed: Boolean,
@@ -33,7 +33,7 @@ class NotificationAccess internal constructor(
 
     /**
      * Shows Android's "Allow notifications?" prompt. If Android won't show it any more (the person said
-     * no before and the system now remembers), opens Sweepy's notification settings instead.
+     * no before and the system now remembers), opens Pixnix's notification settings instead.
      */
     fun request() = ask()
 }
@@ -67,7 +67,7 @@ fun rememberNotificationAccess(onResult: (Boolean) -> Unit = {}): NotificationAc
             }
         }
     }
-    // The person can flip it in Android's settings while Sweepy is in the background.
+    // The person can flip it in Android's settings while Pixnix is in the background.
     LifecycleResumeEffect(Unit) {
         access.allowed = ReminderCheck.canNotify(context)
         onPauseOrDispose { }

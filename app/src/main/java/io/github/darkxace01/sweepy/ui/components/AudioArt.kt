@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import io.github.darkxace01.sweepy.R
 import io.github.darkxace01.sweepy.data.MediaItem
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 
 /**
  * Stand-in artwork for an audio file: a waveform printed in one of the theme's inks. The shape
@@ -22,7 +22,7 @@ import io.github.darkxace01.sweepy.ui.theme.Sweepy
  */
 @Composable
 fun AudioArt(item: MediaItem, modifier: Modifier = Modifier, bars: Int = 18, played: Float? = null) {
-    val colors = Sweepy.colors
+    val colors = Pixnix.colors
     val tint = listOf(colors.keep, colors.later, colors.favorite, colors.pencil)[(item.id % 4).toInt()]
     val ink = colors.ink
     Box(modifier.background(colors.print)) {

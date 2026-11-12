@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Sweepy"
+rootProject.name = "Pixnix"
 include(":app")

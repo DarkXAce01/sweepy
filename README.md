@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/readme/banner_dark.png">
-    <img src=".github/readme/banner_light.png" alt="Sweepy: swipe your gallery clean. No internet, no ads, open source." width="100%">
+    <img src=".github/readme/banner_light.png" alt="Pixnix: swipe your gallery clean. No internet, no ads, open source." width="100%">
   </picture>
 </p>
 
@@ -13,10 +13,10 @@
 </p>
 
 Your gallery has thousands of photos you'll never look at again: blurry pocket shots, screenshots
-you needed once, ten copies of the same sunset, "good morning" forwards. **Sweepy turns clearing
+you needed once, ten copies of the same sunset, "good morning" forwards. **Pixnix turns clearing
 them out into a few minutes of swiping.** Left to delete, right to keep.
 
-It does this without ever seeing the internet. Sweepy has no internet permission at all, so your
+It does this without ever seeing the internet. Pixnix has no internet permission at all, so your
 photos physically cannot leave your phone. No ads, no account, no tracking, no subscription.
 
 ## What it does
@@ -33,7 +33,7 @@ photos physically cannot leave your phone. No ads, no account, no tracking, no s
 
 **Nothing goes until you say so**
 - Everything you swipe left waits in a review bin. Look it over, tap anything you'd rather keep, then clean up.
-- Cleaned files go to Android's own trash for about 30 days, and Sweepy can restore them from *Recently cleaned*.
+- Cleaned files go to Android's own trash for about 30 days, and Pixnix can restore them from *Recently cleaned*.
 
 **Duplicates and look-alikes**
 - Finds exact copies and bursts of near-identical shots, and suggests the one to keep: the sharpest, the most detailed, or the original. You make the call.
@@ -48,11 +48,11 @@ photos physically cannot leave your phone. No ads, no account, no tracking, no s
 
 ## Private by design
 
-Sweepy's privacy isn't a policy you have to trust. It's a permission the app doesn't have.
+Pixnix's privacy isn't a policy you have to trust. It's a permission the app doesn't have.
 
 - **No `INTERNET` permission.** Without it, Android won't let an app open a network connection.
   The Play build uses Google Play Billing for the optional tip jar; that library asks for internet
-  access, and Sweepy [removes it again](app/src/play/AndroidManifest.xml). Purchases go through the
+  access, and Pixnix [removes it again](app/src/play/AndroidManifest.xml). Purchases go through the
   Play Store app on the phone instead.
 - **No analytics, no crash reporting, no ads, no accounts.** Not even a "privacy-friendly" one.
 - **Your decisions stay on the phone** in a small local database, and "Start over" in Settings wipes it.
@@ -60,16 +60,16 @@ Sweepy's privacy isn't a policy you have to trust. It's a permission the app doe
 Check it yourself on any build:
 
 ```sh
-aapt2 dump permissions Sweepy.apk
+aapt2 dump permissions Pixnix.apk
 ```
 
 You'll see photo, video and audio access, media management, notifications and billing. You won't see internet.
 
-## Get Sweepy
+## Get Pixnix
 
-Sweepy is in testing on Google Play and will be public soon. Requires Android 11 or newer.
+Pixnix is in testing on Google Play and will be public soon. Requires Android 11 or newer.
 
-Sweepy is free, with everything included. The Play version has an optional tip jar (coffee, lunch
+Pixnix is free, with everything included. The Play version has an optional tip jar (coffee, lunch
 or dinner) for anyone who wants to say thanks; tips unlock nothing.
 
 ## Build it yourself
@@ -95,7 +95,7 @@ Screens are checked with Robolectric and Roborazzi screenshot tests.
 
 ## License
 
-Sweepy is free software under the [GNU GPL v3](LICENSE): you can use, study, change and share it,
+Pixnix is free software under the [GNU GPL v3](LICENSE): you can use, study, change and share it,
 and changed versions must stay open source under the same license.
 
 Fonts are under the SIL Open Font License 1.1 (see [`third_party/`](third_party)): Instrument Serif,

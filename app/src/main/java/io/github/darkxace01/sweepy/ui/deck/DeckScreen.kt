@@ -98,7 +98,7 @@ import io.github.darkxace01.sweepy.ui.components.formatCount
 import io.github.darkxace01.sweepy.ui.components.pencilMark
 import io.github.darkxace01.sweepy.ui.components.pressable
 import io.github.darkxace01.sweepy.ui.formatSize
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
 import kotlinx.coroutines.launch
 
 /** How many cards are drawn in the pile (the top one plus the ones underneath). */
@@ -203,7 +203,7 @@ fun DeckScreen(
                     .onSizeChanged { stackSize = it },
             ) {
                 when {
-                    state.loading -> CircularProgressIndicator(color = Sweepy.colors.ink, strokeWidth = 1.5.dp, modifier = Modifier.size(28.dp))
+                    state.loading -> CircularProgressIndicator(color = Pixnix.colors.ink, strokeWidth = 1.5.dp, modifier = Modifier.size(28.dp))
                     current == null -> DoneState(source, state, onOpenReview, onBack, onShowAll = { onFilterChange(state.defaultFilter) })
                     else -> {
                         // Prints underneath, drawn back to front. They straighten up and come forward
@@ -285,14 +285,14 @@ private fun TopBar(
         modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
     ) {
         QuietIconButton(stringResource(R.string.back), onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Sweepy.colors.ink)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Pixnix.colors.ink)
         }
         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
             Eyebrow(eyebrow, small = true)
             Text(
                 title,
                 style = MaterialTheme.typography.headlineSmall,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -308,14 +308,14 @@ private fun TopBar(
 private fun BinChip(count: Int, onClick: () -> Unit) {
     val active = count > 0
     val label = stringResource(R.string.review_title)
-    val color = if (active) Sweepy.colors.pencil else Sweepy.colors.inkMuted
+    val color = if (active) Pixnix.colors.pencil else Pixnix.colors.inkMuted
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .height(40.dp)
-            .chunky(RoundedCornerShape(10.dp), fill = Sweepy.colors.surface, offset = 3.dp)
+            .chunky(RoundedCornerShape(10.dp), fill = Pixnix.colors.surface, offset = 3.dp)
             .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, if (active) color.copy(alpha = 0.45f) else Sweepy.colors.hairline, RoundedCornerShape(10.dp))
+            .border(1.dp, if (active) color.copy(alpha = 0.45f) else Pixnix.colors.hairline, RoundedCornerShape(10.dp))
             .pressable(onClick, pressedScale = 0.92f)
             .padding(horizontal = 12.dp)
             .semantics { contentDescription = label },
@@ -330,7 +330,7 @@ private fun BinChip(count: Int, onClick: () -> Unit) {
             },
             label = "binCount",
         ) { value ->
-            Eyebrow(formatCount(value), color = Sweepy.colors.ink, modifier = Modifier.padding(start = 6.dp))
+            Eyebrow(formatCount(value), color = Pixnix.colors.ink, modifier = Modifier.padding(start = 6.dp))
         }
     }
 }
@@ -417,7 +417,7 @@ private fun DeckReel(reel: List<ReelCard>, position: Int, onMoveTo: (MediaItem) 
                         showBadge = false,
                     )
                     if (decided != null) MarkIcon(decided.mark, decided.color, size = 26.dp, strokeWidth = 0.13f)
-                    if (onShow) Box(Modifier.fillMaxSize().border(2.dp, Sweepy.colors.ink, RoundedCornerShape(6.dp)))
+                    if (onShow) Box(Modifier.fillMaxSize().border(2.dp, Pixnix.colors.ink, RoundedCornerShape(6.dp)))
                 }
             }
         }
@@ -443,7 +443,7 @@ private fun UndoButton(enabled: Boolean, onClick: () -> Unit) {
             .pressable(onClick, enabled = enabled, pressedScale = 0.85f)
             .semantics { contentDescription = label },
     ) {
-        Icon(painterResource(R.drawable.ic_undo), contentDescription = null, tint = Sweepy.colors.ink, modifier = Modifier.size(22.dp))
+        Icon(painterResource(R.drawable.ic_undo), contentDescription = null, tint = Pixnix.colors.ink, modifier = Modifier.size(22.dp))
     }
 }
 
@@ -457,8 +457,8 @@ private fun MarkButton(
     onSwipe: (SwipeDirection) -> Unit,
 ) {
     val color = direction.color
-    val print = Sweepy.colors.print
-    val hairline = Sweepy.colors.hairline
+    val print = Pixnix.colors.print
+    val hairline = Pixnix.colors.hairline
     val label = stringResource(
         when (direction) {
             SwipeDirection.LEFT -> R.string.action_delete
@@ -563,7 +563,7 @@ private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -
                 stringResource(R.string.done_title),
                 style = MaterialTheme.typography.displaySmall,
                 fontStyle = FontStyle.Italic,
-                color = Sweepy.colors.ink,
+                color = Pixnix.colors.ink,
                 textAlign = TextAlign.Center,
             )
             // A loop drawn around the words, the way a keeper gets circled on a contact sheet.
@@ -571,7 +571,7 @@ private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -
                 Modifier
                     .fillMaxWidth(0.88f)
                     .height(150.dp)
-                    .pencilMark(Mark.CIRCLE, Sweepy.colors.keep, { draw.value }, strokeWidth = 0.035f),
+                    .pencilMark(Mark.CIRCLE, Pixnix.colors.keep, { draw.value }, strokeWidth = 0.035f),
             )
         }
         Spacer(Modifier.height(12.dp))
@@ -584,7 +584,7 @@ private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -
                 pluralStringResource(R.plurals.done_body, state.totalCount, formatCount(state.totalCount))
             },
             style = MaterialTheme.typography.bodyLarge,
-            color = Sweepy.colors.inkMuted,
+            color = Pixnix.colors.inkMuted,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 12.dp),
         )
@@ -597,8 +597,8 @@ private fun DoneState(source: DeckSource, state: DeckUiState, onOpenReview: () -
             InkButton(
                 text = pluralStringResource(R.plurals.done_review, state.markedCount, formatCount(state.markedCount)),
                 trailing = formatSize(context, state.markedBytes),
-                color = Sweepy.colors.pencil,
-                contentColor = Sweepy.colors.onPencil,
+                color = Pixnix.colors.pencil,
+                contentColor = Pixnix.colors.onPencil,
                 onClick = onOpenReview,
                 modifier = Modifier.fillMaxWidth(),
             )

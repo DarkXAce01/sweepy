@@ -1,7 +1,7 @@
 package io.github.darkxace01.sweepy.data.reminders
 
 /**
- * When Sweepy is allowed to send a reminder, and which one. Everything here is plain arithmetic on
+ * When Pixnix is allowed to send a reminder, and which one. Everything here is plain arithmetic on
  * numbers worked out on the phone, so it can be tested without Android.
  *
  * The rules, in short:

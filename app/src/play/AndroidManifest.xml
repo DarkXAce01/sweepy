@@ -4,8 +4,8 @@
 
     <!--
         Google Play billing (the tip jar) pulls in Google's logging library, which asks for internet
-        access to send billing logs. Sweepy promises no internet, so take it back out. Payments still
-        work: they go through the Play Store app over an on-device connection, not through Sweepy.
+        access to send billing logs. Pixnix promises no internet, so take it back out. Payments still
+        work: they go through the Play Store app over an on-device connection, not through Pixnix.
     -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />

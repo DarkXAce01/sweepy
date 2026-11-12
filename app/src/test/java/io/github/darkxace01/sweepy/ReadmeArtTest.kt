@@ -33,8 +33,8 @@ import io.github.darkxace01.sweepy.ui.components.Mark
 import io.github.darkxace01.sweepy.ui.components.MarkIcon
 import io.github.darkxace01.sweepy.ui.components.Paper
 import io.github.darkxace01.sweepy.ui.components.pencilMark
-import io.github.darkxace01.sweepy.ui.theme.Sweepy
-import io.github.darkxace01.sweepy.ui.theme.SweepyTheme
+import io.github.darkxace01.sweepy.ui.theme.Pixnix
+import io.github.darkxace01.sweepy.ui.theme.PixnixTheme
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -54,17 +54,17 @@ class ReadmeArtTest {
     @Test fun banner_dark() = banner("banner_dark", dark = true)
 
     private fun banner(name: String, dark: Boolean) = captureRoboImage("build/outputs/readme/$name.png") {
-        SweepyTheme(darkTheme = dark, theme = ThemeChoice.CONTACT_SHEET) {
+        PixnixTheme(darkTheme = dark, theme = ThemeChoice.CONTACT_SHEET) {
             Paper {
                 Row(Modifier.align(Alignment.Center).offset(x = (-8).dp), verticalAlignment = Alignment.CenterVertically) {
                     AppIcon(Modifier.size(176.dp))
                     Spacer(Modifier.width(40.dp))
                     Column {
-                        Eyebrow("Photo & video cleaner for Android", color = Sweepy.colors.pencil)
+                        Eyebrow("Photo & video cleaner for Android", color = Pixnix.colors.pencil)
                         Text(
-                            "Sweepy",
+                            "Pixnix",
                             style = MaterialTheme.typography.displayLarge.copy(fontSize = 88.sp, lineHeight = 88.sp),
-                            color = Sweepy.colors.ink,
+                            color = Pixnix.colors.ink,
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Line("Swipe your gallery")
@@ -75,9 +75,9 @@ class ReadmeArtTest {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             for ((i, promise) in listOf("No internet", "No ads", "Open source").withIndex()) {
                                 if (i > 0) Spacer(Modifier.width(14.dp))
-                                MarkIcon(Mark.CIRCLE, Sweepy.colors.keep, size = 12.dp, strokeWidth = 0.16f)
+                                MarkIcon(Mark.CIRCLE, Pixnix.colors.keep, size = 12.dp, strokeWidth = 0.16f)
                                 Spacer(Modifier.width(6.dp))
-                                Eyebrow(promise, color = Sweepy.colors.ink, small = true)
+                                Eyebrow(promise, color = Pixnix.colors.ink, small = true)
                             }
                         }
                     }
@@ -94,7 +94,7 @@ class ReadmeArtTest {
             lineHeight = 34.sp,
             fontStyle = if (italic) FontStyle.Italic else FontStyle.Normal,
         ),
-        color = Sweepy.colors.inkMuted,
+        color = Pixnix.colors.inkMuted,
         modifier = modifier,
     )
 
@@ -109,7 +109,7 @@ class ReadmeArtTest {
                         scaleX = 1.25f
                         scaleY = 1.45f
                     }
-                    .pencilMark(Mark.CIRCLE, Sweepy.colors.pencil, { 1f }, strokeWidth = 0.06f),
+                    .pencilMark(Mark.CIRCLE, Pixnix.colors.pencil, { 1f }, strokeWidth = 0.06f),
             )
             Line(word, italic = true)
         }

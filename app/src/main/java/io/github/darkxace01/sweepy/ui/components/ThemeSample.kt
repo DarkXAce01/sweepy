@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.darkxace01.sweepy.data.ThemeChoice
-import io.github.darkxace01.sweepy.ui.theme.LocalSweepyLook
+import io.github.darkxace01.sweepy.ui.theme.LocalPixnixLook
 import io.github.darkxace01.sweepy.ui.theme.lookFor
 import io.github.darkxace01.sweepy.ui.theme.typographyFor
 
@@ -25,7 +25,7 @@ import io.github.darkxace01.sweepy.ui.theme.typographyFor
 @Composable
 fun ThemeSample(theme: ThemeChoice, dark: Boolean, modifier: Modifier = Modifier, markSize: Dp = 20.dp, padding: Dp = 12.dp) {
     val look = lookFor(theme, dark)
-    CompositionLocalProvider(LocalSweepyLook provides look) {
+    CompositionLocalProvider(LocalPixnixLook provides look) {
         MaterialTheme(typography = typographyFor(theme, look)) {
             Paper(modifier) {
                 // Pinned top and bottom, so a tall font can't squash the marks in a small swatch.

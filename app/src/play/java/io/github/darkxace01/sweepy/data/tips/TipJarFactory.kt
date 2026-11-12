@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 fun createTipJar(context: Context, scope: CoroutineScope, onTipped: (Tip, Int) -> Unit): TipJar = PlayTipJar(context, scope, onTipped)
 
 /**
- * Tips through Google Play billing. Talks to the Play Store app on the phone, so Sweepy itself
+ * Tips through Google Play billing. Talks to the Play Store app on the phone, so Pixnix itself
  * still needs no internet permission. Tips are consumed right away: nothing to unlock or restore.
  */
 private class PlayTipJar(context: Context, private val scope: CoroutineScope, private val onTipped: (Tip, Int) -> Unit) : TipJar {
@@ -107,7 +107,7 @@ private class PlayTipJar(context: Context, private val scope: CoroutineScope, pr
         }
     }
 
-    /** Tips that were paid while Sweepy wasn't listening (slow payment methods, a crash mid-purchase). */
+    /** Tips that were paid while Pixnix wasn't listening (slow payment methods, a crash mid-purchase). */
     private fun finishOpenPurchases() {
         val params = QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()
         client.queryPurchasesAsync(params) { result, purchases ->

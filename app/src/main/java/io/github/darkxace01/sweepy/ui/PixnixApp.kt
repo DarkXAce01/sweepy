@@ -92,7 +92,7 @@ sealed interface Screen {
 }
 
 @Composable
-fun SweepyApp(
+fun PixnixApp(
     /** A tapped reminder: the screen to open once the app is ready. */
     openRequest: ReminderKind? = null,
     onOpenRequestHandled: () -> Unit = {},
@@ -118,7 +118,7 @@ fun SweepyApp(
     }
 
     // Audio is asked for on its own, from the audio card. Turned down twice, Android stops asking,
-    // so after that the card opens Sweepy's page in Settings instead.
+    // so after that the card opens Pixnix's page in Settings instead.
     var audioAsks by rememberSaveable { mutableIntStateOf(0) }
     val audioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         audioAsks++
