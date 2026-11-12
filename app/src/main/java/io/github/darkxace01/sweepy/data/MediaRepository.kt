@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.BaseColumns
 import android.provider.MediaStore
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -42,19 +43,76 @@ class MediaRepository(private val context: Context) {
     /**
      * Voice notes, recordings and music, newest first. Ringtones, alarms and notification sounds are
      * left out: they're part of how the phone works, not clutter. Empty without audio permission.
+     *
+     * Read from Android's own audio collection (the one music players use), and every column is
+     * optional: phones fill these in very differently, and one odd phone mustn't hide all audio.
      */
     suspend fun loadAudio(): List<MediaItem> = withContext(Dispatchers.IO) {
         val args = Bundle().apply {
-            putString(ContentResolver.QUERY_ARG_SQL_SELECTION, AUDIO_SELECTION)
-            putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, AUDIO_SELECTION_ARGS)
             putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER, "${MediaStore.MediaColumns.DATE_ADDED} DESC")
         }
-        runCatching {
-            resolver.query(collection, PROJECTION, args, null)?.use { cursor ->
-                val columns = Columns(cursor)
-                buildList(cursor.count) { while (cursor.moveToNext()) add(columns.read(cursor)) }
-            }
-        }.getOrNull().orEmpty()
+        try {
+            resolver.query(AUDIO_COLLECTION, null, args, null)?.use { cursor ->
+                val columns = AudioColumns(cursor)
+                buildList(cursor.count) {
+                    while (cursor.moveToNext()) columns.read(cursor)?.let(::add)
+                }
+            }.orEmpty()
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Couldn't read audio files", e)
+            emptyList()
+        }
+    }
+
+    /** Reads audio rows, tolerating any column a phone leaves out. */
+    private class AudioColumns(private val cursor: Cursor) {
+        private fun column(name: String) = cursor.getColumnIndex(name).takeIf { it >= 0 }
+        private val id = cursor.getColumnIndexOrThrow(BaseColumns._ID)
+        private val mime = column(MediaStore.MediaColumns.MIME_TYPE)
+        private val name = column(MediaStore.MediaColumns.DISPLAY_NAME)
+        private val folder = column(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+        private val bucketId = column(MediaStore.MediaColumns.BUCKET_ID)
+        private val path = column(MediaStore.MediaColumns.RELATIVE_PATH)
+        private val size = column(MediaStore.MediaColumns.SIZE)
+        private val taken = column(MediaStore.MediaColumns.DATE_TAKEN)
+        private val added = column(MediaStore.MediaColumns.DATE_ADDED)
+        private val duration = column(MediaStore.MediaColumns.DURATION)
+        private val artist = column(MediaStore.MediaColumns.ARTIST)
+
+        /** Phone sounds: a "yes" here means skip it. Blank (as many phones leave it) counts as no. */
+        private val phoneSounds = listOf(
+            MediaStore.Audio.AudioColumns.IS_RINGTONE,
+            MediaStore.Audio.AudioColumns.IS_ALARM,
+            MediaStore.Audio.AudioColumns.IS_NOTIFICATION,
+        ).mapNotNull(::column)
+
+        private fun long(index: Int?) = index?.takeUnless(cursor::isNull)?.let(cursor::getLong) ?: 0L
+        private fun string(index: Int?) = index?.takeUnless(cursor::isNull)?.let(cursor::getString)
+
+        fun read(cursor: Cursor): MediaItem? {
+            if (phoneSounds.any { long(it) == 1L }) return null
+            val id = cursor.getLong(id)
+            val addedSeconds = long(added)
+            val takenMillis = long(taken)
+            return MediaItem(
+                id = id,
+                uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id),
+                isVideo = false,
+                mimeType = string(mime),
+                displayName = string(name),
+                folder = string(folder),
+                bucketId = long(bucketId),
+                relativePath = string(path),
+                sizeBytes = long(size),
+                dateTakenMillis = if (takenMillis > 0) takenMillis else addedSeconds * 1000,
+                dateAddedSeconds = addedSeconds,
+                width = 0,
+                height = 0,
+                durationMillis = long(duration),
+                isAudio = true,
+                artist = string(artist)?.takeUnless { it == MediaStore.UNKNOWN_STRING },
+            )
+        }
     }
 
     /** Items in the system trash, soonest-to-expire first. */
@@ -172,11 +230,8 @@ class MediaRepository(private val context: Context) {
             MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString(),
             MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString(),
         )
-        val AUDIO_SELECTION = "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ? AND " +
-            "${MediaStore.Audio.AudioColumns.IS_RINGTONE} = 0 AND " +
-            "${MediaStore.Audio.AudioColumns.IS_ALARM} = 0 AND " +
-            "${MediaStore.Audio.AudioColumns.IS_NOTIFICATION} = 0"
-        val AUDIO_SELECTION_ARGS = arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString())
+        val AUDIO_COLLECTION = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        const val TAG = "Sweepy"
         const val TRASH_SELECTION = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?, ?)"
         val TRASH_SELECTION_ARGS = MEDIA_SELECTION_ARGS + MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString()
     }
