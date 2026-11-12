@@ -48,7 +48,7 @@ import io.github.darkxace01.sweepy.ui.deck.SwipeCard
 import io.github.darkxace01.sweepy.ui.deck.SwipeCardState
 import io.github.darkxace01.sweepy.ui.home.HomeScreen
 import io.github.darkxace01.sweepy.ui.home.HomeTab
-import io.github.darkxace01.sweepy.ui.DecidedCard
+import io.github.darkxace01.sweepy.data.ReelCard
 import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.ui.permission.PermissionScreen
 import io.github.darkxace01.sweepy.ui.review.ReviewScreen
@@ -105,6 +105,9 @@ class ScreenshotTest {
 
     @Config(qualifiers = "w412dp-h2000dp-xxhdpi")
     @Test fun pop_home_full() = capture("pop_home_full", theme = ThemeChoice.POP) { Home() }
+
+    /** The reel moved back to a photo already swiped: its mark shows on the card. */
+    @Test fun deck_revisit() = capture("deck_revisit") { Deck(position = 1) }
 
     @Test fun deck_audio() = capture("deck_audio") { AudioDeck() }
 
@@ -330,18 +333,20 @@ class ScreenshotTest {
     }
 
     @Composable
-    private fun Deck(showHint: Boolean = false) {
+    private fun Deck(showHint: Boolean = false, position: Int = 4) {
         DeckScreen(
             source = DeckSource.WhatsApp,
             state = DeckUiState(
                 loading = false,
-                deck = library.drop(1),
+                deck = library.drop(4),
                 totalCount = 3122,
                 markedCount = 38,
                 markedBytes = 96_000_000,
                 canUndo = true,
-                recent = listOf(Decision.KEEP, Decision.DELETE, Decision.DELETE, Decision.LATER, Decision.KEEP)
-                    .mapIndexed { i, d -> DecidedCard(library[i + 10], d) },
+                reel = library.mapIndexed { i, item ->
+                    ReelCard(item, listOf(Decision.KEEP, Decision.DELETE, Decision.DELETE, Decision.LATER).getOrNull(i))
+                },
+                position = position,
             ),
             showHint = showHint,
             onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
@@ -354,7 +359,8 @@ class ScreenshotTest {
             source = DeckSource.Audio,
             state = DeckUiState(
                 loading = false, deck = audio, totalCount = 212, markedCount = 4, markedBytes = 9_000_000, canUndo = true,
-                recent = listOf(DecidedCard(audio[4], Decision.DELETE)),
+                reel = listOf(ReelCard(audio[4], Decision.DELETE)) + audio.take(4).map { ReelCard(it, null) },
+                position = 1,
             ),
             showHint = false,
             onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},

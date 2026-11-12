@@ -15,9 +15,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import kotlin.math.abs
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -72,7 +80,7 @@ import io.github.darkxace01.sweepy.data.Decision
 import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
-import io.github.darkxace01.sweepy.ui.DecidedCard
+import io.github.darkxace01.sweepy.data.ReelCard
 import io.github.darkxace01.sweepy.ui.DeckUiState
 import io.github.darkxace01.sweepy.ui.LocalAppSettings
 import io.github.darkxace01.sweepy.ui.components.Eyebrow
@@ -114,10 +122,8 @@ fun DeckScreen(
     onOpenReview: () -> Unit,
     onDismissHint: () -> Unit,
     onFilterChange: (DeckFilter) -> Unit = {},
-    /** A waiting card was tapped on the strip: put it on top. */
-    onJump: (MediaItem) -> Unit = {},
-    /** A swiped card was tapped on the strip: take the swipe back. */
-    onReopen: (MediaItem) -> Unit = {},
+    /** The reel under the pile was scrolled or tapped to this photo: show it on top. */
+    onMoveTo: (MediaItem) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -202,7 +208,7 @@ fun DeckScreen(
                     else -> {
                         // Prints underneath, drawn back to front. They straighten up and come forward
                         // as the top one is dragged away.
-                        val upcoming = state.deck.subList(1, minOf(state.deck.size, VISIBLE_CARDS))
+                        val upcoming = state.underneath.take(VISIBLE_CARDS - 1)
                         upcoming.asReversed().forEachIndexed { reversedIndex, item ->
                             val depth = upcoming.size - reversedIndex // 1 = right under the top card
                             key(item.id) {
@@ -227,6 +233,7 @@ fun DeckScreen(
                             SwipeCard(
                                 item = current,
                                 state = cardState,
+                                existing = state.currentDecision,
                                 onSwiped = { direction ->
                                     if (showHint) onDismissHint()
                                     onDecide(current, direction.decision)
@@ -240,12 +247,11 @@ fun DeckScreen(
                 }
             }
 
-            if (current != null) {
-                DeckStrip(
-                    recent = state.recent,
-                    upcoming = state.deck.take(STRIP_AHEAD),
-                    onJump = { if (!cardState.isFlyingOut) onJump(it) },
-                    onReopen = { if (!cardState.isFlyingOut) onReopen(it) },
+            if (current != null && state.reel.isNotEmpty()) {
+                DeckReel(
+                    reel = state.reel,
+                    position = state.position,
+                    onMoveTo = { if (!cardState.isFlyingOut) onMoveTo(it) },
                 )
             }
             if (current != null || state.loading) {
@@ -352,63 +358,77 @@ private fun ActionBar(
     }
 }
 
-/** How many waiting cards the strip shows after the current one. */
-private const val STRIP_AHEAD = 40
+private val FRAME_WIDTH = 44.dp
+private val FRAME_HEIGHT = 58.dp
 
 /**
- * A strip of small prints under the pile: the last few swiped (each with its mark), the one on
- * top (outlined), and what's coming. Tap a waiting one to jump to it, or a swiped one to take
- * that swipe back.
+ * The reel under the pile, like a film strip: every photo waiting in this deck plus the ones swiped
+ * this visit (with their marks), in order. The frame in the middle is the photo on top of the pile.
+ * Scroll it and the pile follows; swipe a photo and the reel moves on by itself. Tap any frame to go
+ * straight there. Moving along never decides anything.
  */
 @Composable
-private fun DeckStrip(
-    recent: List<DecidedCard>,
-    upcoming: List<MediaItem>,
-    onJump: (MediaItem) -> Unit,
-    onReopen: (MediaItem) -> Unit,
-) {
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (recent.size - 2).coerceAtLeast(0))
-    val currentId = upcoming.firstOrNull()?.id
-    // Keep the card on top in view, with a couple of swiped ones to its left.
-    LaunchedEffect(currentId) {
-        listState.animateScrollToItem((recent.size - 2).coerceAtLeast(0))
-    }
-    val jumpLabel = stringResource(R.string.strip_jump)
-    val reopenLabel = stringResource(R.string.strip_reopen)
-    LazyRow(
-        state = listState,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        contentPadding = PaddingValues(horizontal = 22.dp),
-        modifier = Modifier.fillMaxWidth().height(70.dp),
-    ) {
-        items(recent, key = { "done-" + it.item.id }) { card ->
-            val direction = SwipeDirection.of(card.decision)
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(width = 44.dp, height = 56.dp)
-                    .pressable({ onReopen(card.item) }, pressedScale = 0.9f)
-                    .semantics { contentDescription = reopenLabel },
-            ) {
-                MediaThumbnail(card.item, Modifier.fillMaxSize().graphicsLayer { alpha = 0.45f }, cornerRadius = 6.dp, showBadge = false)
-                MarkIcon(direction.mark, direction.color, size = 26.dp, strokeWidth = 0.13f)
+private fun DeckReel(reel: List<ReelCard>, position: Int, onMoveTo: (MediaItem) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth().height(72.dp)) {
+        val side = ((maxWidth - FRAME_WIDTH) / 2).coerceAtLeast(0.dp)
+        val listState = rememberLazyListState(initialFirstVisibleItemIndex = position.coerceAtLeast(0))
+        val snapping = rememberSnapFlingBehavior(listState, SnapPosition.Center)
+        val dragged by listState.interactionSource.collectIsDraggedAsState()
+        // True from the moment a finger moves the reel until it comes to rest: the reel leads, the pile follows.
+        var leading by remember { mutableStateOf(false) }
+        LaunchedEffect(dragged) { if (dragged) leading = true }
+        val currentReel by rememberUpdatedState(reel)
+        val move by rememberUpdatedState(onMoveTo)
+        LaunchedEffect(listState) {
+            snapshotFlow { listState.centeredIndex() to listState.isScrollInProgress }
+                .distinctUntilChanged()
+                .collect { (index, scrolling) ->
+                    if (leading && index != null) currentReel.getOrNull(index)?.let { move(it.item) }
+                    if (!scrolling && !dragged) leading = false
+                }
+        }
+        // Otherwise the pile leads: after a swipe, undo or tap, bring that frame to the middle.
+        LaunchedEffect(position) {
+            if (!leading && position >= 0 && listState.centeredIndex() != position) listState.animateScrollToItem(position)
+        }
+        val moveLabel = stringResource(R.string.strip_jump)
+        LazyRow(
+            state = listState,
+            flingBehavior = snapping,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            contentPadding = PaddingValues(horizontal = side),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            itemsIndexed(reel, key = { _, card -> card.item.id }) { index, card ->
+                val onShow = index == position
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(FRAME_WIDTH, FRAME_HEIGHT)
+                        .pressable({ move(card.item) }, pressedScale = 0.9f)
+                        .semantics { contentDescription = moveLabel },
+                ) {
+                    val decided = card.decision?.let(SwipeDirection::of)
+                    MediaThumbnail(
+                        card.item,
+                        Modifier.fillMaxSize().graphicsLayer { alpha = if (decided != null && !onShow) 0.45f else 1f },
+                        cornerRadius = 6.dp,
+                        showBadge = false,
+                    )
+                    if (decided != null) MarkIcon(decided.mark, decided.color, size = 26.dp, strokeWidth = 0.13f)
+                    if (onShow) Box(Modifier.fillMaxSize().border(2.dp, Sweepy.colors.ink, RoundedCornerShape(6.dp)))
+                }
             }
         }
-        itemsIndexed(upcoming, key = { _, item -> "next-" + item.id }) { index, item ->
-            val onTop = index == 0
-            Box(
-                Modifier
-                    .size(width = if (onTop) 50.dp else 44.dp, height = if (onTop) 64.dp else 56.dp)
-                    .then(
-                        if (onTop) Modifier.border(2.dp, Sweepy.colors.ink, RoundedCornerShape(8.dp)).padding(3.dp)
-                        else Modifier.pressable({ onJump(item) }, pressedScale = 0.9f).semantics { contentDescription = jumpLabel },
-                    ),
-            ) {
-                MediaThumbnail(item, Modifier.fillMaxSize(), cornerRadius = if (onTop) 5.dp else 6.dp, showBadge = false)
-            }
-        }
     }
+}
+
+/** The frame nearest the middle of the reel. */
+private fun LazyListState.centeredIndex(): Int? {
+    val info = layoutInfo
+    val middle = (info.viewportStartOffset + info.viewportEndOffset) / 2
+    return info.visibleItemsInfo.minByOrNull { abs(it.offset + it.size / 2 - middle) }?.index
 }
 
 @Composable

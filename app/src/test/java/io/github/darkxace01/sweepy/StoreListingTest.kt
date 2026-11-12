@@ -66,7 +66,7 @@ import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateKind
 import io.github.darkxace01.sweepy.data.duplicates.KeepReason
 import io.github.darkxace01.sweepy.data.duplicates.MediaSignature
-import io.github.darkxace01.sweepy.ui.DecidedCard
+import io.github.darkxace01.sweepy.data.ReelCard
 import io.github.darkxace01.sweepy.ui.DeckSummary
 import io.github.darkxace01.sweepy.ui.DeckUiState
 import io.github.darkxace01.sweepy.ui.DuplicateGroupUi
@@ -460,7 +460,10 @@ class StoreListingTest {
         source = DeckSource.Folder(1, "Travel"),
         state = DeckUiState(
             loading = false, deck = library.drop(5), totalCount = 402, markedCount = 12, markedBytes = 41_000_000, canUndo = true,
-            recent = listOf(Decision.KEEP, Decision.DELETE, Decision.KEEP, Decision.FAVORITE).mapIndexed { i, d -> DecidedCard(library[i], d) },
+            reel = library.drop(1).mapIndexed { i, item ->
+                ReelCard(item, listOf(Decision.KEEP, Decision.DELETE, Decision.KEEP, Decision.FAVORITE).getOrNull(i))
+            },
+            position = 4,
         ),
         showHint = false, onBack = {}, onDecide = { _, _ -> }, onUndo = { null }, onOpenReview = {}, onDismissHint = {},
     )

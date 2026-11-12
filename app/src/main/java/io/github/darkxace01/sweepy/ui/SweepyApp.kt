@@ -288,8 +288,7 @@ fun SweepyApp(
                             onOpenReview = { navigate(Screen.Review) },
                             onDismissHint = viewModel::dismissSwipeHint,
                             onFilterChange = { viewModel.setFilter(screen.source, it) },
-                            onJump = { viewModel.jumpTo(screen.source, it) },
-                            onReopen = { viewModel.reopen(screen.source, it) },
+                            onMoveTo = { viewModel.moveTo(screen.source, it) },
                         )
                     }
                     Screen.Review -> {

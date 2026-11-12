@@ -7,6 +7,11 @@ import io.github.darkxace01.sweepy.data.DeckOrder
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.MediaKind
+import io.github.darkxace01.sweepy.data.Decision
+import io.github.darkxace01.sweepy.data.ReelCard
+import io.github.darkxace01.sweepy.data.buildReel
+import io.github.darkxace01.sweepy.data.nextWaiting
+import io.github.darkxace01.sweepy.data.reelPosition
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,15 +46,33 @@ class DeckFilterTest {
         assertEquals(listOf(1L, 3L), DeckFilter(MediaKind.PHOTOS, DeckOrder.LARGEST).apply())
     }
 
-    @Test fun `jumping to a card starts the pile there and moves the ones before it to the end`() {
-        val pile = DeckFilter().arrange(library, anchor = library[2]).map { it.id }
-        assertEquals(listOf(3L, 4L, 1L, 2L), pile)
+    private val reel = library.mapIndexed { i, item -> ReelCard(item, if (i == 1) Decision.DELETE else null) }
+
+    @Test fun `the reel opens on the first photo still waiting`() {
+        assertEquals(0, reelPosition(reel, cursor = null))
+        val firstTwoSwiped = reel.mapIndexed { i, card -> if (i == 0) card.copy(decision = Decision.KEEP) else card }
+        assertEquals(2, reelPosition(firstTwoSwiped, cursor = null))
     }
 
-    @Test fun `once the jumped-to card is decided the pile carries on from where it was`() {
-        val dated = library.mapIndexed { i, it -> it.copy(dateAddedSeconds = 1000L - i) }
-        val pile = DeckFilter().arrange(dated - dated[2], anchor = dated[2]).map { it.id }
-        assertEquals(listOf(4L, 1L, 2L), pile)
+    @Test fun `scrolling the reel back keeps every frame in place`() {
+        // Moved back to the swiped photo: it shows, and nothing before or after it is dropped.
+        assertEquals(1, reelPosition(reel, cursor = 2))
+        assertEquals(listOf(1L, 2L, 3L, 4L), reel.map { it.item.id })
+    }
+
+    @Test fun `after a swipe the reel moves on, then wraps round to photos skipped earlier`() {
+        assertEquals(3L, nextWaiting(reel, from = 0)) // the next one waiting, skipping the swiped one
+        assertEquals(4L, nextWaiting(reel, from = 2))
+        assertEquals(1L, nextWaiting(reel, from = 3)) // nothing after: back to the first skipped
+        val allSwiped = reel.map { it.copy(decision = Decision.KEEP) }
+        assertEquals(null, nextWaiting(allSwiped, from = 3))
+    }
+
+    @Test fun `the reel holds what's waiting plus what was swiped here, in order`() {
+        val decided = mapOf(2L to Decision.DELETE, 3L to Decision.KEEP)
+        val built = buildReel(library, { it.id !in decided }, { decided[it.id] }, swipedHere = setOf(2L))
+        assertEquals(listOf(1L, 2L, 4L), built.map { it.item.id })
+        assertEquals(Decision.DELETE, built[1].decision)
     }
 
     @Test fun `audio only ever shows up in the audio deck`() {

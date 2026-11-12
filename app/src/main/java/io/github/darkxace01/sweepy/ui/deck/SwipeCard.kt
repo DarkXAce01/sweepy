@@ -206,6 +206,8 @@ fun SwipeCard(
     onSwiped: (SwipeDirection) -> Unit,
     onInfo: () -> Unit,
     modifier: Modifier = Modifier,
+    /** How this photo was already swiped, when the reel was moved back to it: its mark shows. */
+    existing: Decision? = null,
 ) {
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
@@ -258,7 +260,7 @@ fun SwipeCard(
             .pointerInput(item.id) { detectTapGestures(onDoubleTap = { onInfo() }) },
     ) {
         PrintCard(item = item, onInfo = onInfo, playVideo = LocalAppSettings.current.autoplayVideos, onTop = true, zoomable = true, modifier = Modifier.fillMaxSize()) {
-            PencilOverlay(state)
+            PencilOverlay(state, existing?.let(SwipeDirection::of))
         }
     }
 }
@@ -268,8 +270,13 @@ fun SwipeCard(
  * the finger, so letting go halfway leaves half a cross. Reads drag state only while drawing.
  */
 @Composable
-private fun PencilOverlay(state: SwipeCardState) {
+private fun PencilOverlay(state: SwipeCardState, existing: SwipeDirection?) {
     val colors = SwipeDirection.entries.associateWith { it.color }
+    // A swiped photo shows its mark until the card is moved; then the finger takes over.
+    fun progress(direction: SwipeDirection): Float {
+        val moving = state.markProgress(direction)
+        return if (existing == direction && state.lean == null && !state.isFlyingOut) 1f else moving
+    }
     Box(
         Modifier
             .fillMaxSize()
@@ -286,7 +293,7 @@ private fun PencilOverlay(state: SwipeCardState) {
                 Modifier
                     .fillMaxSize()
                     .padding(14.dp)
-                    .pencilMark(direction.mark, colors.getValue(direction), { state.markProgress(direction) }, strokeWidth = 0.032f),
+                    .pencilMark(direction.mark, colors.getValue(direction), { progress(direction) }, strokeWidth = 0.032f),
             )
         }
         // The question mark and star sit in the middle.
@@ -296,7 +303,7 @@ private fun PencilOverlay(state: SwipeCardState) {
                     .align(Alignment.Center)
                     .fillMaxWidth(0.5f)
                     .aspectRatio(1f)
-                    .pencilMark(direction.mark, colors.getValue(direction), { state.markProgress(direction) }, strokeWidth = 0.075f),
+                    .pencilMark(direction.mark, colors.getValue(direction), { progress(direction) }, strokeWidth = 0.075f),
             )
         }
         for (direction in SwipeDirection.entries) {
@@ -321,7 +328,7 @@ private fun PencilOverlay(state: SwipeCardState) {
                     .align(alignment)
                     .padding(20.dp)
                     .graphicsLayer {
-                        val p = state.markProgress(direction)
+                        val p = progress(direction)
                         alpha = ((p - 0.25f) / 0.5f).coerceIn(0f, 1f)
                         rotationZ = tilt
                         val s = 0.85f + 0.15f * p

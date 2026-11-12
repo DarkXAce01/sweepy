@@ -13,6 +13,9 @@ import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.TrashedItem
+import io.github.darkxace01.sweepy.data.buildReel
+import io.github.darkxace01.sweepy.data.nextWaiting
+import io.github.darkxace01.sweepy.data.reelPosition
 import io.github.darkxace01.sweepy.data.db.DecisionEntity
 import io.github.darkxace01.sweepy.data.decisionFor
 import io.github.darkxace01.sweepy.data.db.DuplicateReviewEntity
@@ -255,28 +258,27 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** Per-deck "show" and "order" choices. Kept while the app is open; each visit starts where you left it. */
     private val filters = MutableStateFlow<Map<DeckSource, DeckFilter>>(emptyMap())
 
-    /** Per-deck card to start the pile from: picked on the strip, or brought back by undo. */
-    private val anchors = MutableStateFlow<Map<DeckSource, MediaItem>>(emptyMap())
+    /** Per-deck frame of the reel on show, when it's been moved by the strip, a swipe or undo. */
+    private val cursors = MutableStateFlow<Map<DeckSource, Long>>(emptyMap())
 
     fun deck(source: DeckSource): StateFlow<DeckUiState> = decks.getOrPut(source) {
-        combine(media, store.state, history, filters, anchors) { media, decisions, history, filters, anchors ->
+        val base = combine(media, store.state, history, filters) { media, decisions, history, filters ->
             if (media == null || decisions == null) return@combine DeckUiState()
             val filter = filters[source] ?: DeckFilter.defaultFor(source)
             val inSource = media.filter(source::matches)
-            val waiting = if (source == DeckSource.Later) {
-                inSource.filter { decisions.decisionFor(it) == Decision.LATER }
+            val isWaiting: (MediaItem) -> Boolean = if (source == DeckSource.Later) {
+                { decisions.decisionFor(it) == Decision.LATER }
             } else {
-                inSource.filter { decisions.decisionFor(it) == null }
+                { decisions.decisionFor(it) == null }
             }
-            val deck = filter.arrange(waiting.filter(filter::matches), anchors[source])
-            val recentEntries = history.filter { it.source == source }.takeLast(RECENT_STRIP)
-            val recentIds = recentEntries.mapTo(HashSet()) { it.itemId }
-            val recentItems = inSource.filter { it.id in recentIds }.associateBy { it.id }
+            val waiting = inSource.filter(isWaiting)
+            val sorted = filter.sort(inSource.filter(filter::matches))
+            val swipedHere = history.filter { it.source == source }.mapTo(HashSet()) { it.itemId }
             val marked = media.filter { decisions.decisionFor(it) == Decision.DELETE }
             DeckUiState(
                 loading = false,
-                deck = deck,
-                totalCount = if (source == DeckSource.Later) deck.size else inSource.count(filter::matches),
+                deck = sorted.filter(isWaiting),
+                totalCount = if (source == DeckSource.Later) waiting.count(filter::matches) else sorted.size,
                 markedCount = marked.size,
                 markedBytes = marked.sumOf { it.sizeBytes },
                 canUndo = history.any { it.source == source },
@@ -284,28 +286,27 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 defaultFilter = DeckFilter.defaultFor(source),
                 waitingPhotos = waiting.count { !it.isVideo },
                 waitingVideos = waiting.count { it.isVideo },
-                recent = recentEntries.mapNotNull { entry -> recentItems[entry.itemId]?.let { DecidedCard(it, entry.decision) } },
+                reel = buildReel(sorted, isWaiting, { decisions.decisionFor(it) }, swipedHere),
             )
-        }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DeckUiState())
+        }.flowOn(Dispatchers.Default)
+        // Moving along the reel only changes which frame is on show, so it skips the work above.
+        combine(base, cursors) { state, cursors -> state.copy(position = reelPosition(state.reel, cursors[source])) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DeckUiState())
     }
 
     fun setFilter(source: DeckSource, filter: DeckFilter) {
-        anchors.update { it - source }
+        cursors.update { it - source }
         filters.update { it + (source to filter) }
     }
 
-    /** Puts [item], picked from the strip, on top of the pile. Cards before it wait at the end. */
-    fun jumpTo(source: DeckSource, item: MediaItem) = anchors.update { it + (source to item) }
-
-    /** Takes back the swipe on [item] (one of the cards on the strip) and puts it on top again. */
-    fun reopen(source: DeckSource, item: MediaItem) {
-        val entry = history.value.lastOrNull { it.source == source && it.itemId == item.id } ?: return
-        history.update { list -> list.filterNot { it === entry } }
-        if (entry.previous != null) store.putEntities(listOf(entry.previous)) else store.remove(listOf(entry.itemId))
-        jumpTo(source, item)
-    }
+    /** The reel was scrolled or tapped to [item]: show it on top. Nothing is decided by moving. */
+    fun moveTo(source: DeckSource, item: MediaItem) = cursors.update { it + (source to item.id) }
 
     fun decide(source: DeckSource, item: MediaItem, decision: Decision) {
+        // Move on along the reel first: to the next photo still waiting after this one.
+        val reel = decks[source]?.value?.reel.orEmpty()
+        val next = nextWaiting(reel, reel.indexOfFirst { it.item.id == item.id })
+        cursors.update { if (next != null) it + (source to next) else it - source }
         val previous = store.state.value?.get(item.id)
         history.update { (it + HistoryEntry(source, item.id, previous, decision)).takeLast(MAX_HISTORY) }
         store.put(listOf(item), decision)
@@ -317,8 +318,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val entry = history.value.lastOrNull { it.source == source } ?: return null
         history.update { list -> list.filterNot { it === entry } }
         if (entry.previous != null) store.putEntities(listOf(entry.previous)) else store.remove(listOf(entry.itemId))
-        // Back on top, even if the strip had moved the pile on past it.
-        media.value?.firstOrNull { it.id == entry.itemId }?.let { jumpTo(source, it) }
+        // The reel goes back to that photo, wherever it had moved on to.
+        cursors.update { it + (source to entry.itemId) }
         return entry.decision
     }
 
@@ -452,9 +453,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
         const val MAX_HISTORY = 500
-
-        /** Swiped cards shown on the strip under the pile. */
-        const val RECENT_STRIP = 12
 
         /** Keep each system request a reasonable size; the user can simply tap again for the rest. */
         const val MAX_BATCH = 1000

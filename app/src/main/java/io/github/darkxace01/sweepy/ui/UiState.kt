@@ -6,6 +6,7 @@ import io.github.darkxace01.sweepy.data.DeckFilter
 import io.github.darkxace01.sweepy.data.DeckSource
 import io.github.darkxace01.sweepy.data.MediaItem
 import io.github.darkxace01.sweepy.data.MediaKind
+import io.github.darkxace01.sweepy.data.ReelCard
 import io.github.darkxace01.sweepy.data.TrashedItem
 import io.github.darkxace01.sweepy.data.duplicates.DuplicateGroup
 import io.github.darkxace01.sweepy.data.duplicates.KeepReason
@@ -59,10 +60,21 @@ data class DeckUiState(
     /** Undecided photos and videos in this deck, before [filter] narrows them. */
     val waitingPhotos: Int = 0,
     val waitingVideos: Int = 0,
-    /** The last few cards decided in this deck, oldest first, for the strip under the pile. */
-    val recent: List<DecidedCard> = emptyList(),
+    /** The strip under the pile: what's waiting plus what was swiped this visit, in order. */
+    val reel: List<ReelCard> = emptyList(),
+    /** The frame of [reel] on show, or -1 when everything's done. */
+    val position: Int = -1,
 ) {
-    val current: MediaItem? get() = deck.firstOrNull()
+    /** The card on top of the pile. Without a reel (as in some previews), the first one waiting. */
+    val current: MediaItem? get() = if (reel.isEmpty()) deck.firstOrNull() else reel.getOrNull(position)?.item
+
+    /** How the card on top was already swiped, when the reel was moved back to it. */
+    val currentDecision: Decision? get() = reel.getOrNull(position)?.decision
+
+    /** The next couple of cards still waiting, drawn underneath the top one. */
+    val underneath: List<MediaItem>
+        get() = if (reel.isEmpty()) deck.drop(1).take(2)
+        else reel.drop(position + 1).filter { it.decision == null }.take(2).map { it.item }
     val isFiltered: Boolean get() = filter != defaultFilter
 
     /** Files still waiting that the current filter hides. */
@@ -73,9 +85,6 @@ data class DeckUiState(
     val remainingBytes: Long get() = deck.sumOf { it.sizeBytes }
     val progress: Float get() = if (totalCount == 0) 1f else (totalCount - deck.size) / totalCount.toFloat()
 }
-
-/** A card already swiped, and which way. */
-data class DecidedCard(val item: MediaItem, val decision: Decision)
 
 data class ReviewGroup(val folder: String?, val items: List<MediaItem>) {
     val bytes: Long get() = items.sumOf { it.sizeBytes }

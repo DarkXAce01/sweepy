@@ -63,8 +63,7 @@
     <string name="audio_music">Music</string>
     <string name="audio_play">Play</string>
     <string name="audio_pause">Pause</string>
-    <string name="strip_jump">Show this one now</string>
-    <string name="strip_reopen">Take this swipe back</string>
+    <string name="strip_jump">Show this one</string>
     <string name="deck_all_done">All done ✓</string>
     <string name="folder_unnamed">Other</string>
 
