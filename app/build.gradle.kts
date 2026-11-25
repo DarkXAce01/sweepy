@@ -19,8 +19,8 @@ android {
         // Android 11: first version with the system trash (MediaStore.createTrashRequest).
         minSdk = 30
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.0"
+        versionCode = 4
+        versionName = "1.1.0"
     }
 
     // Release signing reads keystore.properties at the project root (never committed). Without it,
